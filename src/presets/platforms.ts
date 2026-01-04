@@ -44,6 +44,8 @@ export const PRESETS: PlatformPreset[] = [
     domains: ['notion.so', 'notion.site'],
     selectors: {
       contentArea: '.notion-page-content',
+      textBlocks:
+        '[class*="notion-text-block"], [class*="notion-bulleted_list"], [class*="notion-numbered_list"]',
       hotSpots: [
         '[class*="notion-header"]',
         '[class*="notion-callout"]',
@@ -78,6 +80,7 @@ export const PRESETS: PlatformPreset[] = [
     domains: ['atlassian.net', 'confluence.com'],
     selectors: {
       contentArea: '#content-body, [data-testid="page-content"], .wiki-content',
+      textBlocks: 'p, [data-node-type="text"], [data-node-type="paragraph"]',
       hotSpots: [
         '[data-testid*="emoji"]',
         '.confluence-information-macro',

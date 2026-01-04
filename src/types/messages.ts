@@ -22,6 +22,8 @@ export interface PlatformPreset {
   domains: string[]
   selectors: {
     contentArea: string
+    /** Selectors for text blocks (paragraphs). Defaults to 'p' if not specified */
+    textBlocks?: string
     hotSpots: string[]
     ignoreElements: string[]
   }
@@ -33,6 +35,7 @@ export interface AnalyticsData {
   totalTextBlocks: number
   totalAnchors: number
   problemBlocks: number
+  unformattedCodeBlocks: number
   anchorsBreakdown: {
     headings: number
     emphasis: number

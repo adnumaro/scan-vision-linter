@@ -293,6 +293,12 @@
   color: #16a34a;
 }
 
+.problem-alert--code {
+  background: #fffbeb;
+  border-color: #fed7aa;
+  color: #d97706;
+}
+
 .problem-icon {
   flex-shrink: 0;
 }

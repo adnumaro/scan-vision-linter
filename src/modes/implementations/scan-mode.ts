@@ -4,6 +4,7 @@
  */
 
 import { ScanText } from 'lucide-react'
+import { UNFORMATTED_CODE_CLASS } from '../../content/analysis/antiPatterns'
 import type { PlatformPreset } from '../../presets/platforms'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
 import { cloneModeConfig } from '../utils/config'
@@ -43,11 +44,19 @@ function createBaseStyles(scope: string, config: ScanModeConfig): string {
     transition: color 0.2s ease, filter 0.2s ease;
   }
 
-  /* Problem blocks - warning highlight */
+  /* Problem blocks - warning highlight (dense paragraphs) */
   ${scope} p.${PROBLEM_CLASS} {
     outline: 2px dashed rgba(239, 68, 68, 0.7) !important;
     outline-offset: 4px;
     background-color: rgba(239, 68, 68, 0.05) !important;
+  }
+
+  /* Unformatted code blocks - orange highlight (works on any text block type) */
+  ${scope} .${UNFORMATTED_CODE_CLASS},
+  .${UNFORMATTED_CODE_CLASS} {
+    outline: 2px dashed rgba(251, 146, 60, 0.8) !important;
+    outline-offset: 4px;
+    background-color: rgba(251, 146, 60, 0.08) !important;
   }`
 }
 

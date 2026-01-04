@@ -247,7 +247,7 @@ function App() {
             </div>
           </div>
 
-          {analytics.problemBlocks > 0 ? (
+          {analytics.problemBlocks > 0 && (
             <div className="problem-alert">
               <span className="problem-icon">⚠️</span>
               <span>
@@ -255,10 +255,22 @@ function App() {
                 visual anchors
               </span>
             </div>
-          ) : (
+          )}
+
+          {analytics.unformattedCodeBlocks > 0 && (
+            <div className="problem-alert problem-alert--code">
+              <span className="problem-icon">📝</span>
+              <span>
+                {analytics.unformattedCodeBlocks} unformatted code block
+                {analytics.unformattedCodeBlocks > 1 ? 's' : ''}
+              </span>
+            </div>
+          )}
+
+          {analytics.problemBlocks === 0 && analytics.unformattedCodeBlocks === 0 && (
             <div className="problem-alert problem-alert--none">
               <span className="problem-icon">✓</span>
-              <span>No problematic blocks found</span>
+              <span>No issues found</span>
             </div>
           )}
 

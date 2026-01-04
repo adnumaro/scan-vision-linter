@@ -26,6 +26,11 @@ import type {
   ScanResponse,
 } from '../types/messages'
 import { DEFAULT_CONFIG } from '../types/messages'
+import {
+  clearUnformattedCodeMarkers,
+  detectUnformattedCode,
+  markUnformattedCodeBlocks,
+} from './analysis/antiPatterns'
 
 // Register all modes
 registry.register(scanMode)
@@ -206,20 +211,32 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
 
   const totalAnchors = allAnchors.length
 
-  const paragraphs = mainContent.querySelectorAll('p')
-  const totalTextBlocks = paragraphs.length
+  // Use platform-specific text block selector, fallback to 'p'
+  const textBlockSelector = currentPreset.selectors.textBlocks || 'p'
+  const textBlocks = mainContent.querySelectorAll(textBlockSelector)
+  const totalTextBlocks = textBlocks.length
 
-  // Count problem blocks (paragraphs > 5 lines without anchors)
+  // Count problem blocks (text blocks > 5 lines without anchors)
   let problemBlocks = 0
 
-  paragraphs.forEach((p) => {
-    const hasAnchor = p.querySelector('strong, b, mark, code, a, img') !== null
-    const lines = estimateLines(p)
+  textBlocks.forEach((block) => {
+    const hasAnchor = block.querySelector('strong, b, mark, code, a, img') !== null
+    const lines = estimateLines(block)
 
     if (!hasAnchor && lines > MAX_LINES_WITHOUT_ANCHOR) {
       problemBlocks++
     }
   })
+
+  // Detect unformatted code blocks
+  const unformattedCodeMatches = detectUnformattedCode(mainContent, textBlockSelector)
+  const unformattedCodeBlocks = unformattedCodeMatches.length
+
+  // Mark unformatted code blocks visually (cleared on deactivate)
+  if (manager.isActive('scan')) {
+    clearUnformattedCodeMarkers()
+    markUnformattedCodeBlocks(unformattedCodeMatches)
+  }
 
   // Calculate score
   let score = 100
@@ -230,11 +247,18 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
 
     const ratioScore = Math.min(70, (anchorRatio / idealRatio) * 70)
     const problemPenalty = Math.min(30, (problemBlocks / totalTextBlocks) * 50)
+    const unformattedCodePenalty = Math.min(25, unformattedCodeBlocks * 5)
     const headingBonus = Math.min(15, headings * 3)
     const imageBonus = Math.min(15, images * 5)
 
     score = Math.round(
-      Math.max(0, Math.min(100, ratioScore - problemPenalty + headingBonus + imageBonus)),
+      Math.max(
+        0,
+        Math.min(
+          100,
+          ratioScore - problemPenalty - unformattedCodePenalty + headingBonus + imageBonus,
+        ),
+      ),
     )
   }
 
@@ -243,6 +267,7 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
     totalTextBlocks,
     totalAnchors,
     problemBlocks,
+    unformattedCodeBlocks,
     anchorsBreakdown: {
       headings,
       emphasis,
@@ -420,6 +445,7 @@ function cleanup(): void {
     manager.destroy()
     removeAllOverlays()
     removeAllStylesheets()
+    clearUnformattedCodeMarkers()
     invalidateCache()
   } catch {
     // Silently handle errors during cleanup
