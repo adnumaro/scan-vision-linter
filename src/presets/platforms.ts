@@ -118,7 +118,14 @@ export const PRESETS: PlatformPreset[] = [
         '.expand-control',
         '[data-testid="title-wrapper"]',
       ],
-      ignoreElements: [],
+      ignoreElements: [
+        '[data-testid="end-page-rec-wrapper"]',
+        '[data-testid="object-comment-wrapper"]',
+        '[data-testid="footer-reply-container"]',
+        '[data-testid="reactions-container"]',
+        '[data-testid="render-reactions"]',
+        '.ak-renderer-wrapper.is-comment',
+      ],
     },
     styles: {
       navigationSelectors: [
@@ -139,16 +146,6 @@ export const PRESETS: PlatformPreset[] = [
             const hasWarningText = /\b(note|warning|important|caution)\b[:\s]/i.test(text)
             const hasInfoPanel = content.querySelector('.confluence-information-macro') !== null
             return hasWarningText && !hasInfoPanel
-          },
-        },
-        {
-          id: 'confluence-expand',
-          name: 'Use Expand Sections',
-          description: 'Long documents benefit from expandable sections',
-          validate: (content) => {
-            const paragraphs = content.querySelectorAll('p')
-            const hasExpand = content.querySelector('.expand-control') !== null
-            return paragraphs.length > 20 && !hasExpand
           },
         },
         {

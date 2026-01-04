@@ -17,18 +17,6 @@ const MODE_ID = 'scan'
 const STYLE_ID = 'scan-mode'
 const PROBLEM_CLASS = 'scanvision-problem-block'
 
-/**
- * Selectors for Confluence elements that should be excluded from analysis and styling
- * (comments, reactions, reply containers)
- */
-const CONFLUENCE_EXCLUDE_SELECTORS = [
-  '[data-testid="object-comment-wrapper"]',
-  '[data-testid="footer-reply-container"]',
-  '[data-testid="reactions-container"]',
-  '[data-testid="render-reactions"]',
-  '.ak-renderer-wrapper.is-comment',
-]
-
 interface ScanModeConfig extends ModeConfig {
   settings: {
     opacity: number
@@ -75,6 +63,7 @@ function scopeSelectors(scope: string, suffixes: string[]): string {
  */
 function createBaseStyles(scope: string, config: ScanModeConfig): string {
   const { opacity, blur } = config.settings
+
   return `
   /* Dim paragraph text - only within content area */
   ${scopeSelector(scope, ' p')} {
@@ -103,15 +92,6 @@ function createBaseStyles(scope: string, config: ScanModeConfig): string {
   .pm-breakout-resize-handle-rail-inside-tooltip,
   [class*="pm-breakout-resize-handle"],
   [class*="_tip"] {
-    outline: none !important;
-    background-color: transparent !important;
-  }
-
-  /* Exclude Confluence comment/reaction containers from all styling */
-  ${CONFLUENCE_EXCLUDE_SELECTORS.map((s) => `${s}, ${s} *`).join(',\n  ')} {
-    color: inherit !important;
-    filter: none !important;
-    opacity: 1 !important;
     outline: none !important;
     background-color: transparent !important;
   }`
@@ -266,30 +246,47 @@ function createPlatformHotSpotStyles(preset: PlatformPreset, scope: string): str
 }
 
 /**
- * Creates CSS for ignore elements - SCOPED to content area to prevent global pollution
- * Sanitizes selectors to prevent CSS injection attacks
+ * Creates CSS to exclude ignored elements from hotspot styling
+ * Removes outlines and resets styles for elements inside ignored areas
+ * Uses scoped selectors to ensure higher specificity than hotspot styles
  */
 function createIgnoreElementStyles(preset: PlatformPreset, scope: string): string {
-  if (preset.selectors.ignoreElements.length === 0) return ''
+  const ignoreSelectors = preset.selectors.ignoreElements
+  if (!ignoreSelectors || ignoreSelectors.length === 0) return ''
 
-  // Sanitize selectors to prevent CSS injection
-  const safeIgnoreElements = sanitizeSelectors(preset.selectors.ignoreElements)
-  if (safeIgnoreElements.length === 0) return ''
+  const safeIgnoreSelectors = sanitizeSelectors(ignoreSelectors)
+  if (safeIgnoreSelectors.length === 0) return ''
 
-  // Scope to content area to prevent affecting navigation/sidebars
-  // Include both the element and its descendants
-  const suffixes: string[] = []
-  for (const s of safeIgnoreElements) {
-    suffixes.push(` ${s}`)
-    suffixes.push(` ${s} *`)
+  // Create selectors for common hotspot elements inside ignored areas
+  // Must match or exceed specificity of hotspot selectors (e.g., "#content-body p strong")
+  const hotspotElements = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'b', 'mark', 'em', 'code', 'pre', 'a', 'img', 'svg', 'li', 'ul', 'ol', 'p', 'p strong', 'p b', 'p em', 'p mark', 'p code', 'p a']
+  const excludeSelectors: string[] = []
+  const scopes = scope.split(',').map((s) => s.trim())
+
+  for (const ignoreSelector of safeIgnoreSelectors) {
+    for (const s of scopes) {
+      // Add scoped selectors for higher specificity
+      for (const element of hotspotElements) {
+        excludeSelectors.push(`${s} ${ignoreSelector} ${element}`)
+      }
+      // Also target the ignore container itself
+      excludeSelectors.push(`${s} ${ignoreSelector}`)
+    }
+    // Also add non-scoped versions as fallback
+    excludeSelectors.push(ignoreSelector)
+    for (const element of hotspotElements) {
+      excludeSelectors.push(`${ignoreSelector} ${element}`)
+    }
   }
-  const selectors = scopeSelectors(scope, suffixes)
 
   return `
-  /* Ignored elements - scoped to content area (${preset.name}) */
-  ${selectors} {
-    opacity: 0.4 !important;
-    filter: none !important;
+  /* === EXCLUDED AREAS - No hotspot styling === */
+  ${excludeSelectors.join(',\n  ')} {
+    outline: none !important;
+    outline-offset: 0 !important;
+    color: inherit !important;
+    filter: inherit !important;
+    opacity: inherit !important;
   }`
 }
 
@@ -367,8 +364,8 @@ function createStyles(config: ScanModeConfig, context: ModeContext): string {
     createBaseStyles(scope, config),
     createHotSpotStyles(scope),
     createPlatformHotSpotStyles(preset, scope),
-    createIgnoreElementStyles(preset, scope),
     createNavigationStyles(preset),
+    createIgnoreElementStyles(preset, scope), // Must come after hotspot styles to override them
     sanitizeCSS(preset.styles?.additionalCSS),
   ]
 
@@ -383,10 +380,11 @@ function analyzeProblemBlocks(context: ModeContext): number {
   const contentArea = context.contentArea
   // Use platform-specific text block selector, fallback to 'p'
   const textBlockSelector = context.preset.selectors.textBlocks || 'p'
+  const ignoreSelector = context.preset.selectors.ignoreElements?.join(', ') || ''
   const textBlocks = contentArea.querySelectorAll(textBlockSelector)
 
   // Use optimized batch functions to minimize reflows
-  const analyses = batchAnalyzeParagraphs(textBlocks)
+  const analyses = batchAnalyzeParagraphs(textBlocks, undefined, undefined, ignoreSelector)
   return batchApplyProblemClasses(analyses, PROBLEM_CLASS)
 }
 

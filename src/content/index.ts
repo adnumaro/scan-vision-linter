@@ -182,6 +182,7 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
 
   // Use platform-specific text block selector, fallback to 'p'
   const textBlockSelector = currentPreset.selectors.textBlocks || 'p'
+  const ignoreSelector = currentPreset.selectors.ignoreElements?.join(', ') || ''
   const textBlocks = mainContent.querySelectorAll(textBlockSelector)
   const totalTextBlocks = textBlocks.length
 
@@ -189,6 +190,11 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
   let problemBlocks = 0
 
   textBlocks.forEach((block) => {
+    // Skip blocks inside ignored elements
+    if (ignoreSelector && block.closest(ignoreSelector)) {
+      return
+    }
+
     const hasAnchor = block.querySelector('strong, b, mark, code, a, img') !== null
     const lines = estimateLines(block)
 
@@ -198,7 +204,7 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
   })
 
   // Detect unformatted code blocks
-  const unformattedCodeMatches = detectUnformattedCode(mainContent, textBlockSelector)
+  const unformattedCodeMatches = detectUnformattedCode(mainContent, textBlockSelector, ignoreSelector)
   const unformattedCodeBlocks = unformattedCodeMatches.length
 
   // Mark unformatted code blocks visually (cleared on deactivate)

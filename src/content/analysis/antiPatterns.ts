@@ -105,11 +105,13 @@ function getTextWithoutCodeElements(element: Element): string {
  * Detects unformatted code patterns in text blocks
  * @param contentArea - The content area to analyze
  * @param textBlockSelector - CSS selector for text blocks (defaults to 'p')
+ * @param ignoreSelector - CSS selector for elements to ignore (from preset)
  * @returns Array of detected anti-pattern matches
  */
 export function detectUnformattedCode(
   contentArea: Element,
   textBlockSelector = 'p',
+  ignoreSelector = '',
 ): AntiPatternMatch[] {
   const matches: AntiPatternMatch[] = []
   const textBlocks = contentArea.querySelectorAll(textBlockSelector)
@@ -142,8 +144,8 @@ export function detectUnformattedCode(
       continue
     }
 
-    // Skip blocks inside Confluence comment/reaction containers
-    if (block.closest('[data-testid="object-comment-wrapper"], [data-testid="footer-reply-container"], [data-testid="reactions-container"], [data-testid="render-reactions"], .ak-renderer-wrapper.is-comment')) {
+    // Skip blocks inside ignored elements (from preset)
+    if (ignoreSelector && block.closest(ignoreSelector)) {
       continue
     }
 

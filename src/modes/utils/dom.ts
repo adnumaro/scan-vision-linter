@@ -109,16 +109,19 @@ export interface ParagraphAnalysis {
  * @param paragraphs - NodeList or array of paragraph elements
  * @param anchorSelector - CSS selector for anchor elements
  * @param maxLinesWithoutAnchor - Threshold for problem detection
+ * @param ignoreSelector - CSS selector for elements to ignore (from preset)
  * @returns Analysis results for each paragraph
  */
 export function batchAnalyzeParagraphs(
   paragraphs: NodeListOf<Element> | Element[],
   anchorSelector = 'strong, b, mark, code, a, img',
   maxLinesWithoutAnchor = MAX_LINES_WITHOUT_ANCHOR,
+  ignoreSelector = '',
 ): ParagraphAnalysis[] {
-  // Filter out paragraphs inside Confluence comment/reaction containers
-  const EXCLUDE_SELECTORS = '[data-testid="object-comment-wrapper"], [data-testid="footer-reply-container"], [data-testid="reactions-container"], [data-testid="render-reactions"], .ak-renderer-wrapper.is-comment'
-  const elements = Array.from(paragraphs).filter((p) => !p.closest(EXCLUDE_SELECTORS))
+  // Filter out paragraphs inside ignored elements
+  const elements = ignoreSelector
+    ? Array.from(paragraphs).filter((p) => !p.closest(ignoreSelector))
+    : Array.from(paragraphs)
   if (elements.length === 0) return []
 
   // Phase 1: Batch check for anchors (DOM read)
