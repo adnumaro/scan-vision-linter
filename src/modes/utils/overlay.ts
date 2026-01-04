@@ -2,13 +2,12 @@
  * Overlay utilities for creating and managing DOM overlays
  */
 
-const OVERLAY_PREFIX = 'scanvision-overlay-'
-const DEFAULT_Z_INDEX = 999999
+import { OVERLAY_PREFIX, Z_INDEX } from './constants'
 
 /**
  * Creates a positioned overlay element
  */
-export function createOverlayElement(id: string, zIndex: number = DEFAULT_Z_INDEX): HTMLElement {
+export function createOverlayElement(id: string, zIndex: number = Z_INDEX.TOP): HTMLElement {
   const existingOverlay = document.getElementById(OVERLAY_PREFIX + id)
   if (existingOverlay) {
     return existingOverlay
@@ -63,7 +62,7 @@ export function createLineElement(
     zIndex?: number
   } = {},
 ): HTMLElement {
-  const { color = '#ef4444', width = '2px', style = 'dashed', zIndex = DEFAULT_Z_INDEX } = options
+  const { color = '#ef4444', width = '2px', style = 'dashed', zIndex = Z_INDEX.INDICATOR } = options
 
   const existingLine = document.getElementById(OVERLAY_PREFIX + id)
   if (existingLine) {
@@ -104,7 +103,7 @@ export function createLabelElement(
     backgroundColor = '#ef4444',
     textColor = '#ffffff',
     fontSize = '11px',
-    zIndex = DEFAULT_Z_INDEX,
+    zIndex = Z_INDEX.TOP,
   } = options
 
   const existingLabel = document.getElementById(OVERLAY_PREFIX + id)
@@ -138,7 +137,7 @@ export function createLabelElement(
 /**
  * Creates an SVG overlay element
  */
-export function createSvgOverlay(id: string, zIndex: number = DEFAULT_Z_INDEX): SVGSVGElement {
+export function createSvgOverlay(id: string, zIndex: number = Z_INDEX.OVERLAY): SVGSVGElement {
   const existingSvg = document.getElementById(OVERLAY_PREFIX + id) as SVGSVGElement | null
   if (existingSvg) {
     return existingSvg

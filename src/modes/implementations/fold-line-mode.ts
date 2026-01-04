@@ -5,13 +5,13 @@
 
 import { Minus } from 'lucide-react'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
+import { OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
 import { removeOverlayElement } from '../utils/overlay'
 import { getFoldLinePosition, onViewportChange } from '../utils/viewport'
 
 const MODE_ID = 'fold-line'
 const LINE_ID = 'fold-line-line'
 const LABEL_ID = 'fold-line-label'
-const OVERLAY_PREFIX = 'scanvision-overlay-'
 
 export interface FoldLineConfig extends ModeConfig {
   settings: {
@@ -132,7 +132,6 @@ export class FoldLineMode implements VisualizationMode {
    */
   private createElements(): void {
     const { color, showLabel, labelText } = this.config.settings
-    const zIndex = 999999
 
     // Create line element
     const lineFullId = OVERLAY_PREFIX + LINE_ID
@@ -146,7 +145,7 @@ export class FoldLineMode implements VisualizationMode {
       position: fixed;
       height: 0;
       border-top: 2px dashed ${color};
-      z-index: ${zIndex};
+      z-index: ${Z_INDEX.INDICATOR};
       pointer-events: none;
     `
     this.lineElement = lineEl
@@ -170,7 +169,7 @@ export class FoldLineMode implements VisualizationMode {
         font-family: system-ui, -apple-system, sans-serif;
         font-weight: 500;
         border-radius: 4px;
-        z-index: ${zIndex};
+        z-index: ${Z_INDEX.TOP};
         pointer-events: none;
         white-space: nowrap;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);

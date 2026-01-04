@@ -6,6 +6,7 @@
 import { ScanText } from 'lucide-react'
 import type { PlatformPreset } from '../../presets/platforms'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
+import { estimateLines, MAX_LINES_WITHOUT_ANCHOR } from '../utils/dom'
 import { injectStylesheet, removeStylesheet } from '../utils/styles'
 
 const MODE_ID = 'scan'
@@ -239,14 +240,12 @@ function analyzeProblemBlocks(context: ModeContext): number {
   const paragraphs = contentArea.querySelectorAll('p')
 
   let problemBlocks = 0
-  const lineHeight = 24
-  const maxLinesWithoutAnchor = 5
 
   paragraphs.forEach((p) => {
     const hasAnchor = p.querySelector('strong, b, mark, code, a, img') !== null
-    const estimatedLines = p.scrollHeight / lineHeight
+    const lines = estimateLines(p)
 
-    if (!hasAnchor && estimatedLines > maxLinesWithoutAnchor) {
+    if (!hasAnchor && lines > MAX_LINES_WITHOUT_ANCHOR) {
       problemBlocks++
       p.classList.add(PROBLEM_CLASS)
     } else {

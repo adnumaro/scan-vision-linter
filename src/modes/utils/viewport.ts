@@ -5,6 +5,21 @@
 import type { ViewportInfo } from '../types'
 
 /**
+ * Simple debounce function
+ */
+function debounce<T extends (...args: unknown[]) => void>(
+  fn: T,
+  delay: number,
+): (...args: Parameters<T>) => void {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null
+
+  return (...args: Parameters<T>) => {
+    if (timeoutId) clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => fn(...args), delay)
+  }
+}
+
+/**
  * Gets current viewport information
  */
 export function getViewportInfo(): ViewportInfo {
@@ -52,15 +67,36 @@ export function isInViewport(element: Element): boolean {
 }
 
 /**
- * Subscribes to viewport changes (resize and scroll)
+ * Options for viewport change subscription
+ */
+export interface ViewportChangeOptions {
+  /** Debounce delay in ms (default: 16ms for ~60fps) */
+  debounceMs?: number
+  /** Whether to call immediately on subscribe (default: false) */
+  immediate?: boolean
+}
+
+/**
+ * Subscribes to viewport changes (resize and scroll) with debouncing
  * Returns a cleanup function
  */
-export function onViewportChange(callback: () => void): () => void {
-  const handleResize = () => callback()
-  const handleScroll = () => callback()
+export function onViewportChange(
+  callback: () => void,
+  options: ViewportChangeOptions = {},
+): () => void {
+  const { debounceMs = 16, immediate = false } = options
+
+  const debouncedCallback = debounceMs > 0 ? debounce(callback, debounceMs) : callback
+
+  const handleResize = () => debouncedCallback()
+  const handleScroll = () => debouncedCallback()
 
   window.addEventListener('resize', handleResize)
   window.addEventListener('scroll', handleScroll, { passive: true })
+
+  if (immediate) {
+    callback()
+  }
 
   return () => {
     window.removeEventListener('resize', handleResize)

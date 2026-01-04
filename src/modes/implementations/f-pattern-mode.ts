@@ -9,12 +9,12 @@
 import { LayoutTemplate } from 'lucide-react'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
 import { hexToRgba } from '../utils/colors'
+import { OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
 import { removeOverlayElement } from '../utils/overlay'
 import { onViewportChange } from '../utils/viewport'
 
 const MODE_ID = 'f-pattern'
 const OVERLAY_ID = 'f-pattern-overlay'
-const OVERLAY_PREFIX = 'scanvision-overlay-'
 
 export interface FPatternConfig extends ModeConfig {
   settings: {
@@ -137,7 +137,7 @@ export class FPatternMode implements VisualizationMode {
       left: ${rect.left}px;
       width: ${rect.width}px;
       height: ${rect.height}px;
-      z-index: 999990;
+      z-index: ${Z_INDEX.OVERLAY};
       pointer-events: none;
       overflow: hidden;
     `

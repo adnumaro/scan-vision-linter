@@ -77,12 +77,19 @@ function App() {
       }
     }
 
+    // Re-sync state when popup gains focus (handles page reloads)
+    const handleFocus = () => {
+      detectAndUpdateState()
+    }
+
     chrome.tabs.onActivated.addListener(handleTabActivated)
     chrome.tabs.onUpdated.addListener(handleTabUpdated)
+    window.addEventListener('focus', handleFocus)
 
     return () => {
       chrome.tabs.onActivated.removeListener(handleTabActivated)
       chrome.tabs.onUpdated.removeListener(handleTabUpdated)
+      window.removeEventListener('focus', handleFocus)
     }
   }, [])
 

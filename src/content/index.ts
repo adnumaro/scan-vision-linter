@@ -11,6 +11,7 @@ import { first5sMode } from '../modes/implementations/first-5s-mode'
 import { foldLineMode } from '../modes/implementations/fold-line-mode'
 import { heatZonesMode } from '../modes/implementations/heat-zones-mode'
 import { scanMode } from '../modes/implementations/scan-mode'
+import { estimateLines, MAX_LINES_WITHOUT_ANCHOR } from '../modes/utils/dom'
 import type {
   AnalyticsData,
   Message,
@@ -103,14 +104,12 @@ function analyzeScannability(): AnalyticsData {
 
   // Count problem blocks (paragraphs > 5 lines without anchors)
   let problemBlocks = 0
-  const lineHeight = 24
-  const maxLinesWithoutAnchor = 5
 
   paragraphs.forEach((p) => {
     const hasAnchor = p.querySelector('strong, b, mark, code, a, img') !== null
-    const estimatedLines = p.scrollHeight / lineHeight
+    const lines = estimateLines(p)
 
-    if (!hasAnchor && estimatedLines > maxLinesWithoutAnchor) {
+    if (!hasAnchor && lines > MAX_LINES_WITHOUT_ANCHOR) {
       problemBlocks++
     }
   })

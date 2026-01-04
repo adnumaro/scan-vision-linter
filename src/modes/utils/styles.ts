@@ -2,7 +2,7 @@
  * Style injection utilities for modes
  */
 
-const STYLE_PREFIX = 'scanvision-style-'
+import { STYLE_PREFIX } from './constants'
 
 /**
  * Injects a stylesheet into the document head
