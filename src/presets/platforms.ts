@@ -161,7 +161,18 @@ export const PRESETS: PlatformPreset[] = [
     id: 'docusaurus',
     name: 'Docusaurus',
     description: 'Optimized for Docusaurus sites',
-    domains: [], // Many custom domains, detected by structure
+    domains: [
+      'docusaurus.io',
+      'reactnative.dev',
+      'redux.js.org',
+      'jestjs.io',
+      'prettier.io',
+      'babel.dev',
+      'create-react-app.dev',
+      'reactrouter.com',
+      'relay.dev',
+      'pnpm.io',
+    ],
     selectors: {
       contentArea: '.markdown, article',
       hotSpots: ['.admonition', '.alert', '.tabs-container', '.prism-code'],

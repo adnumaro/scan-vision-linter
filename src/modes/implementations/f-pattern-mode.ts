@@ -10,7 +10,7 @@ import { LayoutTemplate } from 'lucide-react'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
 import { hexToRgba } from '../utils/colors'
 import { OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
-import { removeOverlayElement } from '../utils/overlay'
+import { createPatternZone, removeOverlayElement } from '../utils/overlay'
 import { onViewportChange } from '../utils/viewport'
 
 const MODE_ID = 'f-pattern'
@@ -121,6 +121,7 @@ export class FPatternMode implements VisualizationMode {
 
   /**
    * Updates the overlay with current content area dimensions
+   * Uses DOM manipulation instead of innerHTML for security
    */
   private updateOverlay(): void {
     if (!this.overlayElement || !this.contentArea) return
@@ -142,9 +143,12 @@ export class FPatternMode implements VisualizationMode {
       overflow: hidden;
     `
 
+    // Clear previous content safely
+    this.overlayElement.textContent = ''
+
     // F-Pattern zones (percentages of content area)
-    const cw = rect.width
     const ch = rect.height
+    const cw = rect.width
 
     const topBarHeight = ch * 0.15
     const secondBarHeight = ch * 0.12
@@ -153,17 +157,45 @@ export class FPatternMode implements VisualizationMode {
     const leftBarWidth = cw * 0.2
     const leftBarTop = secondBarTop + secondBarHeight
 
-    this.overlayElement.innerHTML = `
-      <div style="position: absolute; top: 0; left: 0; width: 100%; height: ${topBarHeight}px; background: ${bgColor}; border-bottom: 2px solid ${borderColor};">
-        ${showLabels ? `<span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 11px; color: ${color}; font-family: system-ui; font-weight: 500; opacity: 0.8;">Primary scan zone</span>` : ''}
-      </div>
-      <div style="position: absolute; top: ${secondBarTop}px; left: 0; width: ${secondBarWidth}px; height: ${secondBarHeight}px; background: ${bgColor}; border-bottom: 2px solid ${borderColor}; border-right: 2px solid ${borderColor};">
-        ${showLabels ? `<span style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 11px; color: ${color}; font-family: system-ui; font-weight: 500; opacity: 0.8;">Secondary scan</span>` : ''}
-      </div>
-      <div style="position: absolute; top: ${leftBarTop}px; left: 0; width: ${leftBarWidth}px; height: calc(100% - ${leftBarTop}px); background: ${bgColor}; border-right: 2px solid ${borderColor};">
-        ${showLabels ? `<span style="position: absolute; left: 50%; top: 24px; transform: translateX(-50%); font-size: 11px; color: ${color}; font-family: system-ui; font-weight: 500; opacity: 0.8; writing-mode: vertical-rl;">Vertical scan</span>` : ''}
-      </div>
-    `
+    // Top bar - primary scan zone
+    const topBar = createPatternZone({
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: topBarHeight,
+      backgroundColor: bgColor,
+      borderColor,
+      borderBottom: true,
+      label: showLabels ? { text: 'Primary scan zone', color, position: 'right' } : undefined,
+    })
+    this.overlayElement.appendChild(topBar)
+
+    // Second bar - secondary scan
+    const secondBar = createPatternZone({
+      top: secondBarTop,
+      left: 0,
+      width: secondBarWidth,
+      height: secondBarHeight,
+      backgroundColor: bgColor,
+      borderColor,
+      borderBottom: true,
+      borderRight: true,
+      label: showLabels ? { text: 'Secondary scan', color, position: 'right' } : undefined,
+    })
+    this.overlayElement.appendChild(secondBar)
+
+    // Left bar - vertical scan
+    const leftBar = createPatternZone({
+      top: leftBarTop,
+      left: 0,
+      width: leftBarWidth,
+      height: `calc(100% - ${leftBarTop}px)`,
+      backgroundColor: bgColor,
+      borderColor,
+      borderRight: true,
+      label: showLabels ? { text: 'Vertical scan', color, position: 'vertical' } : undefined,
+    })
+    this.overlayElement.appendChild(leftBar)
   }
 }
 

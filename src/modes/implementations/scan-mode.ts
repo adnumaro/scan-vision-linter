@@ -7,6 +7,7 @@ import { ScanText } from 'lucide-react'
 import type { PlatformPreset } from '../../presets/platforms'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
 import { estimateLines, MAX_LINES_WITHOUT_ANCHOR } from '../utils/dom'
+import { sanitizeCSS } from '../utils/security'
 import { injectStylesheet, removeStylesheet } from '../utils/styles'
 
 const MODE_ID = 'scan'
@@ -249,7 +250,7 @@ function createStyles(config: ScanModeConfig, context: ModeContext): string {
     createPlatformHotSpotStyles(preset, scope),
     createIgnoreElementStyles(preset, scope),
     createNavigationStyles(preset),
-    preset.styles?.additionalCSS || '',
+    sanitizeCSS(preset.styles?.additionalCSS),
   ]
 
   return sections.filter(Boolean).join('\n')

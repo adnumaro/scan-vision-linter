@@ -182,3 +182,72 @@ export function removeAllOverlays(): void {
     overlay.remove()
   })
 }
+
+/**
+ * Options for creating a pattern zone
+ */
+export interface PatternZoneOptions {
+  top: number | string
+  left: number | string
+  width: number | string
+  height: number | string
+  backgroundColor: string
+  borderColor: string
+  borderBottom?: boolean
+  borderRight?: boolean
+  label?: {
+    text: string
+    color: string
+    position: 'right' | 'left' | 'vertical'
+  }
+}
+
+/**
+ * Creates a pattern zone element safely without innerHTML
+ * Used by F-Pattern and E-Pattern modes
+ */
+export function createPatternZone(options: PatternZoneOptions): HTMLElement {
+  const zone = document.createElement('div')
+
+  const formatValue = (v: number | string): string => (typeof v === 'number' ? `${v}px` : v)
+
+  const borderStyles = [
+    options.borderBottom ? `border-bottom: 2px solid ${options.borderColor}` : '',
+    options.borderRight ? `border-right: 2px solid ${options.borderColor}` : '',
+  ]
+    .filter(Boolean)
+    .join('; ')
+
+  zone.style.cssText = `
+    position: absolute;
+    top: ${formatValue(options.top)};
+    left: ${formatValue(options.left)};
+    width: ${formatValue(options.width)};
+    height: ${formatValue(options.height)};
+    background: ${options.backgroundColor};
+    ${borderStyles};
+  `
+
+  if (options.label) {
+    const label = document.createElement('span')
+    label.textContent = options.label.text // Safe: uses textContent, not innerHTML
+    label.style.cssText = `
+      position: absolute;
+      font-size: 10px;
+      color: ${options.label.color};
+      font-family: system-ui, -apple-system, sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+      ${
+        options.label.position === 'vertical'
+          ? 'left: 50%; top: 24px; transform: translateX(-50%); writing-mode: vertical-rl;'
+          : options.label.position === 'right'
+            ? 'right: 16px; top: 50%; transform: translateY(-50%);'
+            : 'left: 16px; top: 50%; transform: translateY(-50%);'
+      }
+    `
+    zone.appendChild(label)
+  }
+
+  return zone
+}

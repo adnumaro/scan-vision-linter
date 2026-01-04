@@ -47,6 +47,35 @@ const DEFAULT_PRESET: PlatformPreset = {
 let currentConfig: ScanConfig = DEFAULT_CONFIG
 let currentPreset: PlatformPreset = DEFAULT_PRESET
 
+// Analytics cache to avoid recalculating on every toggle
+interface AnalyticsCache {
+  data: AnalyticsData | null
+  timestamp: number
+  contentHash: string
+}
+
+let analyticsCache: AnalyticsCache = {
+  data: null,
+  timestamp: 0,
+  contentHash: '',
+}
+
+const CACHE_TTL = 1000 // 1 second TTL
+
+/**
+ * Computes a simple hash of content area for cache invalidation
+ */
+function getContentHash(contentArea: Element): string {
+  return `${contentArea.childElementCount}-${contentArea.textContent?.length || 0}-${currentPreset.id}`
+}
+
+/**
+ * Invalidates the analytics cache
+ */
+function invalidateCache(): void {
+  analyticsCache = { data: null, timestamp: 0, contentHash: '' }
+}
+
 /**
  * Gets the main content area element
  */
@@ -80,24 +109,69 @@ function initializeManager(): void {
 
 /**
  * Analyzes scannability and returns analytics data
+ * Uses caching to avoid recalculating on rapid toggles
  */
-function analyzeScannability(): AnalyticsData {
+function analyzeScannability(forceRefresh = false): AnalyticsData {
   const mainContent = getContentArea()
+  const currentHash = getContentHash(mainContent)
+  const now = Date.now()
 
-  const headings = mainContent.querySelectorAll('h1, h2, h3, h4, h5, h6').length
-  const emphasis = mainContent.querySelectorAll('strong, b, mark').length
-  const code = mainContent.querySelectorAll('code, pre, kbd').length
-  const links = mainContent.querySelectorAll('a[href]').length
-  const images = mainContent.querySelectorAll('img, svg, picture, video').length
-  const lists = mainContent.querySelectorAll('ul, ol').length
-
-  // Count platform-specific hot spots
-  let platformHotSpots = 0
-  for (const selector of currentPreset.selectors.hotSpots) {
-    platformHotSpots += mainContent.querySelectorAll(selector).length
+  // Check if cache is valid
+  if (
+    !forceRefresh &&
+    analyticsCache.data &&
+    analyticsCache.contentHash === currentHash &&
+    now - analyticsCache.timestamp < CACHE_TTL
+  ) {
+    return analyticsCache.data
   }
 
-  const totalAnchors = headings + emphasis + code + links + images + lists + platformHotSpots
+  // Combine all anchor queries into a single querySelectorAll for better performance
+  const anchorSelectors = [
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6', // headings
+    'strong',
+    'b',
+    'mark', // emphasis
+    'code',
+    'pre',
+    'kbd', // code
+    'a[href]', // links
+    'img',
+    'svg',
+    'picture',
+    'video', // images
+    'ul',
+    'ol', // lists
+    ...currentPreset.selectors.hotSpots, // platform-specific
+  ].join(', ')
+
+  const allAnchors = mainContent.querySelectorAll(anchorSelectors)
+
+  // Count by type using a single pass through results
+  let headings = 0
+  let emphasis = 0
+  let code = 0
+  let links = 0
+  let images = 0
+  let lists = 0
+
+  for (const el of allAnchors) {
+    const tag = el.tagName.toLowerCase()
+    if (/^h[1-6]$/.test(tag)) headings++
+    else if (tag === 'strong' || tag === 'b' || tag === 'mark') emphasis++
+    else if (tag === 'code' || tag === 'pre' || tag === 'kbd') code++
+    else if (tag === 'a') links++
+    else if (tag === 'img' || tag === 'svg' || tag === 'picture' || tag === 'video') images++
+    else if (tag === 'ul' || tag === 'ol') lists++
+    // Platform hot spots are counted in totalAnchors but not in breakdown
+  }
+
+  const totalAnchors = allAnchors.length
 
   const paragraphs = mainContent.querySelectorAll('p')
   const totalTextBlocks = paragraphs.length
@@ -131,7 +205,7 @@ function analyzeScannability(): AnalyticsData {
     )
   }
 
-  return {
+  const data: AnalyticsData = {
     score,
     totalTextBlocks,
     totalAnchors,
@@ -145,6 +219,15 @@ function analyzeScannability(): AnalyticsData {
       lists,
     },
   }
+
+  // Update cache
+  analyticsCache = {
+    data,
+    timestamp: now,
+    contentHash: currentHash,
+  }
+
+  return data
 }
 
 /**
@@ -192,6 +275,10 @@ chrome.runtime.onMessage.addListener(
         currentConfig = message.config
       }
       if (message.preset) {
+        // Invalidate cache when preset changes
+        if (message.preset.id !== currentPreset.id) {
+          invalidateCache()
+        }
         currentPreset = message.preset
       }
 
