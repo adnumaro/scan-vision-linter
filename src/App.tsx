@@ -20,12 +20,6 @@ function App() {
   useEffect(() => {
     const detectAndUpdateState = async () => {
       const savedConfig = await getConfig()
-      const savedAnalytics = await getAnalytics()
-
-      // Load saved analytics first
-      if (savedAnalytics) {
-        setAnalytics(savedAnalytics)
-      }
 
       try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
@@ -34,10 +28,19 @@ function App() {
           const detected = detectPlatform(tab.url)
           setDetectedPresetId(detected.id)
 
+          // Load saved analytics for this specific URL
+          const savedAnalytics = await getAnalytics(tab.url)
+          if (savedAnalytics) {
+            setAnalytics(savedAnalytics)
+          } else {
+            setAnalytics(null)
+          }
+
           // Always use detected preset for current page
           const newConfig = { ...savedConfig, presetId: detected.id }
           setConfig(newConfig)
         } else {
+          setAnalytics(null)
           setConfig(savedConfig)
         }
 
@@ -55,15 +58,15 @@ function App() {
               setActiveModes(['scan'])
             }
             // Only update analytics if we got fresh data from content script
-            if (response?.analytics) {
+            if (response?.analytics && tab.url) {
               setAnalytics(response.analytics)
-              await saveAnalytics(response.analytics)
+              await saveAnalytics(tab.url, response.analytics)
             }
           } catch {
             // Content script not loaded on this tab
             setIsActive(false)
             setActiveModes(['scan'])
-            // Keep saved analytics, don't clear them
+            // Keep saved analytics for this URL, don't clear them
           }
         }
       } catch {
@@ -196,12 +199,12 @@ function App() {
       })
       if (response?.isScanning !== undefined) {
         setIsActive(response.isScanning)
-        if (response.analytics) {
+        if (response.analytics && tab.url) {
           setAnalytics(response.analytics)
-          await saveAnalytics(response.analytics)
-        } else {
+          await saveAnalytics(tab.url, response.analytics)
+        } else if (tab.url) {
           setAnalytics(null)
-          await clearAnalytics()
+          await clearAnalytics(tab.url)
         }
       }
     } catch {
@@ -216,15 +219,15 @@ function App() {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
 
-      if (!tab.id) {
+      if (!tab.id || !tab.url) {
         setError('No active tab found')
         setIsReanalyzing(false)
         return
       }
 
-      // Clear current analytics and storage
+      // Clear current analytics and storage for this URL
       setAnalytics(null)
-      await clearAnalytics()
+      await clearAnalytics(tab.url)
 
       // Send message to clear overlays and re-analyze
       const preset = getPresetById(config.presetId)
@@ -248,7 +251,7 @@ function App() {
 
       if (response?.analytics) {
         setAnalytics(response.analytics)
-        await saveAnalytics(response.analytics)
+        await saveAnalytics(tab.url, response.analytics)
         setIsActive(response.isScanning)
       }
     } catch {
@@ -268,6 +271,18 @@ function App() {
     if (score >= 70) return 'Good scannability'
     if (score >= 40) return 'Needs improvement'
     return 'Poor scannability'
+  }
+
+  const formatTimestamp = (timestamp: number | undefined): string => {
+    if (!timestamp) return ''
+    const date = new Date(timestamp)
+    const now = new Date()
+    const isToday = date.toDateString() === now.toDateString()
+
+    if (isToday) {
+      return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    }
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
   }
 
   const currentPreset = getPresetById(config.presetId)
@@ -322,6 +337,9 @@ function App() {
           <div className="score-container">
             <div className={`score-value ${getScoreClass(analytics.score)}`}>{analytics.score}</div>
             <div className="score-label">{getScoreLabel(analytics.score)}</div>
+            {analytics.timestamp && (
+              <div className="score-timestamp">{formatTimestamp(analytics.timestamp)}</div>
+            )}
           </div>
 
           <div className="stats-grid">

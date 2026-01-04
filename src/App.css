@@ -328,6 +328,12 @@
   margin-top: 4px;
 }
 
+.score-timestamp {
+  font-size: 10px;
+  color: #9ca3af;
+  margin-top: 6px;
+}
+
 .score--good {
   color: #16a34a;
 }

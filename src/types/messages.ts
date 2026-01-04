@@ -97,6 +97,8 @@ export interface AnalyticsData {
   problems?: DetectedProblem[]
   /** Platform-specific suggestions (informative, don't affect score) */
   suggestions?: TriggeredSuggestion[]
+  /** Timestamp of when the analysis was performed */
+  timestamp?: number
 }
 
 export type MessageAction =

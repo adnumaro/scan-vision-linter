@@ -288,6 +288,7 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
     },
     problems: problems.length > 0 ? problems : undefined,
     suggestions: triggeredSuggestions.length > 0 ? triggeredSuggestions : undefined,
+    timestamp: Date.now(),
   }
 
   // Update cache
