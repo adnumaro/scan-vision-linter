@@ -168,8 +168,12 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
     return analyticsCache.data
   }
 
+  // Use platform-specific text block selector, fallback to 'p'
+  const textBlockSelector = currentPreset.selectors.textBlocks || 'p'
+  const ignoreSelector = currentPreset.selectors.ignoreElements?.join(', ') || ''
+
   // Calculate weighted anchors for more accurate scannability scoring
-  const weightedAnchors = calculateWeightedAnchors(mainContent, currentPreset.selectors.hotSpots)
+  const weightedAnchors = calculateWeightedAnchors(mainContent, currentPreset.selectors.hotSpots, ignoreSelector)
 
   // Extract counts for display (UI breakdown)
   const headings = weightedAnchors.headings.count
@@ -179,10 +183,6 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
   const images = weightedAnchors.images.count
   const lists = weightedAnchors.lists.count
   const totalAnchors = weightedAnchors.totalRaw
-
-  // Use platform-specific text block selector, fallback to 'p'
-  const textBlockSelector = currentPreset.selectors.textBlocks || 'p'
-  const ignoreSelector = currentPreset.selectors.ignoreElements?.join(', ') || ''
   const textBlocks = mainContent.querySelectorAll(textBlockSelector)
   const totalTextBlocks = textBlocks.length
 

@@ -71,19 +71,25 @@ function isStandaloneLink(link: Element): boolean {
 export function calculateWeightedAnchors(
   contentArea: Element,
   platformHotSpots: string[] = [],
+  ignoreSelector = '',
 ): WeightedAnchorBreakdown {
+  // Helper to filter out elements inside ignored areas
+  const filterIgnored = <T extends Element>(elements: NodeListOf<T> | T[]): T[] => {
+    if (!ignoreSelector) return Array.from(elements)
+    return Array.from(elements).filter((el) => !el.closest(ignoreSelector))
+  }
   // Count headings
-  const headings = contentArea.querySelectorAll('h1, h2, h3, h4, h5, h6')
+  const headings = filterIgnored(contentArea.querySelectorAll('h1, h2, h3, h4, h5, h6'))
   const headingCount = headings.length
   const headingWeight = headingCount * ANCHOR_WEIGHTS.heading
 
   // Count emphasis elements (strong, b, mark)
-  const emphasisElements = contentArea.querySelectorAll('strong, b, mark')
+  const emphasisElements = filterIgnored(contentArea.querySelectorAll('strong, b, mark'))
   const emphasisCount = emphasisElements.length
   const emphasisWeight = emphasisCount * ANCHOR_WEIGHTS.emphasis
 
   // Count code elements - distinguish block vs inline
-  const allCodeElements = contentArea.querySelectorAll('code, pre, kbd')
+  const allCodeElements = filterIgnored(contentArea.querySelectorAll('code, pre, kbd'))
   let codeBlockCount = 0
   let inlineCodeCount = 0
 
@@ -102,7 +108,7 @@ export function calculateWeightedAnchors(
   const inlineCodeWeight = inlineCodeCount * ANCHOR_WEIGHTS.inlineCode
 
   // Count links - distinguish standalone vs inline
-  const allLinks = contentArea.querySelectorAll('a[href]')
+  const allLinks = filterIgnored(contentArea.querySelectorAll('a[href]'))
   let standaloneLinksCount = 0
   let inlineLinksCount = 0
 
@@ -117,13 +123,13 @@ export function calculateWeightedAnchors(
   const standaloneLinkWeight = standaloneLinksCount * ANCHOR_WEIGHTS.linkStandalone
   const inlineLinkWeight = inlineLinksCount * ANCHOR_WEIGHTS.linkInline
 
-  // Count images
-  const images = contentArea.querySelectorAll('img, svg, picture, video')
+  // Count images (excluding svg - most are UI icons, not content images)
+  const images = filterIgnored(contentArea.querySelectorAll('img, picture, video'))
   const imageCount = images.length
   const imageWeight = imageCount * ANCHOR_WEIGHTS.image
 
   // Count lists
-  const lists = contentArea.querySelectorAll('ul, ol')
+  const lists = filterIgnored(contentArea.querySelectorAll('ul, ol'))
   const listCount = lists.length
   const listWeight = listCount * ANCHOR_WEIGHTS.list
 
@@ -132,7 +138,7 @@ export function calculateWeightedAnchors(
   if (platformHotSpots.length > 0) {
     try {
       const selector = platformHotSpots.join(', ')
-      platformHotSpotCount = contentArea.querySelectorAll(selector).length
+      platformHotSpotCount = filterIgnored(contentArea.querySelectorAll(selector)).length
     } catch {
       // Invalid selector, ignore
     }

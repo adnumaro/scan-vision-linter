@@ -119,6 +119,27 @@ export const PRESETS: PlatformPreset[] = [
         '[data-testid="title-wrapper"]',
       ],
       ignoreElements: [
+        // Navigation and header
+        '[data-testid="grid-left-sidebar"]',
+        '[data-testid="space-navigation"]',
+        '[data-vc="space-navigation"]',
+        'nav[aria-label]',
+        'header',
+        '[role="navigation"]',
+        '[role="banner"]',
+        // Atlaskit UI portals (modals, tooltips, dialogs, etc.)
+        '.atlaskit-portal-container',
+        '[data-testid="help-widget"]',
+        '[data-testid="confluence-account-menu"]',
+        '[data-testid="right-sidebar-panel"]',
+        '[role="dialog"]',
+        // Page header (author, date, etc.)
+        '[data-testid="object-header-container"]',
+        '[data-testid="content-topper-wrapper"]',
+        '[data-testid="byline-single-line"]',
+        // Sidebar
+        '[data-testid="object-sidebar-container"]',
+        // Related content and comments
         '[data-testid="end-page-rec-wrapper"]',
         '[data-testid="object-comment-wrapper"]',
         '[data-testid="footer-reply-container"]',
