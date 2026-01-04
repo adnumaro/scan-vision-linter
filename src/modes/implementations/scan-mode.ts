@@ -6,7 +6,7 @@
 import { ScanText } from 'lucide-react'
 import type { PlatformPreset } from '../../presets/platforms'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
-import { estimateLines, MAX_LINES_WITHOUT_ANCHOR } from '../utils/dom'
+import { batchAnalyzeParagraphs, batchApplyProblemClasses } from '../utils/dom'
 import { sanitizeCSS, sanitizeSelectors } from '../utils/security'
 import { injectStylesheet, removeStylesheet } from '../utils/styles'
 
@@ -271,26 +271,15 @@ function createStyles(config: ScanModeConfig, context: ModeContext): string {
 
 /**
  * Analyzes content and marks problem blocks
+ * Uses batch DOM operations to minimize layout thrashing
  */
 function analyzeProblemBlocks(context: ModeContext): number {
   const contentArea = context.contentArea
   const paragraphs = contentArea.querySelectorAll('p')
 
-  let problemBlocks = 0
-
-  paragraphs.forEach((p) => {
-    const hasAnchor = p.querySelector('strong, b, mark, code, a, img') !== null
-    const lines = estimateLines(p)
-
-    if (!hasAnchor && lines > MAX_LINES_WITHOUT_ANCHOR) {
-      problemBlocks++
-      p.classList.add(PROBLEM_CLASS)
-    } else {
-      p.classList.remove(PROBLEM_CLASS)
-    }
-  })
-
-  return problemBlocks
+  // Use optimized batch functions to minimize reflows
+  const analyses = batchAnalyzeParagraphs(paragraphs)
+  return batchApplyProblemClasses(analyses, PROBLEM_CLASS)
 }
 
 /**
