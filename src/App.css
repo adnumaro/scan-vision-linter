@@ -274,7 +274,72 @@
   margin-top: 2px;
 }
 
-/* Problem Alert */
+/* Problems Section */
+.problems-section {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.problems-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.problems-icon {
+  font-size: 12px;
+}
+
+.problems-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.problems-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.problem-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 6px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.problem-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.problem-count {
+  font-weight: 600;
+  color: #991b1b;
+}
+
+.problem-desc {
+  color: #b91c1c;
+}
+
+.problem-penalty {
+  font-weight: 700;
+  color: #dc2626;
+  font-size: 12px;
+}
+
+/* Problem Alert (for no issues state) */
 .problem-alert {
   display: flex;
   align-items: center;
@@ -291,12 +356,6 @@
   background: #f0fdf4;
   border-color: #bbf7d0;
   color: #16a34a;
-}
-
-.problem-alert--code {
-  background: #fffbeb;
-  border-color: #fed7aa;
-  color: #d97706;
 }
 
 .problem-icon {
@@ -340,6 +399,19 @@
   font-size: 9px;
   color: #9ca3af;
   text-transform: uppercase;
+}
+
+.breakdown-item--warning {
+  background: #fef3c7;
+}
+
+.breakdown-item--warning .breakdown-value {
+  color: #b45309;
+}
+
+.breakdown-warning {
+  font-size: 10px;
+  margin-left: 2px;
 }
 
 /* Platform Suggestions */

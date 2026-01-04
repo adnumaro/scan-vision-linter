@@ -68,6 +68,17 @@ export interface TriggeredSuggestion {
   description: string
 }
 
+/**
+ * A detected problem that affects the score
+ */
+export interface DetectedProblem {
+  id: string
+  type: 'unformatted-code' | 'dense-paragraph' | 'missing-anchors'
+  description: string
+  count: number
+  penalty: number
+}
+
 export interface AnalyticsData {
   score: number
   totalTextBlocks: number
@@ -82,6 +93,8 @@ export interface AnalyticsData {
     images: number
     lists: number
   }
+  /** Detected problems that affect the score */
+  problems?: DetectedProblem[]
   /** Platform-specific suggestions (informative, don't affect score) */
   suggestions?: TriggeredSuggestion[]
 }

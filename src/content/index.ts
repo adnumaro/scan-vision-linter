@@ -21,6 +21,7 @@ import { estimateLines, MAX_LINES_WITHOUT_ANCHOR } from '../modes/utils/dom'
 import { getPresetById } from '../presets/platforms'
 import type {
   AnalyticsData,
+  DetectedProblem,
   Message,
   PlatformPreset,
   ScanConfig,
@@ -210,6 +211,7 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
   // Weighted anchors give more value to high-impact elements (headings, code blocks)
   // and less value to inline links which can exist in dense text
   let score = 100
+  const problems: DetectedProblem[] = []
 
   if (totalTextBlocks > 0) {
     // Use weighted total for ratio calculation
@@ -217,8 +219,29 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
     const idealRatio = 1.5 // Slightly lower since weights are more meaningful
 
     const ratioScore = Math.min(70, (anchorRatio / idealRatio) * 70)
-    const problemPenalty = Math.min(30, (problemBlocks / totalTextBlocks) * 50)
+    const problemPenalty = Math.round(Math.min(30, (problemBlocks / totalTextBlocks) * 50))
     const unformattedCodePenalty = Math.min(25, unformattedCodeBlocks * 5)
+
+    // Build problems array with penalties
+    if (problemBlocks > 0) {
+      problems.push({
+        id: 'dense-paragraphs',
+        type: 'dense-paragraph',
+        description: 'Dense paragraphs without visual anchors',
+        count: problemBlocks,
+        penalty: problemPenalty,
+      })
+    }
+
+    if (unformattedCodeBlocks > 0) {
+      problems.push({
+        id: 'unformatted-code',
+        type: 'unformatted-code',
+        description: 'Code that should be in code blocks',
+        count: unformattedCodeBlocks,
+        penalty: unformattedCodePenalty,
+      })
+    }
 
     // Bonuses based on weighted values (not raw counts)
     const headingBonus = Math.min(15, weightedAnchors.headings.weight * 3)
@@ -263,6 +286,7 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
       images,
       lists,
     },
+    problems: problems.length > 0 ? problems : undefined,
     suggestions: triggeredSuggestions.length > 0 ? triggeredSuggestions : undefined,
   }
 

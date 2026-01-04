@@ -247,27 +247,26 @@ function App() {
             </div>
           </div>
 
-          {analytics.problemBlocks > 0 && (
-            <div className="problem-alert">
-              <span className="problem-icon">⚠️</span>
-              <span>
-                {analytics.problemBlocks} block{analytics.problemBlocks > 1 ? 's' : ''} without
-                visual anchors
-              </span>
+          {/* Problems Section */}
+          {analytics.problems && analytics.problems.length > 0 ? (
+            <div className="problems-section">
+              <div className="problems-header">
+                <span className="problems-icon">⚠️</span>
+                <span className="problems-title">Problems ({analytics.problems.length})</span>
+              </div>
+              <ul className="problems-list">
+                {analytics.problems.map((problem) => (
+                  <li key={problem.id} className="problem-item">
+                    <span className="problem-info">
+                      <span className="problem-count">{problem.count}×</span>
+                      <span className="problem-desc">{problem.description}</span>
+                    </span>
+                    <span className="problem-penalty">-{problem.penalty}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-          )}
-
-          {analytics.unformattedCodeBlocks > 0 && (
-            <div className="problem-alert problem-alert--code">
-              <span className="problem-icon">📝</span>
-              <span>
-                {analytics.unformattedCodeBlocks} unformatted code block
-                {analytics.unformattedCodeBlocks > 1 ? 's' : ''}
-              </span>
-            </div>
-          )}
-
-          {analytics.problemBlocks === 0 && analytics.unformattedCodeBlocks === 0 && (
+          ) : (
             <div className="problem-alert problem-alert--none">
               <span className="problem-icon">✓</span>
               <span>No issues found</span>
@@ -281,12 +280,26 @@ function App() {
                 <span className="breakdown-value">{analytics.anchorsBreakdown.headings}</span>
                 <span className="breakdown-label">Headings</span>
               </div>
-              <div className="breakdown-item">
-                <span className="breakdown-value">{analytics.anchorsBreakdown.emphasis}</span>
+              <div
+                className={`breakdown-item ${analytics.anchorsBreakdown.emphasis === 0 ? 'breakdown-item--warning' : ''}`}
+              >
+                <span className="breakdown-value">
+                  {analytics.anchorsBreakdown.emphasis}
+                  {analytics.anchorsBreakdown.emphasis === 0 && (
+                    <span className="breakdown-warning">⚠️</span>
+                  )}
+                </span>
                 <span className="breakdown-label">Emphasis</span>
               </div>
-              <div className="breakdown-item">
-                <span className="breakdown-value">{analytics.anchorsBreakdown.code}</span>
+              <div
+                className={`breakdown-item ${analytics.anchorsBreakdown.code === 0 && analytics.unformattedCodeBlocks > 0 ? 'breakdown-item--warning' : ''}`}
+              >
+                <span className="breakdown-value">
+                  {analytics.anchorsBreakdown.code}
+                  {analytics.anchorsBreakdown.code === 0 && analytics.unformattedCodeBlocks > 0 && (
+                    <span className="breakdown-warning">⚠️</span>
+                  )}
+                </span>
                 <span className="breakdown-label">Code</span>
               </div>
               <div className="breakdown-item">
