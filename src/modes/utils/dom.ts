@@ -116,7 +116,9 @@ export function batchAnalyzeParagraphs(
   anchorSelector = 'strong, b, mark, code, a, img',
   maxLinesWithoutAnchor = MAX_LINES_WITHOUT_ANCHOR,
 ): ParagraphAnalysis[] {
-  const elements = Array.from(paragraphs)
+  // Filter out paragraphs inside Confluence comment/reaction containers
+  const EXCLUDE_SELECTORS = '[data-testid="object-comment-wrapper"], [data-testid="footer-reply-container"], [data-testid="reactions-container"], [data-testid="render-reactions"], .ak-renderer-wrapper.is-comment'
+  const elements = Array.from(paragraphs).filter((p) => !p.closest(EXCLUDE_SELECTORS))
   if (elements.length === 0) return []
 
   // Phase 1: Batch check for anchors (DOM read)

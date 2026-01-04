@@ -64,12 +64,38 @@ export interface AntiPatternMatch {
 }
 
 /**
+ * Selectors for code block elements across platforms
+ * Used to skip detection inside already-formatted code
+ */
+const CODE_BLOCK_SELECTORS = [
+  // Standard
+  'pre',
+  'code',
+  'kbd',
+  'samp',
+  '.highlight',
+  '.code-block',
+  // Confluence (ProseMirror/CodeMirror)
+  '.cm-editor',
+  '.cm-content',
+  '.fabric-editor-breakout-mark',
+  '[data-prosemirror-node-name="codeBlock"]',
+  '[data-prosemirror-content-type="node"]',
+  // Notion
+  '[class*="notion-code"]',
+  // GitHub
+  '.blob-code',
+  // Generic
+  '[data-language]',
+].join(', ')
+
+/**
  * Extracts text content from an element, excluding code elements
  */
 function getTextWithoutCodeElements(element: Element): string {
   const clone = element.cloneNode(true) as Element
   // Remove all code-related elements
-  clone.querySelectorAll('code, pre, kbd, samp, .highlight, .code-block').forEach((el) => {
+  clone.querySelectorAll(CODE_BLOCK_SELECTORS).forEach((el) => {
     el.remove()
   })
   return clone.textContent || ''
@@ -90,7 +116,33 @@ export function detectUnformattedCode(
 
   for (const block of textBlocks) {
     // Skip if block is inside a code block
-    if (block.closest('pre, code, .highlight, .code-block')) {
+    if (block.closest(CODE_BLOCK_SELECTORS)) {
+      continue
+    }
+
+    // Skip if block contains a code block (wrapper element)
+    if (block.querySelector(CODE_BLOCK_SELECTORS)) {
+      continue
+    }
+
+    // Skip if block or ancestors have code-editor-like classes/attributes
+    // This catches editors we don't know about (CodeMirror, Monaco, etc.)
+    const blockClasses = block.className || ''
+    const hasEditorClass = /\b(cm-|monaco-|ace-|code|editor|highlight)\b/i.test(blockClasses)
+    if (hasEditorClass) {
+      continue
+    }
+
+    // Check if any ancestor has editor-like patterns
+    const ancestorWithEditor = block.closest(
+      '[class*="cm-"], [class*="monaco-"], [class*="ace-"], [class*="editor"], [class*="code-block"], [contenteditable="true"]',
+    )
+    if (ancestorWithEditor) {
+      continue
+    }
+
+    // Skip blocks inside Confluence comment/reaction containers
+    if (block.closest('[data-testid="object-comment-wrapper"], [data-testid="footer-reply-container"], [data-testid="reactions-container"], [data-testid="render-reactions"], .ak-renderer-wrapper.is-comment')) {
       continue
     }
 

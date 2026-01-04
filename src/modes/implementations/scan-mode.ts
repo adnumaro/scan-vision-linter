@@ -16,6 +16,18 @@ const MODE_ID = 'scan'
 const STYLE_ID = 'scan-mode'
 const PROBLEM_CLASS = 'scanvision-problem-block'
 
+/**
+ * Selectors for Confluence elements that should be excluded from analysis and styling
+ * (comments, reactions, reply containers)
+ */
+const CONFLUENCE_EXCLUDE_SELECTORS = [
+  '[data-testid="object-comment-wrapper"]',
+  '[data-testid="footer-reply-container"]',
+  '[data-testid="reactions-container"]',
+  '[data-testid="render-reactions"]',
+  '.ak-renderer-wrapper.is-comment',
+]
+
 interface ScanModeConfig extends ModeConfig {
   settings: {
     opacity: number
@@ -32,31 +44,74 @@ const DEFAULT_CONFIG: ScanModeConfig = {
 }
 
 /**
+ * Expands a comma-separated scope selector to properly scope a suffix
+ * e.g., "#a, #b, #c" + " p" => "#a p, #b p, #c p"
+ */
+function scopeSelector(scope: string, suffix: string): string {
+  return scope
+    .split(',')
+    .map((s) => `${s.trim()}${suffix}`)
+    .join(', ')
+}
+
+/**
+ * Expands scope with multiple element suffixes
+ * e.g., "#a, #b" + [" h1", " h2"] => "#a h1, #b h1, #a h2, #b h2"
+ */
+function scopeSelectors(scope: string, suffixes: string[]): string {
+  const scopes = scope.split(',').map((s) => s.trim())
+  const results: string[] = []
+  for (const suffix of suffixes) {
+    for (const s of scopes) {
+      results.push(`${s}${suffix}`)
+    }
+  }
+  return results.join(', ')
+}
+
+/**
  * Creates base CSS styles for paragraphs and problem blocks
  */
 function createBaseStyles(scope: string, config: ScanModeConfig): string {
   const { opacity, blur } = config.settings
   return `
   /* Dim paragraph text - only within content area */
-  ${scope} p {
+  ${scopeSelector(scope, ' p')} {
     color: color-mix(in srgb, currentColor ${Math.round(opacity * 100)}%, transparent) !important;
     filter: blur(${blur}px) !important;
     transition: color 0.2s ease, filter 0.2s ease;
   }
 
   /* Problem blocks - warning highlight (dense paragraphs) */
-  ${scope} p.${PROBLEM_CLASS} {
+  ${scopeSelector(scope, ` p.${PROBLEM_CLASS}`)} {
     outline: 2px dashed rgba(239, 68, 68, 0.7) !important;
     outline-offset: 4px;
     background-color: rgba(239, 68, 68, 0.05) !important;
   }
 
   /* Unformatted code blocks - orange highlight (works on any text block type) */
-  ${scope} .${UNFORMATTED_CODE_CLASS},
+  ${scopeSelector(scope, ` .${UNFORMATTED_CODE_CLASS}`)},
   .${UNFORMATTED_CODE_CLASS} {
     outline: 2px dashed rgba(251, 146, 60, 0.8) !important;
     outline-offset: 4px;
     background-color: rgba(251, 146, 60, 0.08) !important;
+  }
+
+  /* Exclude Confluence breakout resize handles and Atlassian internal classes */
+  .pm-breakout-resize-handle-rail-inside-tooltip,
+  [class*="pm-breakout-resize-handle"],
+  [class*="_tip"] {
+    outline: none !important;
+    background-color: transparent !important;
+  }
+
+  /* Exclude Confluence comment/reaction containers from all styling */
+  ${CONFLUENCE_EXCLUDE_SELECTORS.map((s) => `${s}, ${s} *`).join(',\n  ')} {
+    color: inherit !important;
+    filter: none !important;
+    opacity: 1 !important;
+    outline: none !important;
+    background-color: transparent !important;
   }`
 }
 
@@ -68,7 +123,7 @@ function createHotSpotStyles(scope: string): string {
   /* === HOT SPOTS - Always fully visible === */
 
   /* Headings */
-  ${scope} h1, ${scope} h2, ${scope} h3, ${scope} h4, ${scope} h5, ${scope} h6 {
+  ${scopeSelectors(scope, [' h1', ' h2', ' h3', ' h4', ' h5', ' h6'])} {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
@@ -77,7 +132,7 @@ function createHotSpotStyles(scope: string): string {
   }
 
   /* Emphasis */
-  ${scope} strong, ${scope} b, ${scope} mark, ${scope} em {
+  ${scopeSelectors(scope, [' strong', ' b', ' mark', ' em'])} {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
@@ -86,7 +141,7 @@ function createHotSpotStyles(scope: string): string {
   }
 
   /* Code */
-  ${scope} code, ${scope} pre, ${scope} kbd, ${scope} samp {
+  ${scopeSelectors(scope, [' code', ' pre', ' kbd', ' samp'])} {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
@@ -94,46 +149,40 @@ function createHotSpotStyles(scope: string): string {
   }
 
   /* Links */
-  ${scope} a, ${scope} a * {
+  ${scopeSelectors(scope, [' a', ' a *'])} {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
   }
 
   /* Images and media */
-  ${scope} img, ${scope} picture, ${scope} video, ${scope} canvas, ${scope} figure {
+  ${scopeSelectors(scope, [' img', ' picture', ' video', ' canvas', ' figure'])} {
     filter: none !important;
     opacity: 1 !important;
     outline: 2px solid rgba(236, 72, 153, 0.5);
   }
 
   /* SVG icons */
-  ${scope} svg, ${scope} svg * {
+  ${scopeSelectors(scope, [' svg', ' svg *'])} {
     filter: none !important;
     opacity: 1 !important;
   }
 
   /* Emoji and icon elements */
-  ${scope} [role="img"],
-  ${scope} [data-emoji-id],
-  ${scope} [data-testid*="emoji"],
-  ${scope} .emoji,
-  ${scope} span:has(> img.emoji) {
+  ${scopeSelectors(scope, [' [role="img"]', ' [data-emoji-id]', ' [data-testid*="emoji"]', ' .emoji', ' span:has(> img.emoji)'])} {
     filter: none !important;
     opacity: 1 !important;
   }
 
   /* Tables */
-  ${scope} table, ${scope} th, ${scope} td, ${scope} tr, ${scope} thead, ${scope} tbody {
+  ${scopeSelectors(scope, [' table', ' th', ' td', ' tr', ' thead', ' tbody'])} {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
   }
 
   /* Callouts and alerts */
-  ${scope} .alert, ${scope} .note, ${scope} .warning, ${scope} .tip, ${scope} .info, ${scope} .caution,
-  ${scope} [class*="alert"], ${scope} [class*="callout"], ${scope} [class*="admonition"],
-  ${scope} [class*="warning"], ${scope} [class*="info"], ${scope} [class*="tip"] {
+  ${scopeSelectors(scope, [' .alert', ' .note', ' .warning', ' .tip', ' .info', ' .caution', ' [class*="alert"]', ' [class*="callout"]', ' [class*="admonition"]', ' [class*="warning"]', ' [class*="info"]', ' [class*="tip"]'])} {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
@@ -141,13 +190,13 @@ function createHotSpotStyles(scope: string): string {
   }
 
   /* Buttons and interactive elements */
-  ${scope} button, ${scope} input, ${scope} select, ${scope} textarea, ${scope} [role="button"] {
+  ${scopeSelectors(scope, [' button', ' input', ' select', ' textarea', ' [role="button"]'])} {
     filter: none !important;
     opacity: 1 !important;
   }
 
   /* Lists - always visible */
-  ${scope} ul, ${scope} ol, ${scope} li {
+  ${scopeSelectors(scope, [' ul', ' ol', ' li'])} {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
@@ -156,19 +205,19 @@ function createHotSpotStyles(scope: string): string {
   /* === HOT SPOTS INSIDE PARAGRAPHS === */
   /* Use CanvasText to override inherited dimmed color from parent paragraph */
 
-  ${scope} p strong, ${scope} p b, ${scope} p mark, ${scope} p em {
+  ${scopeSelectors(scope, [' p strong', ' p b', ' p mark', ' p em'])} {
     color: CanvasText !important;
     filter: none !important;
     opacity: 1 !important;
   }
 
-  ${scope} p code, ${scope} p kbd, ${scope} p samp {
+  ${scopeSelectors(scope, [' p code', ' p kbd', ' p samp'])} {
     color: CanvasText !important;
     filter: none !important;
     opacity: 1 !important;
   }
 
-  ${scope} p a, ${scope} p a * {
+  ${scopeSelectors(scope, [' p a', ' p a *'])} {
     color: CanvasText !important;
     filter: none !important;
     opacity: 1 !important;
@@ -186,8 +235,15 @@ function createPlatformHotSpotStyles(preset: PlatformPreset, scope: string): str
   const safeHotSpots = sanitizeSelectors(preset.selectors.hotSpots)
   if (safeHotSpots.length === 0) return ''
 
-  const selectors = safeHotSpots.map((s) => `${scope} ${s}`).join(',\n  ')
-  const selectorsInParagraphs = safeHotSpots.map((s) => `${scope} p ${s}`).join(',\n  ')
+  // Properly expand scope with each hotspot selector
+  const selectors = scopeSelectors(
+    scope,
+    safeHotSpots.map((s) => ` ${s}`),
+  )
+  const selectorsInParagraphs = scopeSelectors(
+    scope,
+    safeHotSpots.map((s) => ` p ${s}`),
+  )
 
   return `
   /* Platform-specific hot spots (${preset.name}) */
@@ -219,7 +275,14 @@ function createIgnoreElementStyles(preset: PlatformPreset, scope: string): strin
   if (safeIgnoreElements.length === 0) return ''
 
   // Scope to content area to prevent affecting navigation/sidebars
-  const selectors = safeIgnoreElements.map((s) => `${scope} ${s}, ${scope} ${s} *`).join(',\n  ')
+  // Include both the element and its descendants
+  const suffixes: string[] = []
+  for (const s of safeIgnoreElements) {
+    suffixes.push(` ${s}`)
+    suffixes.push(` ${s} *`)
+  }
+  const selectors = scopeSelectors(scope, suffixes)
+
   return `
   /* Ignored elements - scoped to content area (${preset.name}) */
   ${selectors} {

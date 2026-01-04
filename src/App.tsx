@@ -317,6 +317,41 @@ function App() {
             </div>
           </div>
 
+          {/* Color Legend */}
+          <div className="color-legend">
+            <div className="legend-title">Color Guide</div>
+            <div className="legend-grid">
+              <div className="legend-item">
+                <span className="legend-color legend-color--blue" />
+                <span className="legend-label">Headings & Emphasis</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-color legend-color--green" />
+                <span className="legend-label">Code blocks</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-color legend-color--pink" />
+                <span className="legend-label">Images & Media</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-color legend-color--violet" />
+                <span className="legend-label">Platform hot spots</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-color legend-color--orange-solid" />
+                <span className="legend-label">Callouts & Alerts</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-color legend-color--orange-dashed" />
+                <span className="legend-label">Unformatted code</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-color legend-color--red-dashed" />
+                <span className="legend-label">Dense paragraphs</span>
+              </div>
+            </div>
+          </div>
+
           {/* Platform-specific Suggestions */}
           {analytics.suggestions && analytics.suggestions.length > 0 && (
             <div className="suggestions">
