@@ -38,7 +38,11 @@ src/
 │   ├── ModeList.tsx            # Mode grouping by category
 │   └── ModeToggle.tsx          # Individual mode toggle UI
 ├── content/
-│   └── index.ts                # Content script - mode management & analytics
+│   ├── index.ts                # Content script - mode management & analytics
+│   └── analysis/               # Content analysis modules
+│       ├── antiPatterns.ts     # Unformatted code detection
+│       ├── suggestions.ts      # Platform-specific suggestions
+│       └── weights.ts          # Weighted anchor calculation
 └── modes/                      # Modular visualization system
     ├── types.ts                # VisualizationMode interface, ModeContext
     ├── registry.ts             # Singleton mode registry
@@ -53,7 +57,10 @@ src/
     │   └── first-5s-mode.ts    # Quick scan simulation
     └── utils/
         ├── colors.ts           # Color utilities & heat map gradients
+        ├── config.ts           # Config cloning utilities
+        ├── dom.ts              # DOM utilities, paragraph analysis, exclusions
         ├── overlay.ts          # DOM overlay creation helpers
+        ├── security.ts         # CSS/selector sanitization
         ├── styles.ts           # Style injection utilities
         └── viewport.ts         # Viewport & fold line calculations
 
@@ -80,9 +87,12 @@ biome.json                      # Biome linter configuration
 - F-Pattern ↔ E-Pattern (both are pattern overlays)
 
 ### 2. Scannability Analytics
-- Calculates score (0-100) based on anchor/text ratio
-- Detects problematic blocks (>5 lines without visual anchors)
+- Calculates score (0-100) based on weighted anchor/text ratio
+- Detects problematic blocks (>5 lines without visual anchors) - red dashed outline
+- Detects unformatted code in plain text (commands, JSON, etc.) - orange dashed outline
 - Shows breakdown by anchor type in popup
+- Color legend explaining outline meanings
+- Platform-specific suggestions (informative, don't affect score)
 
 ### 3. Platform Presets
 - Auto-detects platform from URL on every popup open
@@ -90,7 +100,22 @@ biome.json                      # Biome linter configuration
 - Each preset defines: content area, platform-specific hot spots, elements to ignore
 - User can manually override preset selection
 
-### 4. Customization
+### 4. Confluence-Specific Exclusions
+Elements excluded from analysis and styling (comments, reactions):
+- `[data-testid="object-comment-wrapper"]`
+- `[data-testid="footer-reply-container"]`
+- `[data-testid="reactions-container"]`
+- `[data-testid="render-reactions"]`
+- `.ak-renderer-wrapper.is-comment`
+- `[class*="pm-breakout-resize-handle"]` (resize handles)
+- `[class*="_tip"]` (Atlassian internal classes)
+
+These exclusions are defined in 3 places (keep in sync):
+- `scan-mode.ts` - CSS exclusions
+- `dom.ts` - JS analysis exclusions
+- `antiPatterns.ts` - JS detection exclusions
+
+### 5. Customization
 - Text visibility slider (10%-50%)
 - Blur amount slider (0-2px)
 - Settings persist in `chrome.storage.local`
