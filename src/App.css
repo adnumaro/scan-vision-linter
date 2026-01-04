@@ -1,14 +1,15 @@
 /**
  * Scan mode outline colors (must match SCAN_COLORS in colors.ts)
  * Headings: #2563eb, Code: #10b981, Images: #ec4899
- * Platform: #8b5cf6, Callouts: #fb923c, Problems: #ef4444
+ * Platform: #8b5cf6, Callouts: #eab308, Unformatted: #fb923c, Problems: #ef4444
  */
 :root {
   --scan-color-headings: 37, 99, 235;
   --scan-color-code: 16, 185, 129;
   --scan-color-images: 236, 72, 153;
   --scan-color-platform: 139, 92, 246;
-  --scan-color-callouts: 251, 146, 60;
+  --scan-color-callouts: 234, 179, 8;
+  --scan-color-unformatted: 251, 146, 60;
   --scan-color-problems: 239, 68, 68;
 }
 
@@ -482,14 +483,14 @@
   border: 2px solid rgba(var(--scan-color-platform), 0.7);
 }
 
-.legend-color--orange-solid {
+.legend-color--yellow-solid {
   background: rgba(var(--scan-color-callouts), 0.15);
   border: 2px solid rgba(var(--scan-color-callouts), 0.7);
 }
 
 .legend-color--orange-dashed {
-  background: rgba(var(--scan-color-callouts), 0.15);
-  border: 2px dashed rgba(var(--scan-color-callouts), 0.9);
+  background: rgba(var(--scan-color-unformatted), 0.15);
+  border: 2px dashed rgba(var(--scan-color-unformatted), 0.9);
 }
 
 .legend-color--red-dashed {

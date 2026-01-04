@@ -338,7 +338,7 @@ function App() {
                 <span className="legend-label">Platform hot spots</span>
               </div>
               <div className="legend-item">
-                <span className="legend-color legend-color--orange-solid" />
+                <span className="legend-color legend-color--yellow-solid" />
                 <span className="legend-label">Callouts & Alerts</span>
               </div>
               <div className="legend-item">

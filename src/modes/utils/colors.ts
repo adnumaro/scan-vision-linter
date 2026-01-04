@@ -78,8 +78,8 @@ export const SCAN_COLORS = {
   images: createColor('#ec4899'),
   /** Violet - Platform-specific hot spots */
   platform: createColor('#8b5cf6'),
-  /** Orange - Callouts & Alerts */
-  callouts: createColor('#fb923c'),
+  /** Yellow - Callouts & Alerts */
+  callouts: createColor('#eab308'),
   /** Orange - Unformatted code (problem) */
   unformattedCode: createColor('#fb923c'),
   /** Red - Dense paragraphs (problem) */
