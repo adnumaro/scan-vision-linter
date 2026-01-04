@@ -31,6 +31,7 @@ import {
   detectUnformattedCode,
   markUnformattedCodeBlocks,
 } from './analysis/antiPatterns'
+import { calculateWeightedAnchors } from './analysis/weights'
 
 // Register all modes
 registry.register(scanMode)
@@ -164,52 +165,17 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
     return analyticsCache.data
   }
 
-  // Combine all anchor queries into a single querySelectorAll for better performance
-  const anchorSelectors = [
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6', // headings
-    'strong',
-    'b',
-    'mark', // emphasis
-    'code',
-    'pre',
-    'kbd', // code
-    'a[href]', // links
-    'img',
-    'svg',
-    'picture',
-    'video', // images
-    'ul',
-    'ol', // lists
-    ...currentPreset.selectors.hotSpots, // platform-specific
-  ].join(', ')
+  // Calculate weighted anchors for more accurate scannability scoring
+  const weightedAnchors = calculateWeightedAnchors(mainContent, currentPreset.selectors.hotSpots)
 
-  const allAnchors = mainContent.querySelectorAll(anchorSelectors)
-
-  // Count by type using a single pass through results
-  let headings = 0
-  let emphasis = 0
-  let code = 0
-  let links = 0
-  let images = 0
-  let lists = 0
-
-  for (const el of allAnchors) {
-    const tag = el.tagName.toLowerCase()
-    if (/^h[1-6]$/.test(tag)) headings++
-    else if (tag === 'strong' || tag === 'b' || tag === 'mark') emphasis++
-    else if (tag === 'code' || tag === 'pre' || tag === 'kbd') code++
-    else if (tag === 'a') links++
-    else if (tag === 'img' || tag === 'svg' || tag === 'picture' || tag === 'video') images++
-    else if (tag === 'ul' || tag === 'ol') lists++
-    // Platform hot spots are counted in totalAnchors but not in breakdown
-  }
-
-  const totalAnchors = allAnchors.length
+  // Extract counts for display (UI breakdown)
+  const headings = weightedAnchors.headings.count
+  const emphasis = weightedAnchors.emphasis.count
+  const code = weightedAnchors.codeBlocks.count + weightedAnchors.inlineCode.count
+  const links = weightedAnchors.standaloneLinks.count + weightedAnchors.inlineLinks.count
+  const images = weightedAnchors.images.count
+  const lists = weightedAnchors.lists.count
+  const totalAnchors = weightedAnchors.totalRaw
 
   // Use platform-specific text block selector, fallback to 'p'
   const textBlockSelector = currentPreset.selectors.textBlocks || 'p'
@@ -238,25 +204,37 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
     markUnformattedCodeBlocks(unformattedCodeMatches)
   }
 
-  // Calculate score
+  // Calculate score using weighted anchors
+  // Weighted anchors give more value to high-impact elements (headings, code blocks)
+  // and less value to inline links which can exist in dense text
   let score = 100
 
   if (totalTextBlocks > 0) {
-    const anchorRatio = totalAnchors / totalTextBlocks
-    const idealRatio = 2
+    // Use weighted total for ratio calculation
+    const anchorRatio = weightedAnchors.totalWeighted / totalTextBlocks
+    const idealRatio = 1.5 // Slightly lower since weights are more meaningful
 
     const ratioScore = Math.min(70, (anchorRatio / idealRatio) * 70)
     const problemPenalty = Math.min(30, (problemBlocks / totalTextBlocks) * 50)
     const unformattedCodePenalty = Math.min(25, unformattedCodeBlocks * 5)
-    const headingBonus = Math.min(15, headings * 3)
-    const imageBonus = Math.min(15, images * 5)
+
+    // Bonuses based on weighted values (not raw counts)
+    const headingBonus = Math.min(15, weightedAnchors.headings.weight * 3)
+    const imageBonus = Math.min(15, weightedAnchors.images.weight * 5)
+    // Code blocks are valuable - small bonus for proper code formatting
+    const codeBonus = Math.min(10, weightedAnchors.codeBlocks.weight * 2)
 
     score = Math.round(
       Math.max(
         0,
         Math.min(
           100,
-          ratioScore - problemPenalty - unformattedCodePenalty + headingBonus + imageBonus,
+          ratioScore -
+            problemPenalty -
+            unformattedCodePenalty +
+            headingBonus +
+            imageBonus +
+            codeBonus,
         ),
       ),
     )
