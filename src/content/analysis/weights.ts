@@ -7,7 +7,7 @@
  * Weight values for different anchor types
  * Higher weight = more valuable for scannability
  */
-export const ANCHOR_WEIGHTS = {
+const ANCHOR_WEIGHTS = {
   // Structure (high value) - these create clear visual hierarchy
   heading: 1.0,
   codeBlock: 1.0, // <pre>, full code blocks
@@ -22,8 +22,6 @@ export const ANCHOR_WEIGHTS = {
   linkStandalone: 0.6, // Link that is the only content of a paragraph/block
   linkInline: 0.3, // Link inside text (can exist in dense paragraphs)
 } as const
-
-export type AnchorType = keyof typeof ANCHOR_WEIGHTS
 
 /**
  * Breakdown of weighted anchor counts
@@ -45,7 +43,7 @@ export interface WeightedAnchorBreakdown {
  * Checks if a link is standalone (the only significant content of its parent)
  * Standalone links are more valuable because they're easy to spot
  */
-export function isStandaloneLink(link: Element): boolean {
+function isStandaloneLink(link: Element): boolean {
   const parent = link.parentElement
   if (!parent) return false
 
@@ -64,13 +62,6 @@ export function isStandaloneLink(link: Element): boolean {
   // The link is standalone if it's the only significant content
   // Allow up to 10 extra characters for punctuation, spaces, etc.
   return parentText === linkText || parentText.length < linkText.length + 10
-}
-
-/**
- * Checks if a code element is a block (inside <pre>) or inline
- */
-export function isCodeBlock(code: Element): boolean {
-  return code.tagName === 'PRE' || code.closest('pre') !== null
 }
 
 /**

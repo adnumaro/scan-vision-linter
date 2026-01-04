@@ -6,7 +6,7 @@
 /**
  * Patterns that indicate unformatted code in plain text
  */
-export const UNFORMATTED_CODE_PATTERNS = [
+const UNFORMATTED_CODE_PATTERNS = [
   // Terminal commands
   { pattern: /\bcurl\s+-[A-Z]/i, type: 'command', description: 'curl command' },
   { pattern: /\bwget\s+https?:/i, type: 'command', description: 'wget command' },
@@ -51,7 +51,7 @@ export const UNFORMATTED_CODE_PATTERNS = [
   },
 ] as const
 
-export type AntiPatternType = (typeof UNFORMATTED_CODE_PATTERNS)[number]['type']
+type AntiPatternType = (typeof UNFORMATTED_CODE_PATTERNS)[number]['type']
 
 /**
  * Result of an anti-pattern match

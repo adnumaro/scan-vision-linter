@@ -5,9 +5,6 @@
 
 import type { PlatformSuggestion, TriggeredSuggestion } from '../../types/messages'
 
-// Re-export for convenience
-export type { PlatformSuggestion, TriggeredSuggestion } from '../../types/messages'
-
 /**
  * Result of evaluating a suggestion (internal)
  */

@@ -3,17 +3,52 @@
  */
 
 /**
- * Converts hex color to rgba
+ * Parses a hex color to RGB components
+ */
+export function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+  if (!result) return null
+
+  return {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16),
+  }
+}
+
+/**
+ * Converts hex color to rgba string
  */
 export function hexToRgba(hex: string, alpha: number): string {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-  if (!result) return `rgba(0, 0, 0, ${alpha})`
+  const rgb = hexToRgb(hex)
+  if (!rgb) return `rgba(0, 0, 0, ${alpha})`
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`
+}
 
-  const r = parseInt(result[1], 16)
-  const g = parseInt(result[2], 16)
-  const b = parseInt(result[3], 16)
+/**
+ * Converts hex color to rgb string
+ */
+export function hexToRgbString(hex: string): string {
+  const rgb = hexToRgb(hex)
+  if (!rgb) return 'rgb(0, 0, 0)'
+  return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`
+}
 
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+/**
+ * Creates a color helper with multiple output formats
+ */
+function createColor(hex: string) {
+  const rgb = hexToRgb(hex)
+  const { r, g, b } = rgb ?? { r: 0, g: 0, b: 0 }
+
+  return {
+    hex,
+    rgb: `rgb(${r}, ${g}, ${b})`,
+    rgba: (alpha: number) => `rgba(${r}, ${g}, ${b}, ${alpha})`,
+    r,
+    g,
+    b,
+  }
 }
 
 /**
@@ -32,25 +67,24 @@ export function getHeatColor(intensity: number, alpha: number = 0.3): string {
 }
 
 /**
- * Gets attention zone color based on position
- * Top-left = high attention (green), Bottom-right = low attention (red)
+ * Scan mode outline colors (for hot spots and problems)
  */
-export function getAttentionColor(
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  alpha: number = 0.2,
-): string {
-  // Calculate distance from top-left (0,0) as percentage
-  const xPercent = x / width
-  const yPercent = y / height
-
-  // Weighted average - vertical position matters more for reading
-  const intensity = xPercent * 0.3 + yPercent * 0.7
-
-  return getHeatColor(intensity, alpha)
-}
+export const SCAN_COLORS = {
+  /** Blue - Headings & Emphasis */
+  headings: createColor('#2563eb'),
+  /** Green - Code blocks */
+  code: createColor('#10b981'),
+  /** Pink - Images & Media */
+  images: createColor('#ec4899'),
+  /** Violet - Platform-specific hot spots */
+  platform: createColor('#8b5cf6'),
+  /** Orange - Callouts & Alerts */
+  callouts: createColor('#fb923c'),
+  /** Orange - Unformatted code (problem) */
+  unformattedCode: createColor('#fb923c'),
+  /** Red - Dense paragraphs (problem) */
+  denseParagraph: createColor('#ef4444'),
+} as const
 
 /**
  * Color palette for different modes
@@ -80,6 +114,9 @@ export const COLORS = {
     background: 'rgba(0, 0, 0, 0.05)',
     border: 'rgba(0, 0, 0, 0.1)',
   },
+
+  // Scan mode (reference to SCAN_COLORS)
+  scan: SCAN_COLORS,
 } as const
 
 /**

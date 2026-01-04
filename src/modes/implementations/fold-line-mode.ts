@@ -5,6 +5,7 @@
 
 import { Minus } from 'lucide-react'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
+import { COLORS } from '../utils/colors'
 import { cloneModeConfig } from '../utils/config'
 import { OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
 import { removeOverlayElement } from '../utils/overlay'
@@ -25,7 +26,7 @@ interface FoldLineConfig extends ModeConfig {
 const DEFAULT_CONFIG: FoldLineConfig = {
   enabled: false,
   settings: {
-    color: '#ef4444',
+    color: COLORS.indicator.foldLine,
     showLabel: true,
     labelText: 'Above the fold',
   },
@@ -165,7 +166,7 @@ class FoldLineMode implements VisualizationMode {
         position: fixed;
         padding: 4px 8px;
         background-color: ${color};
-        color: #ffffff;
+        color: ${COLORS.indicator.label};
         font-size: 11px;
         font-family: system-ui, -apple-system, sans-serif;
         font-weight: 500;

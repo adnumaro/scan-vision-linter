@@ -2,6 +2,7 @@
  * Overlay utilities for creating and managing DOM overlays
  */
 
+import { COLORS } from './colors'
 import { OVERLAY_PREFIX, Z_INDEX } from './constants'
 
 /**
@@ -62,7 +63,7 @@ export function createLineElement(
     zIndex?: number
   } = {},
 ): HTMLElement {
-  const { color = '#ef4444', width = '2px', style = 'dashed', zIndex = Z_INDEX.INDICATOR } = options
+  const { color = COLORS.indicator.foldLine, width = '2px', style = 'dashed', zIndex = Z_INDEX.INDICATOR } = options
 
   const existingLine = document.getElementById(OVERLAY_PREFIX + id)
   if (existingLine) {
@@ -100,8 +101,8 @@ export function createLabelElement(
   } = {},
 ): HTMLElement {
   const {
-    backgroundColor = '#ef4444',
-    textColor = '#ffffff',
+    backgroundColor = COLORS.indicator.foldLine,
+    textColor = COLORS.indicator.label,
     fontSize = '11px',
     zIndex = Z_INDEX.TOP,
   } = options

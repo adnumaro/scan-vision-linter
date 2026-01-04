@@ -8,7 +8,7 @@
 
 import { LayoutTemplate } from 'lucide-react'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
-import { hexToRgba } from '../utils/colors'
+import { COLORS, hexToRgba } from '../utils/colors'
 import { cloneModeConfig } from '../utils/config'
 import { OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
 import { createPatternZone, removeOverlayElement } from '../utils/overlay'
@@ -29,7 +29,7 @@ const DEFAULT_CONFIG: FPatternConfig = {
   enabled: false,
   settings: {
     opacity: 0.15,
-    color: '#3b82f6',
+    color: COLORS.pattern.primary,
     showLabels: true,
   },
 }

@@ -7,6 +7,7 @@ import { ScanText } from 'lucide-react'
 import { UNFORMATTED_CODE_CLASS } from '../../content/analysis/antiPatterns'
 import type { PlatformPreset } from '../../presets/platforms'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
+import { SCAN_COLORS } from '../utils/colors'
 import { cloneModeConfig } from '../utils/config'
 import { batchAnalyzeParagraphs, batchApplyProblemClasses } from '../utils/dom'
 import { sanitizeCSS, sanitizeSelectors } from '../utils/security'
@@ -84,17 +85,17 @@ function createBaseStyles(scope: string, config: ScanModeConfig): string {
 
   /* Problem blocks - warning highlight (dense paragraphs) */
   ${scopeSelector(scope, ` p.${PROBLEM_CLASS}`)} {
-    outline: 2px dashed rgba(239, 68, 68, 0.7) !important;
+    outline: 2px dashed ${SCAN_COLORS.denseParagraph.rgba(0.7)} !important;
     outline-offset: 4px;
-    background-color: rgba(239, 68, 68, 0.05) !important;
+    background-color: ${SCAN_COLORS.denseParagraph.rgba(0.05)} !important;
   }
 
   /* Unformatted code blocks - orange highlight (works on any text block type) */
   ${scopeSelector(scope, ` .${UNFORMATTED_CODE_CLASS}`)},
   .${UNFORMATTED_CODE_CLASS} {
-    outline: 2px dashed rgba(251, 146, 60, 0.8) !important;
+    outline: 2px dashed ${SCAN_COLORS.unformattedCode.rgba(0.8)} !important;
     outline-offset: 4px;
-    background-color: rgba(251, 146, 60, 0.08) !important;
+    background-color: ${SCAN_COLORS.unformattedCode.rgba(0.08)} !important;
   }
 
   /* Exclude Confluence breakout resize handles and Atlassian internal classes */
@@ -127,7 +128,7 @@ function createHotSpotStyles(scope: string): string {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
-    outline: 2px solid rgba(37, 99, 235, 0.5);
+    outline: 2px solid ${SCAN_COLORS.headings.rgba(0.5)};
     outline-offset: 2px;
   }
 
@@ -136,7 +137,7 @@ function createHotSpotStyles(scope: string): string {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
-    outline: 2px solid rgba(37, 99, 235, 0.5);
+    outline: 2px solid ${SCAN_COLORS.headings.rgba(0.5)};
     outline-offset: 1px;
   }
 
@@ -145,7 +146,7 @@ function createHotSpotStyles(scope: string): string {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
-    outline: 1px dashed rgba(16, 185, 129, 0.5);
+    outline: 1px dashed ${SCAN_COLORS.code.rgba(0.5)};
   }
 
   /* Links */
@@ -159,7 +160,7 @@ function createHotSpotStyles(scope: string): string {
   ${scopeSelectors(scope, [' img', ' picture', ' video', ' canvas', ' figure'])} {
     filter: none !important;
     opacity: 1 !important;
-    outline: 2px solid rgba(236, 72, 153, 0.5);
+    outline: 2px solid ${SCAN_COLORS.images.rgba(0.5)};
   }
 
   /* SVG icons */
@@ -186,7 +187,7 @@ function createHotSpotStyles(scope: string): string {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
-    outline: 2px solid rgba(251, 146, 60, 0.5);
+    outline: 2px solid ${SCAN_COLORS.callouts.rgba(0.5)};
   }
 
   /* Buttons and interactive elements */
@@ -251,7 +252,7 @@ function createPlatformHotSpotStyles(preset: PlatformPreset, scope: string): str
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
-    outline: 2px solid rgba(139, 92, 246, 0.5);
+    outline: 2px solid ${SCAN_COLORS.platform.rgba(0.5)};
   }
 
   /* Platform-specific hot spots inside paragraphs (${preset.name}) */
@@ -259,7 +260,7 @@ function createPlatformHotSpotStyles(preset: PlatformPreset, scope: string): str
     color: CanvasText !important;
     filter: none !important;
     opacity: 1 !important;
-    outline: 2px solid rgba(139, 92, 246, 0.5);
+    outline: 2px solid ${SCAN_COLORS.platform.rgba(0.5)};
   }`
 }
 
