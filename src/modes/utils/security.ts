@@ -19,14 +19,26 @@ const MAX_SELECTOR_LENGTH = 500
  * - behavior: - IE behavior extension
  * - @import - External stylesheet imports (could load malicious CSS)
  * - data: URLs - Could be abused for attacks in some contexts
+ *
+ * NOTE: These are pattern strings, not RegExp objects with global flag.
+ * This avoids issues with lastIndex state when reusing regex objects.
+ * The actual RegExp is created fresh for each check in the helper functions below.
  */
-const DANGEROUS_CSS_PATTERNS = [
-  /expression\s*\(/gi, // IE expression()
-  /javascript\s*:/gi, // javascript: URLs
-  /behavior\s*:/gi, // IE behavior
-  /@import/gi, // External imports
-  /url\s*\(\s*['"]?data:/gi, // data: URLs
-]
+const DANGEROUS_CSS_PATTERN_SOURCES = [
+  { source: 'expression\\s*\\(', flags: 'i' }, // IE expression()
+  { source: 'javascript\\s*:', flags: 'i' }, // javascript: URLs
+  { source: 'behavior\\s*:', flags: 'i' }, // IE behavior
+  { source: '@import', flags: 'i' }, // External imports
+  { source: 'url\\s*\\(\\s*[\'"]?data:', flags: 'i' }, // data: URLs
+] as const
+
+/**
+ * Creates a fresh RegExp from pattern definition
+ * This avoids lastIndex issues with reused global regex objects
+ */
+function createPattern(pattern: (typeof DANGEROUS_CSS_PATTERN_SOURCES)[number]): RegExp {
+  return new RegExp(pattern.source, `${pattern.flags}g`)
+}
 
 /**
  * Characters that should not appear in CSS selectors
@@ -50,7 +62,9 @@ export function sanitizeCSS(css: string | undefined): string {
 
   let sanitized = css
 
-  for (const pattern of DANGEROUS_CSS_PATTERNS) {
+  // Create fresh regex for each pattern to avoid lastIndex issues
+  for (const patternDef of DANGEROUS_CSS_PATTERN_SOURCES) {
+    const pattern = createPattern(patternDef)
     sanitized = sanitized.replace(pattern, '/* blocked */')
   }
 
@@ -63,7 +77,11 @@ export function sanitizeCSS(css: string | undefined): string {
  */
 export function isValidCSS(css: string): boolean {
   if (css.length > MAX_CSS_LENGTH) return false
-  return !DANGEROUS_CSS_PATTERNS.some((pattern) => pattern.test(css))
+  // Create fresh regex for each check to avoid lastIndex state issues
+  return !DANGEROUS_CSS_PATTERN_SOURCES.some((patternDef) => {
+    const pattern = createPattern(patternDef)
+    return pattern.test(css)
+  })
 }
 
 /**

@@ -6,6 +6,7 @@
 import { ScanText } from 'lucide-react'
 import type { PlatformPreset } from '../../presets/platforms'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
+import { cloneModeConfig } from '../utils/config'
 import { batchAnalyzeParagraphs, batchApplyProblemClasses } from '../utils/dom'
 import { sanitizeCSS, sanitizeSelectors } from '../utils/security'
 import { injectStylesheet, removeStylesheet } from '../utils/styles'
@@ -14,7 +15,7 @@ const MODE_ID = 'scan'
 const STYLE_ID = 'scan-mode'
 const PROBLEM_CLASS = 'scanvision-problem-block'
 
-export interface ScanModeConfig extends ModeConfig {
+interface ScanModeConfig extends ModeConfig {
   settings: {
     opacity: number
     blur: number
@@ -294,7 +295,7 @@ function clearProblemBlocks(): void {
 /**
  * Scan Mode implementation
  */
-export class ScanMode implements VisualizationMode {
+class ScanMode implements VisualizationMode {
   readonly id = MODE_ID
   readonly name = 'Scan Mode'
   readonly description = 'Dims text and highlights visual anchors for scannability analysis'
@@ -348,7 +349,7 @@ export class ScanMode implements VisualizationMode {
   }
 
   getConfig(): ModeConfig {
-    return this.config
+    return cloneModeConfig(this.config)
   }
 }
 

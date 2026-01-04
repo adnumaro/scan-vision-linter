@@ -10,12 +10,13 @@
 
 import { Timer } from 'lucide-react'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
+import { cloneModeConfig } from '../utils/config'
 import { injectStylesheet, removeStylesheet } from '../utils/styles'
 
 const MODE_ID = 'first-5s'
 const STYLE_ID = 'first-5s-mode'
 
-export interface First5sConfig extends ModeConfig {
+interface First5sConfig extends ModeConfig {
   settings: {
     wordLimit: number
   }
@@ -122,7 +123,7 @@ function createStyles(): string {
 /**
  * First 5 Seconds Mode implementation
  */
-export class First5sMode implements VisualizationMode {
+class First5sMode implements VisualizationMode {
   readonly id = MODE_ID
   readonly name = 'First 5 Seconds'
   readonly description = 'Shows only what users see during quick scanning'
@@ -171,7 +172,7 @@ export class First5sMode implements VisualizationMode {
   }
 
   getConfig(): ModeConfig {
-    return this.config
+    return cloneModeConfig(this.config)
   }
 }
 

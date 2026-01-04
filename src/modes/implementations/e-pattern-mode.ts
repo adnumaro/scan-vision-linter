@@ -10,6 +10,7 @@
 import { LayoutList } from 'lucide-react'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
 import { hexToRgba } from '../utils/colors'
+import { cloneModeConfig } from '../utils/config'
 import { OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
 import { createPatternZone, removeOverlayElement } from '../utils/overlay'
 import { onViewportChange } from '../utils/viewport'
@@ -17,7 +18,7 @@ import { onViewportChange } from '../utils/viewport'
 const MODE_ID = 'e-pattern'
 const OVERLAY_ID = 'e-pattern-overlay'
 
-export interface EPatternConfig extends ModeConfig {
+interface EPatternConfig extends ModeConfig {
   settings: {
     opacity: number
     color: string
@@ -37,7 +38,7 @@ const DEFAULT_CONFIG: EPatternConfig = {
 /**
  * E-Pattern Mode implementation
  */
-export class EPatternMode implements VisualizationMode {
+class EPatternMode implements VisualizationMode {
   readonly id = MODE_ID
   readonly name = 'E-Pattern'
   readonly description = 'Shows E-shaped reading pattern (3 horizontal bars)'
@@ -100,7 +101,7 @@ export class EPatternMode implements VisualizationMode {
   }
 
   getConfig(): ModeConfig {
-    return this.config
+    return cloneModeConfig(this.config)
   }
 
   /**

@@ -4,7 +4,13 @@
  */
 
 import type { ModeContext, ModesState } from '../modes'
-import { createModeManager, getViewportInfo, registry } from '../modes'
+import {
+  createModeManager,
+  getViewportInfo,
+  registry,
+  removeAllOverlays,
+  removeAllStylesheets,
+} from '../modes'
 import { ePatternMode } from '../modes/implementations/e-pattern-mode'
 import { fPatternMode } from '../modes/implementations/f-pattern-mode'
 import { first5sMode } from '../modes/implementations/first-5s-mode'
@@ -31,6 +37,18 @@ registry.register(first5sMode)
 
 // Create manager
 const manager = createModeManager(registry)
+
+/**
+ * Validates that a modeId is registered in the registry
+ * Returns the modeId if valid, null otherwise
+ */
+function validateModeId(modeId: unknown): string | null {
+  if (typeof modeId !== 'string' || !modeId.trim()) {
+    return null
+  }
+  const trimmedId = modeId.trim()
+  return registry.has(trimmedId) ? trimmedId : null
+}
 
 const DEFAULT_PRESET: PlatformPreset = {
   id: 'default',
@@ -319,25 +337,29 @@ chrome.runtime.onMessage.addListener(
         currentPreset = message.preset
       }
 
-      const modeId = message.modeId
+      // Validate modeId against registered modes
+      const validatedModeId = validateModeId(message.modeId)
       const enabled = message.enabled
 
-      if (modeId) {
+      if (validatedModeId) {
         // Initialize manager if not already done
         if (!manager.getContext()) {
           initializeManager()
         }
 
         // Sync scan mode config if toggling scan
-        if (modeId === 'scan') {
+        if (validatedModeId === 'scan') {
           syncScanModeConfig()
         }
 
         if (enabled) {
-          manager.activate(modeId)
+          manager.activate(validatedModeId)
         } else {
-          manager.deactivate(modeId)
+          manager.deactivate(validatedModeId)
         }
+      } else if (message.modeId) {
+        // Log warning for invalid modeId attempts (helps debugging)
+        console.warn(`[ScanVision] Invalid modeId received: ${message.modeId}`)
       }
 
       const analytics = manager.isActive('scan') ? analyzeScannability() : undefined
@@ -388,3 +410,44 @@ chrome.runtime.onMessage.addListener(
     return false
   },
 )
+
+/**
+ * Global cleanup function
+ * Called when page unloads or extension context invalidates
+ */
+function cleanup(): void {
+  try {
+    manager.destroy()
+    removeAllOverlays()
+    removeAllStylesheets()
+    invalidateCache()
+  } catch {
+    // Silently handle errors during cleanup
+    // Context may already be invalidated
+  }
+}
+
+// Clean up when page unloads
+window.addEventListener('beforeunload', cleanup)
+
+// Clean up when extension context invalidates (extension update/disable)
+// This happens when the extension is updated or disabled while the page is open
+if (chrome.runtime?.id) {
+  chrome.runtime.onMessage.addListener((_message, _sender, _sendResponse) => {
+    // Check if context is still valid - if not, clean up
+    try {
+      void chrome.runtime.id
+    } catch {
+      cleanup()
+    }
+    return false
+  })
+}
+
+// Handle visibility change to clean up when tab becomes hidden and extension updates
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    // Don't fully cleanup, but prepare for potential context invalidation
+    // Full cleanup happens on beforeunload or context invalidation
+  }
+})

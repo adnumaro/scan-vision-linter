@@ -1,7 +1,7 @@
 import type { PlatformPreset } from '../types/messages'
 
 // Re-export for convenience
-export type { PlatformPreset, PlatformStyleOverrides } from '../types/messages'
+export type { PlatformPreset } from '../types/messages'
 
 export const PRESETS: PlatformPreset[] = [
   {

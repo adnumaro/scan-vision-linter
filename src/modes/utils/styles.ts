@@ -144,3 +144,10 @@ export function removeAllStylesheets(): void {
 export function getStylesheetId(id: string): string {
   return STYLE_PREFIX + id
 }
+
+/**
+ * Gets the current cache size (for debugging/testing)
+ */
+export function getStylesheetCacheSize(): number {
+  return stylesheetCache.size
+}

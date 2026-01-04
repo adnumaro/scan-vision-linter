@@ -5,6 +5,7 @@
 
 import { Minus } from 'lucide-react'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
+import { cloneModeConfig } from '../utils/config'
 import { OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
 import { removeOverlayElement } from '../utils/overlay'
 import { getFoldLinePosition, onViewportChange } from '../utils/viewport'
@@ -13,7 +14,7 @@ const MODE_ID = 'fold-line'
 const LINE_ID = 'fold-line-line'
 const LABEL_ID = 'fold-line-label'
 
-export interface FoldLineConfig extends ModeConfig {
+interface FoldLineConfig extends ModeConfig {
   settings: {
     color: string
     showLabel: boolean
@@ -33,7 +34,7 @@ const DEFAULT_CONFIG: FoldLineConfig = {
 /**
  * Fold Line Mode implementation
  */
-export class FoldLineMode implements VisualizationMode {
+class FoldLineMode implements VisualizationMode {
   readonly id = MODE_ID
   readonly name = 'Fold Line'
   readonly description = 'Shows what users see without scrolling'
@@ -124,7 +125,7 @@ export class FoldLineMode implements VisualizationMode {
   }
 
   getConfig(): ModeConfig {
-    return this.config
+    return cloneModeConfig(this.config)
   }
 
   /**

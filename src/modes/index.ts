@@ -30,8 +30,9 @@ export type {
   ViewportInfo,
   VisualizationMode,
 } from './types'
-export { DEFAULT_MODES_STATE } from './types'
 export * from './utils/colors'
+// Config defaults and utilities
+export { DEFAULT_MODES_STATE } from './utils/config'
 // Utilities
 export * from './utils/overlay'
 export * from './utils/styles'

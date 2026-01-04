@@ -9,6 +9,7 @@
 import { LayoutTemplate } from 'lucide-react'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
 import { hexToRgba } from '../utils/colors'
+import { cloneModeConfig } from '../utils/config'
 import { OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
 import { createPatternZone, removeOverlayElement } from '../utils/overlay'
 import { onViewportChange } from '../utils/viewport'
@@ -16,7 +17,7 @@ import { onViewportChange } from '../utils/viewport'
 const MODE_ID = 'f-pattern'
 const OVERLAY_ID = 'f-pattern-overlay'
 
-export interface FPatternConfig extends ModeConfig {
+interface FPatternConfig extends ModeConfig {
   settings: {
     opacity: number
     color: string
@@ -36,7 +37,7 @@ const DEFAULT_CONFIG: FPatternConfig = {
 /**
  * F-Pattern Mode implementation
  */
-export class FPatternMode implements VisualizationMode {
+class FPatternMode implements VisualizationMode {
   readonly id = MODE_ID
   readonly name = 'F-Pattern'
   readonly description = 'Shows natural F-shaped reading pattern overlay'
@@ -99,7 +100,7 @@ export class FPatternMode implements VisualizationMode {
   }
 
   getConfig(): ModeConfig {
-    return this.config
+    return cloneModeConfig(this.config)
   }
 
   /**

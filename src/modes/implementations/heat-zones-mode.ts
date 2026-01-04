@@ -7,6 +7,7 @@
 import { Flame } from 'lucide-react'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
 import { generateHeatGradientStops } from '../utils/colors'
+import { cloneModeConfig } from '../utils/config'
 import { OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
 import { removeOverlayElement } from '../utils/overlay'
 import { generateRadialGradient } from '../utils/styles'
@@ -15,7 +16,7 @@ import { onViewportChange } from '../utils/viewport'
 const MODE_ID = 'heat-zones'
 const OVERLAY_ID = 'heat-zones-overlay'
 
-export interface HeatZonesConfig extends ModeConfig {
+interface HeatZonesConfig extends ModeConfig {
   settings: {
     intensity: number
   }
@@ -31,7 +32,7 @@ const DEFAULT_CONFIG: HeatZonesConfig = {
 /**
  * Heat Zones Mode implementation
  */
-export class HeatZonesMode implements VisualizationMode {
+class HeatZonesMode implements VisualizationMode {
   readonly id = MODE_ID
   readonly name = 'Heat Zones'
   readonly description = 'Shows attention gradient (green = high, red = low)'
@@ -94,7 +95,7 @@ export class HeatZonesMode implements VisualizationMode {
   }
 
   getConfig(): ModeConfig {
-    return this.config
+    return cloneModeConfig(this.config)
   }
 
   /**

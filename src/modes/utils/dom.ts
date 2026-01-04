@@ -4,11 +4,6 @@
  */
 
 /**
- * Default line height fallback when computation fails
- */
-export const DEFAULT_LINE_HEIGHT = 24
-
-/**
  * Maximum lines without anchor before marking as problem block
  */
 export const MAX_LINES_WITHOUT_ANCHOR = 5
@@ -16,7 +11,7 @@ export const MAX_LINES_WITHOUT_ANCHOR = 5
 /**
  * Gets the computed line height of an element in pixels
  */
-export function getLineHeight(element: Element): number {
+function getLineHeight(element: Element): number {
   const computed = window.getComputedStyle(element)
   const lineHeight = computed.lineHeight
 
@@ -59,7 +54,7 @@ interface ElementMeasurement {
  * @param elements - Array of elements to measure
  * @returns Map of element to line count
  */
-export function batchEstimateLines(elements: Element[]): Map<Element, number> {
+function batchEstimateLines(elements: Element[]): Map<Element, number> {
   const results = new Map<Element, number>()
 
   if (elements.length === 0) return results

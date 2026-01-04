@@ -15,13 +15,6 @@ export const Z_INDEX = {
   TOP: 999999,
 } as const
 
-export type ZIndexLayer = keyof typeof Z_INDEX
-
-/**
- * CSS class prefix for all scanvision elements
- */
-export const CSS_PREFIX = 'scanvision'
-
 /**
  * ID prefix for overlay elements
  */
