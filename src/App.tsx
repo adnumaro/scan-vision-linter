@@ -1,10 +1,11 @@
+import { ChevronDown, ChevronRight, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import './App.css'
 import { ModeList } from './components/ModeList'
 import { detectPlatform, getPresetById, PRESETS } from './presets/platforms'
 import type { AnalyticsData, ScanConfig } from './types/messages'
 import { DEFAULT_CONFIG } from './types/messages'
-import { getConfig, resetConfig, saveConfig } from './utils/storage'
+import { clearAnalytics, getAnalytics, getConfig, resetConfig, saveAnalytics, saveConfig } from './utils/storage'
 
 function App() {
   const [isActive, setIsActive] = useState(false)
@@ -13,10 +14,18 @@ function App() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [detectedPresetId, setDetectedPresetId] = useState<string | null>(null)
   const [activeModes, setActiveModes] = useState<string[]>(['scan'])
+  const [analyticsExpanded, setAnalyticsExpanded] = useState(true)
+  const [isReanalyzing, setIsReanalyzing] = useState(false)
 
   useEffect(() => {
     const detectAndUpdateState = async () => {
       const savedConfig = await getConfig()
+      const savedAnalytics = await getAnalytics()
+
+      // Load saved analytics first
+      if (savedAnalytics) {
+        setAnalytics(savedAnalytics)
+      }
 
       try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
@@ -45,16 +54,16 @@ function App() {
             } else {
               setActiveModes(['scan'])
             }
+            // Only update analytics if we got fresh data from content script
             if (response?.analytics) {
               setAnalytics(response.analytics)
-            } else {
-              setAnalytics(null)
+              await saveAnalytics(response.analytics)
             }
           } catch {
             // Content script not loaded on this tab
             setIsActive(false)
             setActiveModes(['scan'])
-            setAnalytics(null)
+            // Keep saved analytics, don't clear them
           }
         }
       } catch {
@@ -189,12 +198,63 @@ function App() {
         setIsActive(response.isScanning)
         if (response.analytics) {
           setAnalytics(response.analytics)
+          await saveAnalytics(response.analytics)
         } else {
           setAnalytics(null)
+          await clearAnalytics()
         }
       }
     } catch {
       setError('Reload the page and try again')
+    }
+  }
+
+  const reAnalyze = async () => {
+    setError(null)
+    setIsReanalyzing(true)
+
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+
+      if (!tab.id) {
+        setError('No active tab found')
+        setIsReanalyzing(false)
+        return
+      }
+
+      // Clear current analytics and storage
+      setAnalytics(null)
+      await clearAnalytics()
+
+      // Send message to clear overlays and re-analyze
+      const preset = getPresetById(config.presetId)
+
+      // First deactivate to clear overlays, then reactivate
+      await chrome.tabs.sendMessage(tab.id, {
+        action: 'toggle-scan',
+        config,
+        preset,
+      })
+
+      // Small delay for visual feedback
+      await new Promise((resolve) => setTimeout(resolve, 400))
+
+      // Reactivate scan
+      const response = await chrome.tabs.sendMessage(tab.id, {
+        action: 'toggle-scan',
+        config,
+        preset,
+      })
+
+      if (response?.analytics) {
+        setAnalytics(response.analytics)
+        await saveAnalytics(response.analytics)
+        setIsActive(response.isScanning)
+      }
+    } catch {
+      setError('Reload the page and try again')
+    } finally {
+      setIsReanalyzing(false)
     }
   }
 
@@ -225,12 +285,40 @@ function App() {
       {error && <div className="error-message">{error}</div>}
 
       {/* Analytics Section */}
-      {isActive && analytics && (
-        <div className="analytics">
-          <div className="analytics-header">
-            <span className="analytics-title">Analysis</span>
+      <div className="analytics">
+        <div
+          className="analytics-header analytics-header--clickable"
+          onClick={() => setAnalyticsExpanded(!analyticsExpanded)}
+          onKeyDown={(e) => e.key === 'Enter' && setAnalyticsExpanded(!analyticsExpanded)}
+          role="button"
+          tabIndex={0}
+        >
+          <div className="analytics-header-left">
+            {analyticsExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+            <span className="analytics-title">ANALYSIS</span>
           </div>
+          <button
+            type="button"
+            className={`reanalyze-button ${isReanalyzing ? 'reanalyze-button--spinning' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation()
+              if (!isReanalyzing) reAnalyze()
+            }}
+            disabled={isReanalyzing}
+            title="Re-analyze page"
+          >
+            <RefreshCw size={14} />
+          </button>
+        </div>
 
+        {analyticsExpanded && !analytics && (
+          <div className="analytics-content analytics-content--empty">
+            <span className="analytics-empty-text">No analysis yet. Start a scan to analyze the page.</span>
+          </div>
+        )}
+
+        {analyticsExpanded && analytics && (
+          <div className="analytics-content">
           <div className="score-container">
             <div className={`score-value ${getScoreClass(analytics.score)}`}>{analytics.score}</div>
             <div className="score-label">{getScoreLabel(analytics.score)}</div>
@@ -369,8 +457,9 @@ function App() {
               </ul>
             </div>
           )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
 
       {/* Preset Selector */}
       <div className="preset-section">

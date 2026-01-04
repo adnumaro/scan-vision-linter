@@ -221,7 +221,85 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 0;
+}
+
+.analytics-header--clickable {
+  cursor: pointer;
+  padding: 8px;
+  margin: -8px -8px 0 -8px;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+
+.analytics-header--clickable:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.analytics-header-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #9ca3af;
+}
+
+.analytics-content {
+  margin-top: 12px;
+}
+
+.analytics-content--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+}
+
+.analytics-empty-text {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.reanalyze-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.reanalyze-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.reanalyze-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.reanalyze-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.reanalyze-button--spinning svg {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .analytics-title {
