@@ -18,6 +18,7 @@ import { foldLineMode } from '../modes/implementations/fold-line-mode'
 import { heatZonesMode } from '../modes/implementations/heat-zones-mode'
 import { scanMode } from '../modes/implementations/scan-mode'
 import { estimateLines, MAX_LINES_WITHOUT_ANCHOR } from '../modes/utils/dom'
+import { getPresetById } from '../presets/platforms'
 import type {
   AnalyticsData,
   Message,
@@ -31,6 +32,7 @@ import {
   detectUnformattedCode,
   markUnformattedCodeBlocks,
 } from './analysis/antiPatterns'
+import { evaluatePlatformSuggestions } from './analysis/suggestions'
 import { calculateWeightedAnchors } from './analysis/weights'
 
 // Register all modes
@@ -240,6 +242,13 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
     )
   }
 
+  // Evaluate platform-specific suggestions (informative only, don't affect score)
+  // Use local preset (with validate functions) instead of message-passed preset
+  // because Chrome messaging strips functions during serialization
+  const localPreset = getPresetById(currentPreset.id)
+  const platformSuggestions = localPreset.analysis?.suggestions || []
+  const triggeredSuggestions = evaluatePlatformSuggestions(platformSuggestions, mainContent)
+
   const data: AnalyticsData = {
     score,
     totalTextBlocks,
@@ -254,6 +263,7 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
       images,
       lists,
     },
+    suggestions: triggeredSuggestions.length > 0 ? triggeredSuggestions : undefined,
   }
 
   // Update cache

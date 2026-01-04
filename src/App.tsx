@@ -303,6 +303,24 @@ function App() {
               </div>
             </div>
           </div>
+
+          {/* Platform-specific Suggestions */}
+          {analytics.suggestions && analytics.suggestions.length > 0 && (
+            <div className="suggestions">
+              <div className="suggestions-title">
+                <span className="suggestions-icon">💡</span>
+                <span>Suggestions for {currentPreset.name}</span>
+              </div>
+              <ul className="suggestions-list">
+                {analytics.suggestions.map((suggestion) => (
+                  <li key={suggestion.id} className="suggestion-item">
+                    <span className="suggestion-name">{suggestion.name}</span>
+                    <span className="suggestion-description">{suggestion.description}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 

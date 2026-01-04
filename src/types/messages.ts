@@ -15,6 +15,33 @@ export interface PlatformStyleOverrides {
   additionalCSS?: string
 }
 
+/**
+ * A platform-specific suggestion for improving scannability
+ * Suggestions are informative only - they do NOT affect the score
+ */
+export interface PlatformSuggestion {
+  /** Unique identifier for this suggestion */
+  id: string
+  /** Display name */
+  name: string
+  /** Description shown to the user */
+  description: string
+  /** Selector that, if NOT present, triggers the suggestion */
+  missingSelector?: string
+  /** Selector that, if present, triggers the suggestion (anti-pattern) */
+  presentSelector?: string
+  /** Custom validation function (optional) */
+  validate?: (contentArea: Element) => boolean
+}
+
+/**
+ * Platform-specific analysis configuration
+ */
+export interface PlatformAnalysisConfig {
+  /** Platform-specific suggestions (informative, don't affect score) */
+  suggestions?: PlatformSuggestion[]
+}
+
 export interface PlatformPreset {
   id: string
   name: string
@@ -28,6 +55,17 @@ export interface PlatformPreset {
     ignoreElements: string[]
   }
   styles?: PlatformStyleOverrides
+  /** Platform-specific analysis configuration */
+  analysis?: PlatformAnalysisConfig
+}
+
+/**
+ * Result of a triggered platform suggestion
+ */
+export interface TriggeredSuggestion {
+  id: string
+  name: string
+  description: string
 }
 
 export interface AnalyticsData {
@@ -44,6 +82,8 @@ export interface AnalyticsData {
     images: number
     lists: number
   }
+  /** Platform-specific suggestions (informative, don't affect score) */
+  suggestions?: TriggeredSuggestion[]
 }
 
 export type MessageAction =

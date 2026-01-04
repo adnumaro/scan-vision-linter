@@ -72,6 +72,56 @@ export const PRESETS: PlatformPreset[] = [
     outline-offset: 2px;
   }`,
     },
+    analysis: {
+      suggestions: [
+        {
+          id: 'notion-callouts',
+          name: 'Use Callout Blocks',
+          description: 'Highlight important notes with callout blocks',
+          validate: (content) => {
+            const text = content.textContent || ''
+            const hasImportantText = /\b(important|note|tip|warning|caution)\b[:\s]/i.test(text)
+            const hasCallout = content.querySelector('[class*="notion-callout"]') !== null
+            return hasImportantText && !hasCallout
+          },
+        },
+        {
+          id: 'notion-toggles',
+          name: 'Use Toggle Blocks',
+          description: 'Organize long lists with collapsible toggles',
+          validate: (content) => {
+            const lists = content.querySelectorAll('[class*="notion-bulleted_list"]')
+            // Check if any list has more than 8 items (siblings)
+            let hasLongList = false
+            for (const list of lists) {
+              const parent = list.parentElement
+              if (parent) {
+                const siblings = parent.querySelectorAll('[class*="notion-bulleted_list"]')
+                if (siblings.length > 8) {
+                  hasLongList = true
+                  break
+                }
+              }
+            }
+            const hasToggles = content.querySelector('[class*="notion-toggle"]') !== null
+            return hasLongList && !hasToggles
+          },
+        },
+        {
+          id: 'notion-code-blocks',
+          name: 'Use Code Blocks',
+          description: 'Format code snippets with proper code blocks',
+          validate: (content) => {
+            const hasCodeBlock = content.querySelector('[class*="notion-code"]') !== null
+            // If there's unformatted code detected but no code blocks, suggest
+            const text = content.textContent || ''
+            const hasCodePatterns =
+              /\{"\w+":\s*["{[\d]/.test(text) || /\b(curl|npm|git|docker)\s+\w+/i.test(text)
+            return hasCodePatterns && !hasCodeBlock
+          },
+        },
+      ],
+    },
   },
   {
     id: 'confluence',
@@ -98,6 +148,46 @@ export const PRESETS: PlatformPreset[] = [
         '[data-testid="space-navigation"]',
         '[data-vc="space-navigation"]',
         'nav[aria-label]',
+      ],
+    },
+    analysis: {
+      suggestions: [
+        {
+          id: 'confluence-info-panels',
+          name: 'Use Info Panels',
+          description: 'Highlight notes and warnings with Info Panels',
+          validate: (content) => {
+            const text = content.textContent || ''
+            const hasWarningText = /\b(note|warning|important|caution)\b[:\s]/i.test(text)
+            const hasInfoPanel = content.querySelector('.confluence-information-macro') !== null
+            return hasWarningText && !hasInfoPanel
+          },
+        },
+        {
+          id: 'confluence-expand',
+          name: 'Use Expand Sections',
+          description: 'Long documents benefit from expandable sections',
+          validate: (content) => {
+            const paragraphs = content.querySelectorAll('p')
+            const hasExpand = content.querySelector('.expand-control') !== null
+            return paragraphs.length > 20 && !hasExpand
+          },
+        },
+        {
+          id: 'confluence-status',
+          name: 'Use Status Macros',
+          description: 'Show project status with colored status labels',
+          validate: (content) => {
+            const text = content.textContent || ''
+            // Common status words that could benefit from status macros
+            const hasStatusText =
+              /\b(status|state|phase)\s*:\s*(done|complete|in progress|pending|blocked)\b/i.test(
+                text,
+              )
+            const hasStatusMacro = content.querySelector('[class*="status-macro"]') !== null
+            return hasStatusText && !hasStatusMacro
+          },
+        },
       ],
     },
   },
