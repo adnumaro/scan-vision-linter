@@ -16,28 +16,6 @@ export const PRESETS: PlatformPreset[] = [
     },
   },
   {
-    id: 'github',
-    name: 'GitHub',
-    description: 'Optimized for GitHub READMEs and docs',
-    domains: ['github.com', 'gist.github.com'],
-    selectors: {
-      contentArea: '.markdown-body',
-      hotSpots: [
-        '.anchor',
-        '.octicon',
-        '.task-list-item-checkbox',
-        '.highlight',
-        '.blob-code',
-        '.contains-task-list',
-        '.task-list-item',
-      ],
-      ignoreElements: ['.file-navigation', '.footer', '.drag-handle'],
-    },
-    styles: {
-      navigationSelectors: ['.AppHeader', '.UnderlineNav', '.Layout-sidebar'],
-    },
-  },
-  {
     id: 'notion',
     name: 'Notion',
     description: 'Optimized for Notion pages',
@@ -188,96 +166,6 @@ export const PRESETS: PlatformPreset[] = [
             return hasStatusText && !hasStatusMacro
           },
         },
-      ],
-    },
-  },
-  {
-    id: 'mdn',
-    name: 'MDN Web Docs',
-    description: 'Optimized for Mozilla Developer Network',
-    domains: ['developer.mozilla.org'],
-    selectors: {
-      contentArea: '.main-content, article',
-      hotSpots: [
-        '.notecard',
-        '.warning',
-        '.callout',
-        '.code-example',
-        '.bc-table',
-        '.section-content > dl',
-      ],
-      ignoreElements: ['.sidebar', '.document-toc', '.top-navigation'],
-    },
-    styles: {
-      navigationSelectors: [
-        '.sidebar',
-        '.document-toc',
-        '.top-navigation',
-        '.main-menu',
-        '.header-main',
-      ],
-    },
-  },
-  {
-    id: 'readme',
-    name: 'ReadMe.io',
-    description: 'Optimized for ReadMe documentation',
-    domains: ['readme.io', 'readme.com'],
-    selectors: {
-      contentArea: '.markdown-body, [class*="content"]',
-      hotSpots: ['.callout', '[class*="Callout"]', '.code-tabs', '[class*="CodeTabs"]', '.embed'],
-      ignoreElements: ['.rm-Sidebar', '[class*="Sidebar"]'],
-    },
-    styles: {
-      navigationSelectors: ['.rm-Sidebar', '[class*="Sidebar"]', '.rm-Header', '[class*="Header"]'],
-    },
-  },
-  {
-    id: 'gitbook',
-    name: 'GitBook',
-    description: 'Optimized for GitBook documentation',
-    domains: ['gitbook.io', 'gitbook.com'],
-    selectors: {
-      contentArea: '[data-testid="page.contentEditor"], .markdown-section',
-      hotSpots: ['.hint', '.tabs', '.code-block', '[class*="expandable"]'],
-      ignoreElements: ['[data-testid="table-of-contents"]', '[class*="sidebar"]'],
-    },
-    styles: {
-      navigationSelectors: [
-        '[data-testid="table-of-contents"]',
-        '[class*="sidebar"]',
-        '[data-testid="space.header"]',
-      ],
-    },
-  },
-  {
-    id: 'docusaurus',
-    name: 'Docusaurus',
-    description: 'Optimized for Docusaurus sites',
-    domains: [
-      'docusaurus.io',
-      'reactnative.dev',
-      'redux.js.org',
-      'jestjs.io',
-      'prettier.io',
-      'babel.dev',
-      'create-react-app.dev',
-      'reactrouter.com',
-      'relay.dev',
-      'pnpm.io',
-    ],
-    selectors: {
-      contentArea: '.markdown, article',
-      hotSpots: ['.admonition', '.alert', '.tabs-container', '.prism-code'],
-      ignoreElements: ['.navbar', '.table-of-contents', '.pagination-nav', '.footer'],
-    },
-    styles: {
-      navigationSelectors: [
-        '.navbar',
-        '.table-of-contents',
-        '.pagination-nav',
-        '.menu',
-        '.sidebar',
       ],
     },
   },

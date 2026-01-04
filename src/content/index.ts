@@ -430,9 +430,10 @@ chrome.runtime.onMessage.addListener(
         // Activate
         initializeManager()
         syncScanModeConfig()
-
-        const analytics = analyzeScannability()
         manager.activate('scan')
+
+        // Analyze AFTER activating so markers get applied
+        const analytics = analyzeScannability()
 
         sendResponse({
           isScanning: true,

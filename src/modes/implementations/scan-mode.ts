@@ -84,7 +84,8 @@ function createBaseStyles(scope: string, config: ScanModeConfig): string {
   }
 
   /* Problem blocks - warning highlight (dense paragraphs) */
-  ${scopeSelector(scope, ` p.${PROBLEM_CLASS}`)} {
+  ${scopeSelector(scope, ` .${PROBLEM_CLASS}`)},
+  .${PROBLEM_CLASS} {
     outline: 2px dashed ${SCAN_COLORS.denseParagraph.rgba(0.7)} !important;
     outline-offset: 4px;
     background-color: ${SCAN_COLORS.denseParagraph.rgba(0.05)} !important;
@@ -380,10 +381,12 @@ function createStyles(config: ScanModeConfig, context: ModeContext): string {
  */
 function analyzeProblemBlocks(context: ModeContext): number {
   const contentArea = context.contentArea
-  const paragraphs = contentArea.querySelectorAll('p')
+  // Use platform-specific text block selector, fallback to 'p'
+  const textBlockSelector = context.preset.selectors.textBlocks || 'p'
+  const textBlocks = contentArea.querySelectorAll(textBlockSelector)
 
   // Use optimized batch functions to minimize reflows
-  const analyses = batchAnalyzeParagraphs(paragraphs)
+  const analyses = batchAnalyzeParagraphs(textBlocks)
   return batchApplyProblemClasses(analyses, PROBLEM_CLASS)
 }
 
