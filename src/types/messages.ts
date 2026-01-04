@@ -43,12 +43,19 @@ export interface AnalyticsData {
   }
 }
 
-export type MessageAction = 'toggle-scan' | 'get-state' | 'update-config' | 'analyze'
+export type MessageAction =
+  | 'toggle-scan'
+  | 'get-state'
+  | 'update-config'
+  | 'analyze'
+  | 'toggle-mode'
 
 export interface Message {
   action: MessageAction
   config?: ScanConfig
   preset?: PlatformPreset
+  modeId?: string
+  enabled?: boolean
 }
 
 export interface ScanResponse {
@@ -56,4 +63,5 @@ export interface ScanResponse {
   config?: ScanConfig
   analytics?: AnalyticsData
   detectedPresetId?: string
+  activeModes?: string[]
 }

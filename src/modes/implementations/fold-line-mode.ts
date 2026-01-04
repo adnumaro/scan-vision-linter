@@ -87,11 +87,31 @@ export class FoldLineMode implements VisualizationMode {
       },
     }
 
-    if (this.active) {
-      // Recreate elements with new config
-      this.deactivate()
-      this.active = false
-      this.activate({} as ModeContext)
+    if (this.active && this.contentArea) {
+      // Update styles without recreating elements
+      this.updateElementStyles()
+      this.positionElements()
+    }
+  }
+
+  /**
+   * Updates element styles without recreating them
+   */
+  private updateElementStyles(): void {
+    const { color, showLabel, labelText } = this.config.settings
+
+    if (this.lineElement) {
+      this.lineElement.style.borderTopColor = color
+    }
+
+    if (this.labelElement) {
+      if (showLabel) {
+        this.labelElement.textContent = labelText
+        this.labelElement.style.backgroundColor = color
+        this.labelElement.style.display = 'block'
+      } else {
+        this.labelElement.style.display = 'none'
+      }
     }
   }
 

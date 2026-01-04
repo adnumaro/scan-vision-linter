@@ -1,23 +1,7 @@
-export interface PlatformStyleOverrides {
-  /** Navigation/sidebar selectors specific to this platform */
-  navigationSelectors?: string[]
-  /** Custom CSS rules for this platform */
-  additionalCSS?: string
-}
+import type { PlatformPreset } from '../types/messages'
 
-export interface PlatformPreset {
-  id: string
-  name: string
-  description: string
-  domains: string[]
-  selectors: {
-    contentArea: string
-    hotSpots: string[]
-    ignoreElements: string[]
-  }
-  /** Platform-specific style overrides */
-  styles?: PlatformStyleOverrides
-}
+// Re-export for convenience
+export type { PlatformPreset, PlatformStyleOverrides } from '../types/messages'
 
 export const PRESETS: PlatformPreset[] = [
   {
@@ -50,11 +34,7 @@ export const PRESETS: PlatformPreset[] = [
       ignoreElements: ['.file-navigation', '.footer', '.drag-handle'],
     },
     styles: {
-      navigationSelectors: [
-        '.AppHeader',
-        '.UnderlineNav',
-        '.Layout-sidebar',
-      ],
+      navigationSelectors: ['.AppHeader', '.UnderlineNav', '.Layout-sidebar'],
     },
   },
   {

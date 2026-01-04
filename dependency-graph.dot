@@ -1,0 +1,94 @@
+strict digraph "dependency-cruiser output"{
+    rankdir="LR" splines="true" overlap="false" nodesep="0.16" ranksep="0.18" fontname="Helvetica-bold" fontsize="9" style="rounded,bold,filled" fillcolor="#ffffff" compound="true"
+    node [shape="box" style="rounded, filled" height="0.2" color="black" fillcolor="#ffffcc" fontcolor="black" fontname="Helvetica" fontsize="9"]
+    edge [arrowhead="normal" arrowsize="0.6" penwidth="2.0" color="#00000033" fontname="Helvetica" fontsize="9"]
+
+    subgraph "cluster_node_modules" {label="node_modules" "node_modules/lucide-react" [label=<lucide-react> tooltip="lucide-react" URL="https://www.npmjs.com/package/lucide-react" shape="box3d" fillcolor="#c40b0a1a" fontcolor="#c40b0a"] }
+    subgraph "cluster_node_modules" {label="node_modules" "node_modules/react" [label=<react> tooltip="react" URL="https://www.npmjs.com/package/react" shape="box3d" fillcolor="#c40b0a1a" fontcolor="#c40b0a"] }
+    subgraph "cluster_node_modules" {label="node_modules" "node_modules/react-dom" [label=<react-dom> tooltip="react-dom" URL="https://www.npmjs.com/package/react-dom" shape="box3d" fillcolor="#c40b0a1a" fontcolor="#c40b0a"] }
+    subgraph "cluster_src" {label="src" "src/App.css" [label=<App.css> tooltip="App.css" URL="src/App.css" ] }
+    subgraph "cluster_src" {label="src" "src/App.tsx" [label=<App.tsx> tooltip="App.tsx" URL="src/App.tsx" fillcolor="#bbfeff"] }
+    "src/App.tsx" -> "src/App.css"
+    "src/App.tsx" -> "src/components/ModeList.tsx"
+    "src/App.tsx" -> "src/presets/platforms.ts"
+    "src/App.tsx" -> "src/types/messages.ts"
+    "src/App.tsx" -> "src/utils/storage.ts"
+    "src/App.tsx" -> "node_modules/react" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/components" {label="components" "src/components/ModeList.tsx" [label=<ModeList.tsx> tooltip="ModeList.tsx" URL="src/components/ModeList.tsx" fillcolor="#bbfeff"] } }
+    "src/components/ModeList.tsx" -> "src/modes/index.ts" [arrowhead="onormal" penwidth="1.0"]
+    "src/components/ModeList.tsx" -> "src/components/ModeToggle.tsx"
+    "src/components/ModeList.tsx" -> "node_modules/lucide-react" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/components" {label="components" "src/components/ModeToggle.tsx" [label=<ModeToggle.tsx> tooltip="ModeToggle.tsx" URL="src/components/ModeToggle.tsx" fillcolor="#bbfeff"] } }
+    "src/components/ModeToggle.tsx" -> "node_modules/lucide-react" [penwidth="1.0" arrowhead="onormal"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/content" {label="content" "src/content/index.ts" [label=<index.ts> tooltip="index.ts" URL="src/content/index.ts" fillcolor="#ddfeff"] } }
+    "src/content/index.ts" -> "src/modes/index.ts"
+    "src/content/index.ts" -> "src/modes/implementations/e-pattern-mode.ts"
+    "src/content/index.ts" -> "src/modes/implementations/f-pattern-mode.ts"
+    "src/content/index.ts" -> "src/modes/implementations/first-5s-mode.ts"
+    "src/content/index.ts" -> "src/modes/implementations/fold-line-mode.ts"
+    "src/content/index.ts" -> "src/modes/implementations/heat-zones-mode.ts"
+    "src/content/index.ts" -> "src/modes/implementations/scan-mode.ts"
+    subgraph "cluster_src" {label="src" "src/index.css" [label=<index.css> tooltip="index.css" URL="src/index.css" ] }
+    subgraph "cluster_src" {label="src" "src/main.tsx" [label=<main.tsx> tooltip="main.tsx" URL="src/main.tsx" fillcolor="#bbfeff"] }
+    "src/main.tsx" -> "src/App.tsx"
+    "src/main.tsx" -> "src/index.css"
+    "src/main.tsx" -> "node_modules/react" [penwidth="1.0"]
+    "src/main.tsx" -> "node_modules/react-dom" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/modes" {label="modes" subgraph "cluster_src/modes/implementations" {label="implementations" "src/modes/implementations/e-pattern-mode.ts" [label=<e-pattern-mode.ts> tooltip="e-pattern-mode.ts" URL="src/modes/implementations/e-pattern-mode.ts" fillcolor="#ddfeff"] } } }
+    "src/modes/implementations/e-pattern-mode.ts" -> "src/modes/types.ts" [arrowhead="onormal" penwidth="1.0"]
+    "src/modes/implementations/e-pattern-mode.ts" -> "src/modes/utils/colors.ts"
+    "src/modes/implementations/e-pattern-mode.ts" -> "src/modes/utils/overlay.ts"
+    "src/modes/implementations/e-pattern-mode.ts" -> "src/modes/utils/viewport.ts"
+    "src/modes/implementations/e-pattern-mode.ts" -> "node_modules/lucide-react" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/modes" {label="modes" subgraph "cluster_src/modes/implementations" {label="implementations" "src/modes/implementations/f-pattern-mode.ts" [label=<f-pattern-mode.ts> tooltip="f-pattern-mode.ts" URL="src/modes/implementations/f-pattern-mode.ts" fillcolor="#ddfeff"] } } }
+    "src/modes/implementations/f-pattern-mode.ts" -> "src/modes/types.ts" [arrowhead="onormal" penwidth="1.0"]
+    "src/modes/implementations/f-pattern-mode.ts" -> "src/modes/utils/colors.ts"
+    "src/modes/implementations/f-pattern-mode.ts" -> "src/modes/utils/overlay.ts"
+    "src/modes/implementations/f-pattern-mode.ts" -> "src/modes/utils/viewport.ts"
+    "src/modes/implementations/f-pattern-mode.ts" -> "node_modules/lucide-react" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/modes" {label="modes" subgraph "cluster_src/modes/implementations" {label="implementations" "src/modes/implementations/first-5s-mode.ts" [label=<first-5s-mode.ts> tooltip="first-5s-mode.ts" URL="src/modes/implementations/first-5s-mode.ts" fillcolor="#ddfeff"] } } }
+    "src/modes/implementations/first-5s-mode.ts" -> "src/modes/types.ts" [arrowhead="onormal" penwidth="1.0"]
+    "src/modes/implementations/first-5s-mode.ts" -> "src/modes/utils/styles.ts"
+    "src/modes/implementations/first-5s-mode.ts" -> "node_modules/lucide-react" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/modes" {label="modes" subgraph "cluster_src/modes/implementations" {label="implementations" "src/modes/implementations/fold-line-mode.ts" [label=<fold-line-mode.ts> tooltip="fold-line-mode.ts" URL="src/modes/implementations/fold-line-mode.ts" fillcolor="#ddfeff"] } } }
+    "src/modes/implementations/fold-line-mode.ts" -> "src/modes/types.ts" [arrowhead="onormal" penwidth="1.0"]
+    "src/modes/implementations/fold-line-mode.ts" -> "src/modes/utils/overlay.ts"
+    "src/modes/implementations/fold-line-mode.ts" -> "src/modes/utils/viewport.ts"
+    "src/modes/implementations/fold-line-mode.ts" -> "node_modules/lucide-react" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/modes" {label="modes" subgraph "cluster_src/modes/implementations" {label="implementations" "src/modes/implementations/heat-zones-mode.ts" [label=<heat-zones-mode.ts> tooltip="heat-zones-mode.ts" URL="src/modes/implementations/heat-zones-mode.ts" fillcolor="#ddfeff"] } } }
+    "src/modes/implementations/heat-zones-mode.ts" -> "src/modes/types.ts" [arrowhead="onormal" penwidth="1.0"]
+    "src/modes/implementations/heat-zones-mode.ts" -> "src/modes/utils/colors.ts"
+    "src/modes/implementations/heat-zones-mode.ts" -> "src/modes/utils/overlay.ts"
+    "src/modes/implementations/heat-zones-mode.ts" -> "src/modes/utils/styles.ts"
+    "src/modes/implementations/heat-zones-mode.ts" -> "src/modes/utils/viewport.ts"
+    "src/modes/implementations/heat-zones-mode.ts" -> "node_modules/lucide-react" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/modes" {label="modes" subgraph "cluster_src/modes/implementations" {label="implementations" "src/modes/implementations/scan-mode.ts" [label=<scan-mode.ts> tooltip="scan-mode.ts" URL="src/modes/implementations/scan-mode.ts" fillcolor="#ddfeff"] } } }
+    "src/modes/implementations/scan-mode.ts" -> "src/modes/types.ts" [arrowhead="onormal" penwidth="1.0"]
+    "src/modes/implementations/scan-mode.ts" -> "src/modes/utils/styles.ts"
+    "src/modes/implementations/scan-mode.ts" -> "node_modules/lucide-react" [penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/modes" {label="modes" "src/modes/index.ts" [label=<index.ts> tooltip="index.ts" URL="src/modes/index.ts" fillcolor="#ddfeff"] } }
+    "src/modes/index.ts" -> "src/modes/manager.ts" [arrowhead="inv"]
+    "src/modes/index.ts" -> "src/modes/registry.ts" [arrowhead="inv"]
+    "src/modes/index.ts" -> "src/modes/types.ts" [arrowhead="inv"]
+    "src/modes/index.ts" -> "src/modes/utils/colors.ts" [arrowhead="inv"]
+    "src/modes/index.ts" -> "src/modes/utils/overlay.ts" [arrowhead="inv"]
+    "src/modes/index.ts" -> "src/modes/utils/styles.ts" [arrowhead="inv"]
+    "src/modes/index.ts" -> "src/modes/utils/viewport.ts" [arrowhead="inv"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/modes" {label="modes" "src/modes/manager.ts" [label=<manager.ts> tooltip="manager.ts" URL="src/modes/manager.ts" fillcolor="#ddfeff"] } }
+    "src/modes/manager.ts" -> "src/modes/registry.ts" [arrowhead="onormal" penwidth="1.0"]
+    "src/modes/manager.ts" -> "src/modes/types.ts" [arrowhead="onormal" penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/modes" {label="modes" "src/modes/registry.ts" [label=<registry.ts> tooltip="registry.ts" URL="src/modes/registry.ts" fillcolor="#ddfeff"] } }
+    "src/modes/registry.ts" -> "src/modes/types.ts" [arrowhead="onormal" penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/modes" {label="modes" "src/modes/types.ts" [label=<types.ts> tooltip="types.ts" URL="src/modes/types.ts" fillcolor="#ddfeff"] } }
+    "src/modes/types.ts" -> "src/types/messages.ts" [arrowhead="onormal" penwidth="1.0"]
+    "src/modes/types.ts" -> "node_modules/lucide-react" [penwidth="1.0" arrowhead="onormal"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/modes" {label="modes" subgraph "cluster_src/modes/utils" {label="utils" "src/modes/utils/colors.ts" [label=<colors.ts> tooltip="colors.ts" URL="src/modes/utils/colors.ts" fillcolor="#ddfeff"] } } }
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/modes" {label="modes" subgraph "cluster_src/modes/utils" {label="utils" "src/modes/utils/overlay.ts" [label=<overlay.ts> tooltip="overlay.ts" URL="src/modes/utils/overlay.ts" fillcolor="#ddfeff"] } } }
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/modes" {label="modes" subgraph "cluster_src/modes/utils" {label="utils" "src/modes/utils/styles.ts" [label=<styles.ts> tooltip="styles.ts" URL="src/modes/utils/styles.ts" fillcolor="#ddfeff"] } } }
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/modes" {label="modes" subgraph "cluster_src/modes/utils" {label="utils" "src/modes/utils/viewport.ts" [label=<viewport.ts> tooltip="viewport.ts" URL="src/modes/utils/viewport.ts" fillcolor="#ddfeff"] } } }
+    "src/modes/utils/viewport.ts" -> "src/modes/types.ts" [arrowhead="onormal" penwidth="1.0"]
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/presets" {label="presets" "src/presets/platforms.ts" [label=<platforms.ts> tooltip="platforms.ts" URL="src/presets/platforms.ts" fillcolor="#ddfeff"] } }
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/types" {label="types" "src/types/messages.ts" [label=<messages.ts> tooltip="messages.ts" URL="src/types/messages.ts" fillcolor="#ddfeff"] } }
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/utils" {label="utils" "src/utils/storage.ts" [label=<storage.ts> tooltip="storage.ts" URL="src/utils/storage.ts" fillcolor="#ddfeff"] } }
+    "src/utils/storage.ts" -> "src/types/messages.ts"
+}
