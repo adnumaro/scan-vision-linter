@@ -31,8 +31,9 @@ const DANGEROUS_CSS_PATTERNS = [
 /**
  * Characters that should not appear in CSS selectors
  * These could be used to break out of selector context and inject arbitrary CSS
+ * Note: '>' is allowed as it's a valid CSS child combinator
  */
-const DANGEROUS_SELECTOR_CHARS = /[{};<>]/
+const DANGEROUS_SELECTOR_CHARS = /[{};<]/
 
 /**
  * Sanitizes CSS to remove potentially dangerous patterns
