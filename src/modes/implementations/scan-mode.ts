@@ -127,7 +127,7 @@ function createHotSpotStyles(scope: string): string {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
-    outline: 1px dashed ${SCAN_COLORS.code.rgba(0.5)};
+    outline: 2px dashed ${SCAN_COLORS.code.rgba(0.5)};
   }
 
   /* Links */
@@ -242,6 +242,29 @@ function createPlatformHotSpotStyles(preset: PlatformPreset, scope: string): str
     filter: none !important;
     opacity: 1 !important;
     outline: 2px solid ${SCAN_COLORS.platform.rgba(0.5)};
+  }`
+}
+
+/**
+ * Creates CSS for platform-specific code blocks
+ * Uses the code color (green) instead of platform hot spots (purple)
+ */
+function createPlatformCodeBlockStyles(preset: PlatformPreset, scope: string): string {
+  const codeBlockSelector = preset.selectors.codeBlocks
+  if (!codeBlockSelector) return ''
+
+  const safeSelector = sanitizeSelectors([codeBlockSelector])
+  if (safeSelector.length === 0) return ''
+
+  const selectors = scopeSelectors(scope, safeSelector.map((s) => ` ${s}`))
+
+  return `
+  /* Platform-specific code blocks (${preset.name}) */
+  ${selectors} {
+    color: inherit !important;
+    filter: none !important;
+    opacity: 1 !important;
+    outline: 2px dashed ${SCAN_COLORS.code.rgba(0.5)};
   }`
 }
 
@@ -366,6 +389,7 @@ function createStyles(config: ScanModeConfig, context: ModeContext): string {
     `   */`,
     createBaseStyles(scope, config),
     createHotSpotStyles(scope),
+    createPlatformCodeBlockStyles(preset, scope),
     createPlatformHotSpotStyles(preset, scope),
     createNavigationStyles(preset),
     createIgnoreElementStyles(preset, scope), // Must come after hotspot styles to override them

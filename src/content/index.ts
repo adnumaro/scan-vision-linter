@@ -168,12 +168,18 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
     return analyticsCache.data
   }
 
-  // Use platform-specific text block selector, fallback to 'p'
+  // Use platform-specific selectors, with fallbacks
   const textBlockSelector = currentPreset.selectors.textBlocks || 'p'
+  const codeBlockSelector = currentPreset.selectors.codeBlocks || 'pre'
   const ignoreSelector = currentPreset.selectors.ignoreElements?.join(', ') || ''
 
   // Calculate weighted anchors for more accurate scannability scoring
-  const weightedAnchors = calculateWeightedAnchors(mainContent, currentPreset.selectors.hotSpots, ignoreSelector)
+  const weightedAnchors = calculateWeightedAnchors(
+    mainContent,
+    currentPreset.selectors.hotSpots,
+    ignoreSelector,
+    codeBlockSelector,
+  )
 
   // Extract counts for display (UI breakdown)
   const headings = weightedAnchors.headings.count

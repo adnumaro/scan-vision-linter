@@ -24,6 +24,7 @@ export const PRESETS: PlatformPreset[] = [
       contentArea: '.notion-page-content',
       textBlocks:
         '[class*="notion-text-block"], [class*="notion-bulleted_list"], [class*="notion-numbered_list"]',
+      codeBlocks: '[class*="notion-code-block"]',
       hotSpots: [
         '[class*="notion-header"]',
         '[class*="notion-callout"]',
@@ -109,10 +110,10 @@ export const PRESETS: PlatformPreset[] = [
     selectors: {
       contentArea: '#content-body, [data-testid="page-content"], .wiki-content',
       textBlocks: 'p, [data-node-type="text"], [data-node-type="paragraph"]',
+      codeBlocks: '[data-prosemirror-node-name="codeBlock"]',
       hotSpots: [
         '[data-testid*="emoji"]',
         '.confluence-information-macro',
-        '.code-block',
         '.panel',
         '[class*="status-macro"]',
         '.expand-control',

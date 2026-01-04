@@ -51,6 +51,8 @@ export interface PlatformPreset {
     contentArea: string
     /** Selectors for text blocks (paragraphs). Defaults to 'p' if not specified */
     textBlocks?: string
+    /** Selectors for code blocks. Defaults to 'pre' if not specified */
+    codeBlocks?: string
     hotSpots: string[]
     ignoreElements: string[]
   }

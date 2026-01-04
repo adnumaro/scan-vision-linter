@@ -72,6 +72,7 @@ export function calculateWeightedAnchors(
   contentArea: Element,
   platformHotSpots: string[] = [],
   ignoreSelector = '',
+  codeBlockSelector = 'pre',
 ): WeightedAnchorBreakdown {
   // Helper to filter out elements inside ignored areas
   const filterIgnored = <T extends Element>(elements: NodeListOf<T> | T[]): T[] => {
@@ -88,19 +89,19 @@ export function calculateWeightedAnchors(
   const emphasisCount = emphasisElements.length
   const emphasisWeight = emphasisCount * ANCHOR_WEIGHTS.emphasis
 
-  // Count code elements - distinguish block vs inline
-  const allCodeElements = filterIgnored(contentArea.querySelectorAll('code, pre, kbd'))
-  let codeBlockCount = 0
+  // Count code blocks using platform-specific selector
+  const codeBlocks = filterIgnored(contentArea.querySelectorAll(codeBlockSelector))
+  const codeBlockCount = codeBlocks.length
+
+  // Count inline code elements (code, kbd not inside a code block)
+  const inlineCodeElements = filterIgnored(contentArea.querySelectorAll('code, kbd'))
   let inlineCodeCount = 0
 
-  for (const el of allCodeElements) {
-    if (el.tagName === 'PRE') {
-      codeBlockCount++
-    } else if (el.tagName === 'CODE' || el.tagName === 'KBD') {
-      // Check if it's inside a <pre> (already counted as block)
-      if (!el.closest('pre')) {
-        inlineCodeCount++
-      }
+  for (const el of inlineCodeElements) {
+    // Check if it's inside a code block (already counted)
+    const isInsideCodeBlock = el.closest(codeBlockSelector)
+    if (!isInsideCodeBlock) {
+      inlineCodeCount++
     }
   }
 
@@ -123,9 +124,21 @@ export function calculateWeightedAnchors(
   const standaloneLinkWeight = standaloneLinksCount * ANCHOR_WEIGHTS.linkStandalone
   const inlineLinkWeight = inlineLinksCount * ANCHOR_WEIGHTS.linkInline
 
-  // Count images (excluding svg - most are UI icons, not content images)
-  const images = filterIgnored(contentArea.querySelectorAll('img, picture, video'))
-  const imageCount = images.length
+  // Count images (excluding svg, avatars, emojis, favicons - not content images)
+  const allImages = filterIgnored(contentArea.querySelectorAll('img, picture, video'))
+  const contentImages = allImages.filter((img) => {
+    const src = (img as HTMLImageElement).src || ''
+    // Exclude avatars, emojis, favicons, and other non-content images
+    if (src.includes('aa-avatar') || src.includes('/avatar')) return false
+    if (src.includes('/emoji/') || src.includes('emoji-service')) return false
+    if (src.includes('favicon')) return false
+    // Exclude very small images (likely icons)
+    const imgEl = img as HTMLImageElement
+    if (imgEl.width > 0 && imgEl.width < 32) return false
+    if (imgEl.height > 0 && imgEl.height < 32) return false
+    return true
+  })
+  const imageCount = contentImages.length
   const imageWeight = imageCount * ANCHOR_WEIGHTS.image
 
   // Count lists
