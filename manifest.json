@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "ScanVision Linter Pro",
+  "version": "1.0.0",
+  "action": { "default_popup": "index.html" },
+  "content_scripts": [
+    {
+      "js": ["src/content/index.ts"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "permissions": ["activeTab", "storage"]
+}
