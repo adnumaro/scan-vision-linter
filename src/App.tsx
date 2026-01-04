@@ -17,7 +17,6 @@ function App() {
   useEffect(() => {
     const init = async () => {
       const savedConfig = await getConfig()
-      setConfig(savedConfig)
 
       try {
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
@@ -26,12 +25,11 @@ function App() {
           const detected = detectPlatform(tab.url)
           setDetectedPresetId(detected.id)
 
-          // Auto-select detected preset if using default
-          if (savedConfig.presetId === 'default' && detected.id !== 'default') {
-            const newConfig = { ...savedConfig, presetId: detected.id }
-            setConfig(newConfig)
-            await saveConfig(newConfig)
-          }
+          // Always use detected preset for current page
+          const newConfig = { ...savedConfig, presetId: detected.id }
+          setConfig(newConfig)
+        } else {
+          setConfig(savedConfig)
         }
 
         if (tab.id) {
@@ -45,6 +43,7 @@ function App() {
         }
       } catch {
         // Content script not loaded
+        setConfig(savedConfig)
       }
     }
     init()
