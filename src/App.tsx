@@ -15,7 +15,7 @@ function App() {
   const [activeModes, setActiveModes] = useState<string[]>(['scan'])
 
   useEffect(() => {
-    const init = async () => {
+    const detectAndUpdateState = async () => {
       const savedConfig = await getConfig()
 
       try {
@@ -33,20 +33,57 @@ function App() {
         }
 
         if (tab.id) {
-          const response = await chrome.tabs.sendMessage(tab.id, { action: 'get-state' })
-          if (response?.isScanning !== undefined) {
-            setIsActive(response.isScanning)
-          }
-          if (response?.activeModes) {
-            setActiveModes(response.activeModes)
+          try {
+            const response = await chrome.tabs.sendMessage(tab.id, { action: 'get-state' })
+            if (response?.isScanning !== undefined) {
+              setIsActive(response.isScanning)
+            } else {
+              setIsActive(false)
+            }
+            if (response?.activeModes) {
+              setActiveModes(response.activeModes)
+            } else {
+              setActiveModes(['scan'])
+            }
+            if (response?.analytics) {
+              setAnalytics(response.analytics)
+            } else {
+              setAnalytics(null)
+            }
+          } catch {
+            // Content script not loaded on this tab
+            setIsActive(false)
+            setActiveModes(['scan'])
+            setAnalytics(null)
           }
         }
       } catch {
-        // Content script not loaded
+        // No active tab
         setConfig(savedConfig)
       }
     }
-    init()
+
+    // Initial detection
+    detectAndUpdateState()
+
+    // Listen for tab changes
+    const handleTabActivated = () => {
+      detectAndUpdateState()
+    }
+
+    const handleTabUpdated = (_tabId: number, changeInfo: { url?: string; status?: string }) => {
+      if (changeInfo.url || changeInfo.status === 'complete') {
+        detectAndUpdateState()
+      }
+    }
+
+    chrome.tabs.onActivated.addListener(handleTabActivated)
+    chrome.tabs.onUpdated.addListener(handleTabUpdated)
+
+    return () => {
+      chrome.tabs.onActivated.removeListener(handleTabActivated)
+      chrome.tabs.onUpdated.removeListener(handleTabUpdated)
+    }
   }, [])
 
   const sendConfigToTab = useCallback(async (newConfig: ScanConfig) => {
