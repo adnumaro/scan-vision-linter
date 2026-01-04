@@ -10,6 +10,11 @@ export const DEFAULT_CONFIG: ScanConfig = {
   presetId: 'default',
 }
 
+export interface PlatformStyleOverrides {
+  navigationSelectors?: string[]
+  additionalCSS?: string
+}
+
 export interface PlatformPreset {
   id: string
   name: string
@@ -20,6 +25,7 @@ export interface PlatformPreset {
     hotSpots: string[]
     ignoreElements: string[]
   }
+  styles?: PlatformStyleOverrides
 }
 
 export interface AnalyticsData {

@@ -4,6 +4,7 @@
  */
 
 import { ScanText } from 'lucide-react'
+import type { PlatformPreset } from '../../presets/platforms'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
 import { injectStylesheet, removeStylesheet } from '../utils/styles'
 
@@ -27,45 +28,35 @@ const DEFAULT_CONFIG: ScanModeConfig = {
 }
 
 /**
- * Creates CSS styles for scan mode
+ * Creates base CSS styles for paragraphs and problem blocks
  */
-function createStyles(config: ScanModeConfig, context: ModeContext): string {
+function createBaseStyles(scope: string, config: ScanModeConfig): string {
   const { opacity, blur } = config.settings
-  const preset = context.preset
-
-  // Build platform-specific hot spots selector
-  const platformHotSpots =
-    preset.selectors.hotSpots.length > 0 ? preset.selectors.hotSpots.join(',\n  ') : ''
-
-  // Build ignore selectors
-  const ignoreSelectors =
-    preset.selectors.ignoreElements.length > 0
-      ? preset.selectors.ignoreElements.map((s) => `${s}, ${s} *`).join(',\n  ')
-      : ''
-
   return `
-  /*
-   * ScanVision Linter - Scan Mode (${preset.name} preset)
-   */
-
-  /* Dim paragraph text */
-  p {
+  /* Dim paragraph text - only within content area */
+  ${scope} p {
     color: color-mix(in srgb, currentColor ${Math.round(opacity * 100)}%, transparent) !important;
     filter: blur(${blur}px) !important;
     transition: color 0.2s ease, filter 0.2s ease;
   }
 
   /* Problem blocks - warning highlight */
-  p.${PROBLEM_CLASS} {
+  ${scope} p.${PROBLEM_CLASS} {
     outline: 2px dashed rgba(239, 68, 68, 0.7) !important;
     outline-offset: 4px;
     background-color: rgba(239, 68, 68, 0.05) !important;
-  }
+  }`
+}
 
+/**
+ * Creates CSS for hot spot elements (headings, code, links, etc.)
+ */
+function createHotSpotStyles(scope: string): string {
+  return `
   /* === HOT SPOTS - Always fully visible === */
 
   /* Headings */
-  h1, h2, h3, h4, h5, h6 {
+  ${scope} h1, ${scope} h2, ${scope} h3, ${scope} h4, ${scope} h5, ${scope} h6 {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
@@ -74,15 +65,16 @@ function createStyles(config: ScanModeConfig, context: ModeContext): string {
   }
 
   /* Emphasis */
-  strong, b, mark, em {
-    color: inherit !important;
+  ${scope} strong, ${scope} b, ${scope} mark, ${scope} em {
+    color: CanvasText !important;
     filter: none !important;
     opacity: 1 !important;
-    background-color: rgba(250, 204, 21, 0.3) !important;
+    outline: 2px solid rgba(37, 99, 235, 0.5);
+    outline-offset: 1px;
   }
 
   /* Code */
-  code, pre, kbd, samp {
+  ${scope} code, ${scope} pre, ${scope} kbd, ${scope} samp {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
@@ -90,46 +82,46 @@ function createStyles(config: ScanModeConfig, context: ModeContext): string {
   }
 
   /* Links */
-  a, a * {
+  ${scope} a, ${scope} a * {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
   }
 
   /* Images and media */
-  img, picture, video, canvas, figure {
+  ${scope} img, ${scope} picture, ${scope} video, ${scope} canvas, ${scope} figure {
     filter: none !important;
     opacity: 1 !important;
     outline: 2px solid rgba(236, 72, 153, 0.5);
   }
 
   /* SVG icons */
-  svg, svg * {
+  ${scope} svg, ${scope} svg * {
     filter: none !important;
     opacity: 1 !important;
   }
 
   /* Emoji and icon elements */
-  [role="img"],
-  [data-emoji-id],
-  [data-testid*="emoji"],
-  .emoji,
-  span:has(> img.emoji) {
+  ${scope} [role="img"],
+  ${scope} [data-emoji-id],
+  ${scope} [data-testid*="emoji"],
+  ${scope} .emoji,
+  ${scope} span:has(> img.emoji) {
     filter: none !important;
     opacity: 1 !important;
   }
 
   /* Tables */
-  table, th, td, tr, thead, tbody {
+  ${scope} table, ${scope} th, ${scope} td, ${scope} tr, ${scope} thead, ${scope} tbody {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
   }
 
   /* Callouts and alerts */
-  .alert, .note, .warning, .tip, .info, .caution,
-  [class*="alert"], [class*="callout"], [class*="admonition"],
-  [class*="warning"], [class*="info"], [class*="tip"] {
+  ${scope} .alert, ${scope} .note, ${scope} .warning, ${scope} .tip, ${scope} .info, ${scope} .caution,
+  ${scope} [class*="alert"], ${scope} [class*="callout"], ${scope} [class*="admonition"],
+  ${scope} [class*="warning"], ${scope} [class*="info"], ${scope} [class*="tip"] {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
@@ -137,43 +129,106 @@ function createStyles(config: ScanModeConfig, context: ModeContext): string {
   }
 
   /* Buttons and interactive elements */
-  button, input, select, textarea, [role="button"] {
+  ${scope} button, ${scope} input, ${scope} select, ${scope} textarea, ${scope} [role="button"] {
     filter: none !important;
     opacity: 1 !important;
   }
 
-  /* List items with important content */
-  li:has(a), li:has(code), li:has(strong), li:has(img) {
+  /* Lists - always visible */
+  ${scope} ul, ${scope} ol, ${scope} li {
     color: inherit !important;
     filter: none !important;
-  }
+    opacity: 1 !important;
+  }`
+}
 
-  ${
-    platformHotSpots
-      ? `
+/**
+ * Creates CSS for platform-specific hot spots
+ */
+function createPlatformHotSpotStyles(preset: PlatformPreset, scope: string): string {
+  if (preset.selectors.hotSpots.length === 0) return ''
+
+  const selectors = preset.selectors.hotSpots.map((s) => `${scope} ${s}`).join(',\n  ')
+  return `
   /* Platform-specific hot spots (${preset.name}) */
-  ${platformHotSpots} {
+  ${selectors} {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
     outline: 2px solid rgba(139, 92, 246, 0.5);
-  }
-  `
-      : ''
-  }
+  }`
+}
 
-  ${
-    ignoreSelectors
-      ? `
-  /* Ignored elements (${preset.name}) */
-  ${ignoreSelectors} {
+/**
+ * Creates CSS for ignore elements - SCOPED to content area to prevent global pollution
+ */
+function createIgnoreElementStyles(preset: PlatformPreset, scope: string): string {
+  if (preset.selectors.ignoreElements.length === 0) return ''
+
+  // Scope to content area to prevent affecting navigation/sidebars
+  const selectors = preset.selectors.ignoreElements
+    .map((s) => `${scope} ${s}, ${scope} ${s} *`)
+    .join(',\n  ')
+  return `
+  /* Ignored elements - scoped to content area (${preset.name}) */
+  ${selectors} {
     opacity: 0.4 !important;
     filter: none !important;
+  }`
+}
+
+/**
+ * Creates CSS for navigation visibility
+ * Uses platform-specific selectors if available, otherwise falls back to generic selectors
+ */
+function createNavigationStyles(preset: PlatformPreset): string {
+  const navSelectors = preset.styles?.navigationSelectors
+
+  if (navSelectors && navSelectors.length > 0) {
+    // Platform-specific navigation selectors
+    return `
+  /* Platform-specific navigation (${preset.name}) */
+  ${navSelectors.join(',\n  ')} {
+    opacity: 0.5 !important;
+    filter: none !important;
+    pointer-events: auto !important;
+  }`
   }
-  `
-      : ''
-  }
-`
+
+  // Generic fallback for default/unknown platforms
+  return `
+  /* Generic navigation visibility */
+  nav, aside, [role="navigation"], [role="complementary"],
+  [class*="sidebar"], [class*="Sidebar"], [class*="nav"], [class*="Nav"],
+  [class*="menu"], [class*="Menu"], header, footer {
+    opacity: 0.5 !important;
+    filter: none !important;
+    pointer-events: auto !important;
+  }`
+}
+
+/**
+ * Creates CSS styles for scan mode
+ * Styles are scoped to contentArea to avoid affecting page navigation/UI
+ */
+function createStyles(config: ScanModeConfig, context: ModeContext): string {
+  const preset = context.preset
+  const scope = preset.selectors.contentArea
+
+  const sections = [
+    `  /*`,
+    `   * ScanVision Linter - Scan Mode (${preset.name} preset)`,
+    `   * Scoped to: ${scope}`,
+    `   */`,
+    createBaseStyles(scope, config),
+    createHotSpotStyles(scope),
+    createPlatformHotSpotStyles(preset, scope),
+    createIgnoreElementStyles(preset, scope),
+    createNavigationStyles(preset),
+    preset.styles?.additionalCSS || '',
+  ]
+
+  return sections.filter(Boolean).join('\n')
 }
 
 /**

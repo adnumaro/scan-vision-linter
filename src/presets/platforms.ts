@@ -1,3 +1,10 @@
+export interface PlatformStyleOverrides {
+  /** Navigation/sidebar selectors specific to this platform */
+  navigationSelectors?: string[]
+  /** Custom CSS rules for this platform */
+  additionalCSS?: string
+}
+
 export interface PlatformPreset {
   id: string
   name: string
@@ -8,6 +15,8 @@ export interface PlatformPreset {
     hotSpots: string[]
     ignoreElements: string[]
   }
+  /** Platform-specific style overrides */
+  styles?: PlatformStyleOverrides
 }
 
 export const PRESETS: PlatformPreset[] = [
@@ -28,9 +37,24 @@ export const PRESETS: PlatformPreset[] = [
     description: 'Optimized for GitHub READMEs and docs',
     domains: ['github.com', 'gist.github.com'],
     selectors: {
-      contentArea: '.markdown-body, .readme, article',
-      hotSpots: ['.anchor', '.octicon', '.task-list-item-checkbox', '.highlight', '.blob-code'],
-      ignoreElements: ['.file-navigation', '.repository-content > :not(.readme)', '.footer'],
+      contentArea: '.markdown-body',
+      hotSpots: [
+        '.anchor',
+        '.octicon',
+        '.task-list-item-checkbox',
+        '.highlight',
+        '.blob-code',
+        '.contains-task-list',
+        '.task-list-item',
+      ],
+      ignoreElements: ['.file-navigation', '.footer', '.drag-handle'],
+    },
+    styles: {
+      navigationSelectors: [
+        '.AppHeader',
+        '.UnderlineNav',
+        '.Layout-sidebar',
+      ],
     },
   },
   {
@@ -39,7 +63,7 @@ export const PRESETS: PlatformPreset[] = [
     description: 'Optimized for Notion pages',
     domains: ['notion.so', 'notion.site'],
     selectors: {
-      contentArea: '.notion-page-content, [class*="notion-page"]',
+      contentArea: '.notion-page-content',
       hotSpots: [
         '[class*="notion-header"]',
         '[class*="notion-callout"]',
@@ -48,8 +72,23 @@ export const PRESETS: PlatformPreset[] = [
         '[class*="notion-toggle"]',
         '[class*="notion-bookmark"]',
         '.notion-emoji',
+        '.notion-page-block',
       ],
-      ignoreElements: ['.notion-sidebar', '.notion-topbar'],
+      ignoreElements: [],
+    },
+    styles: {
+      navigationSelectors: [
+        '.notion-sidebar-container',
+        '.notion-sidebar',
+        '.notion-topbar',
+        '.notion-cursor-listener > div:first-child',
+      ],
+      additionalCSS: `
+  /* Notion page title - outside contentArea */
+  .notion-page-block > h1 {
+    outline: 2px solid rgba(37, 99, 235, 0.5);
+    outline-offset: 2px;
+  }`,
     },
   },
   {
@@ -66,8 +105,17 @@ export const PRESETS: PlatformPreset[] = [
         '.panel',
         '[class*="status-macro"]',
         '.expand-control',
+        '[data-testid="title-wrapper"]',
       ],
-      ignoreElements: ['#navigation', '.page-metadata', '#footer'],
+      ignoreElements: [],
+    },
+    styles: {
+      navigationSelectors: [
+        '[data-testid="grid-left-sidebar"]',
+        '[data-testid="space-navigation"]',
+        '[data-vc="space-navigation"]',
+        'nav[aria-label]',
+      ],
     },
   },
   {
@@ -87,6 +135,15 @@ export const PRESETS: PlatformPreset[] = [
       ],
       ignoreElements: ['.sidebar', '.document-toc', '.top-navigation'],
     },
+    styles: {
+      navigationSelectors: [
+        '.sidebar',
+        '.document-toc',
+        '.top-navigation',
+        '.main-menu',
+        '.header-main',
+      ],
+    },
   },
   {
     id: 'readme',
@@ -97,6 +154,9 @@ export const PRESETS: PlatformPreset[] = [
       contentArea: '.markdown-body, [class*="content"]',
       hotSpots: ['.callout', '[class*="Callout"]', '.code-tabs', '[class*="CodeTabs"]', '.embed'],
       ignoreElements: ['.rm-Sidebar', '[class*="Sidebar"]'],
+    },
+    styles: {
+      navigationSelectors: ['.rm-Sidebar', '[class*="Sidebar"]', '.rm-Header', '[class*="Header"]'],
     },
   },
   {
@@ -109,6 +169,13 @@ export const PRESETS: PlatformPreset[] = [
       hotSpots: ['.hint', '.tabs', '.code-block', '[class*="expandable"]'],
       ignoreElements: ['[data-testid="table-of-contents"]', '[class*="sidebar"]'],
     },
+    styles: {
+      navigationSelectors: [
+        '[data-testid="table-of-contents"]',
+        '[class*="sidebar"]',
+        '[data-testid="space.header"]',
+      ],
+    },
   },
   {
     id: 'docusaurus',
@@ -119,6 +186,15 @@ export const PRESETS: PlatformPreset[] = [
       contentArea: '.markdown, article',
       hotSpots: ['.admonition', '.alert', '.tabs-container', '.prism-code'],
       ignoreElements: ['.navbar', '.table-of-contents', '.pagination-nav', '.footer'],
+    },
+    styles: {
+      navigationSelectors: [
+        '.navbar',
+        '.table-of-contents',
+        '.pagination-nav',
+        '.menu',
+        '.sidebar',
+      ],
     },
   },
 ]
