@@ -142,6 +142,27 @@ function createHotSpotStyles(scope: string): string {
     color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
+  }
+
+  /* === HOT SPOTS INSIDE PARAGRAPHS === */
+  /* Use CanvasText to override inherited dimmed color from parent paragraph */
+
+  ${scope} p strong, ${scope} p b, ${scope} p mark, ${scope} p em {
+    color: CanvasText !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+
+  ${scope} p code, ${scope} p kbd, ${scope} p samp {
+    color: CanvasText !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+
+  ${scope} p a, ${scope} p a * {
+    color: CanvasText !important;
+    filter: none !important;
+    opacity: 1 !important;
   }`
 }
 
@@ -157,10 +178,20 @@ function createPlatformHotSpotStyles(preset: PlatformPreset, scope: string): str
   if (safeHotSpots.length === 0) return ''
 
   const selectors = safeHotSpots.map((s) => `${scope} ${s}`).join(',\n  ')
+  const selectorsInParagraphs = safeHotSpots.map((s) => `${scope} p ${s}`).join(',\n  ')
+
   return `
   /* Platform-specific hot spots (${preset.name}) */
   ${selectors} {
     color: inherit !important;
+    filter: none !important;
+    opacity: 1 !important;
+    outline: 2px solid rgba(139, 92, 246, 0.5);
+  }
+
+  /* Platform-specific hot spots inside paragraphs (${preset.name}) */
+  ${selectorsInParagraphs} {
+    color: CanvasText !important;
     filter: none !important;
     opacity: 1 !important;
     outline: 2px solid rgba(139, 92, 246, 0.5);
