@@ -280,13 +280,16 @@ function createIgnoreElementStyles(preset: PlatformPreset, scope: string): strin
   }
 
   return `
-  /* === EXCLUDED AREAS - No hotspot styling === */
+  /* === EXCLUDED AREAS - Dimmed and no hotspot styling === */
+  ${safeIgnoreSelectors.join(',\n  ')} {
+    opacity: 0.4 !important;
+  }
+
   ${excludeSelectors.join(',\n  ')} {
     outline: none !important;
     outline-offset: 0 !important;
     color: inherit !important;
     filter: inherit !important;
-    opacity: inherit !important;
   }`
 }
 
