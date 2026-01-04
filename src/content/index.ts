@@ -78,12 +78,27 @@ function invalidateCache(): void {
 
 /**
  * Gets the main content area element
+ * Safely handles empty or invalid selectors
  */
 function getContentArea(): Element {
-  const selectors = currentPreset.selectors.contentArea.split(',').map((s) => s.trim())
+  const contentAreaSelector = currentPreset.selectors.contentArea
+  if (!contentAreaSelector || !contentAreaSelector.trim()) {
+    return document.body
+  }
+
+  const selectors = contentAreaSelector
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+
   for (const selector of selectors) {
-    const element = document.querySelector(selector)
-    if (element) return element
+    try {
+      const element = document.querySelector(selector)
+      if (element) return element
+    } catch {
+      // Invalid selector, skip to next
+      console.warn(`[ScanVision] Invalid selector: ${selector}`)
+    }
   }
   return document.body
 }

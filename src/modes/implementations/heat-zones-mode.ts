@@ -7,13 +7,13 @@
 import { Flame } from 'lucide-react'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
 import { generateHeatGradientStops } from '../utils/colors'
+import { OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
 import { removeOverlayElement } from '../utils/overlay'
 import { generateRadialGradient } from '../utils/styles'
 import { onViewportChange } from '../utils/viewport'
 
 const MODE_ID = 'heat-zones'
 const OVERLAY_ID = 'heat-zones-overlay'
-const OVERLAY_PREFIX = 'scanvision-overlay-'
 
 export interface HeatZonesConfig extends ModeConfig {
   settings: {
@@ -134,7 +134,7 @@ export class HeatZonesMode implements VisualizationMode {
       left: ${rect.left}px;
       width: ${rect.width}px;
       height: ${rect.height}px;
-      z-index: 999989;
+      z-index: ${Z_INDEX.OVERLAY};
       pointer-events: none;
       background: ${gradient};
       mix-blend-mode: multiply;

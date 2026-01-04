@@ -7,7 +7,7 @@ import { ScanText } from 'lucide-react'
 import type { PlatformPreset } from '../../presets/platforms'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
 import { estimateLines, MAX_LINES_WITHOUT_ANCHOR } from '../utils/dom'
-import { sanitizeCSS } from '../utils/security'
+import { sanitizeCSS, sanitizeSelectors } from '../utils/security'
 import { injectStylesheet, removeStylesheet } from '../utils/styles'
 
 const MODE_ID = 'scan'
@@ -146,11 +146,16 @@ function createHotSpotStyles(scope: string): string {
 
 /**
  * Creates CSS for platform-specific hot spots
+ * Sanitizes selectors to prevent CSS injection attacks
  */
 function createPlatformHotSpotStyles(preset: PlatformPreset, scope: string): string {
   if (preset.selectors.hotSpots.length === 0) return ''
 
-  const selectors = preset.selectors.hotSpots.map((s) => `${scope} ${s}`).join(',\n  ')
+  // Sanitize selectors to prevent CSS injection
+  const safeHotSpots = sanitizeSelectors(preset.selectors.hotSpots)
+  if (safeHotSpots.length === 0) return ''
+
+  const selectors = safeHotSpots.map((s) => `${scope} ${s}`).join(',\n  ')
   return `
   /* Platform-specific hot spots (${preset.name}) */
   ${selectors} {
@@ -163,14 +168,17 @@ function createPlatformHotSpotStyles(preset: PlatformPreset, scope: string): str
 
 /**
  * Creates CSS for ignore elements - SCOPED to content area to prevent global pollution
+ * Sanitizes selectors to prevent CSS injection attacks
  */
 function createIgnoreElementStyles(preset: PlatformPreset, scope: string): string {
   if (preset.selectors.ignoreElements.length === 0) return ''
 
+  // Sanitize selectors to prevent CSS injection
+  const safeIgnoreElements = sanitizeSelectors(preset.selectors.ignoreElements)
+  if (safeIgnoreElements.length === 0) return ''
+
   // Scope to content area to prevent affecting navigation/sidebars
-  const selectors = preset.selectors.ignoreElements
-    .map((s) => `${scope} ${s}, ${scope} ${s} *`)
-    .join(',\n  ')
+  const selectors = safeIgnoreElements.map((s) => `${scope} ${s}, ${scope} ${s} *`).join(',\n  ')
   return `
   /* Ignored elements - scoped to content area (${preset.name}) */
   ${selectors} {
@@ -182,19 +190,24 @@ function createIgnoreElementStyles(preset: PlatformPreset, scope: string): strin
 /**
  * Creates CSS for navigation visibility
  * Uses platform-specific selectors if available, otherwise falls back to generic selectors
+ * Sanitizes selectors to prevent CSS injection attacks
  */
 function createNavigationStyles(preset: PlatformPreset): string {
   const navSelectors = preset.styles?.navigationSelectors
 
   if (navSelectors && navSelectors.length > 0) {
-    // Platform-specific navigation selectors
-    return `
+    // Sanitize navigation selectors
+    const safeNavSelectors = sanitizeSelectors(navSelectors)
+    if (safeNavSelectors.length > 0) {
+      // Platform-specific navigation selectors
+      return `
   /* Platform-specific navigation (${preset.name}) */
-  ${navSelectors.join(',\n  ')} {
+  ${safeNavSelectors.join(',\n  ')} {
     opacity: 0.5 !important;
     filter: none !important;
     pointer-events: auto !important;
   }`
+    }
   }
 
   // More specific fallback selectors to avoid false positives

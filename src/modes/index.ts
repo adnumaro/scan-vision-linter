@@ -6,6 +6,16 @@
 
 // Manager
 export { createModeManager, ModeManager } from './manager'
+export type { ModeInfo, ModeMetadata } from './metadata'
+// Metadata
+export {
+  CATEGORY_LABELS,
+  CATEGORY_ORDER,
+  getModeById,
+  getModesByCategory,
+  getModesGroupedByCategory,
+  MODE_METADATA,
+} from './metadata'
 // Registry
 export { ModeRegistry, registry } from './registry'
 // Types
