@@ -13,10 +13,11 @@ ScanVision Linter Pro is a Chrome extension (Manifest V3) for visual "scannabili
 ## Commands
 
 ```bash
-npm run dev      # Start Vite dev server with HMR (load dist/ in Chrome as unpacked extension)
-npm run build    # TypeScript check + Vite production build
-npm run lint     # Run ESLint on all files
-npm run preview  # Preview production build
+npm run dev       # Start Vite dev server with HMR (load dist/ in Chrome as unpacked extension)
+npm run build     # TypeScript check + Vite production build
+npm run lint      # Run Biome linter on all files
+npm run preview   # Preview production build
+npm run depcruise # Generate dependency graph (outputs .dot and .svg)
 ```
 
 ## Architecture
@@ -33,19 +34,50 @@ src/
 │   └── storage.ts              # Chrome storage helpers
 ├── presets/
 │   └── platforms.ts            # Platform presets (GitHub, Notion, etc.)
-└── content/
-    └── index.ts                # Content script - CSS injection & analytics
+├── components/
+│   ├── ModeList.tsx            # Mode grouping by category
+│   └── ModeToggle.tsx          # Individual mode toggle UI
+├── content/
+│   └── index.ts                # Content script - mode management & analytics
+└── modes/                      # Modular visualization system
+    ├── types.ts                # VisualizationMode interface, ModeContext
+    ├── registry.ts             # Singleton mode registry
+    ├── manager.ts              # Mode lifecycle coordinator
+    ├── index.ts                # Public API exports
+    ├── implementations/        # 6 visualization modes
+    │   ├── scan-mode.ts        # Core: dims text, highlights anchors
+    │   ├── f-pattern-mode.ts   # F-shaped reading pattern overlay
+    │   ├── e-pattern-mode.ts   # E-shaped reading pattern overlay
+    │   ├── fold-line-mode.ts   # "Above the fold" indicator line
+    │   ├── heat-zones-mode.ts  # Attention gradient overlay
+    │   └── first-5s-mode.ts    # Quick scan simulation
+    └── utils/
+        ├── colors.ts           # Color utilities & heat map gradients
+        ├── overlay.ts          # DOM overlay creation helpers
+        ├── styles.ts           # Style injection utilities
+        └── viewport.ts         # Viewport & fold line calculations
 
 manifest.json                   # Chrome extension manifest (MV3)
 vite.config.ts                  # Vite + CRXJS plugin config
+biome.json                      # Biome linter configuration
 ```
 
 ## Key Features
 
-### 1. Scan Mode
-- Dims paragraph text using `color-mix()` (not opacity, to avoid affecting children)
-- Highlights "hot spots": headings, emphasis, code, links, images, tables
-- Each hot spot type has a distinct visual indicator (outlines, backgrounds)
+### 1. Visualization Modes (6 modes)
+
+| Mode           | Category   | Description                                                                               |
+|----------------|------------|-------------------------------------------------------------------------------------------|
+| **Scan**       | Simulation | Core mode: dims text with `color-mix()`, highlights anchors (headings, code, links, etc.) |
+| **First 5s**   | Simulation | Shows only what users perceive in first 5 seconds (blur + word limit)                     |
+| **F-Pattern**  | Overlay    | F-shaped reading pattern overlay with 3 attention zones                                   |
+| **E-Pattern**  | Overlay    | E-shaped pattern overlay with 4 zones (more detailed than F)                              |
+| **Heat Zones** | Overlay    | Attention gradient overlay (green→red radial gradient)                                    |
+| **Fold Line**  | Indicator  | Shows "above the fold" viewport boundary                                                  |
+
+**Mode incompatibilities:**
+- Scan ↔ First 5s (both are text simulations)
+- F-Pattern ↔ E-Pattern (both are pattern overlays)
 
 ### 2. Scannability Analytics
 - Calculates score (0-100) based on anchor/text ratio
@@ -53,7 +85,8 @@ vite.config.ts                  # Vite + CRXJS plugin config
 - Shows breakdown by anchor type in popup
 
 ### 3. Platform Presets
-- Auto-detects platform from URL (GitHub, Notion, Confluence, MDN, etc.)
+- Auto-detects platform from URL on every popup open
+- Supported: GitHub, Notion, Confluence, MDN, and more
 - Each preset defines: content area, platform-specific hot spots, elements to ignore
 - User can manually override preset selection
 
@@ -62,20 +95,54 @@ vite.config.ts                  # Vite + CRXJS plugin config
 - Blur amount slider (0-2px)
 - Settings persist in `chrome.storage.local`
 
+## Mode System Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  POPUP UI (React)                                       │
+│  App.tsx → ModeList.tsx → ModeToggle.tsx                │
+└─────────────┬───────────────────────────────────────────┘
+              │ Chrome Message API
+              ↓
+┌─────────────────────────────────────────────────────────┐
+│  CONTENT SCRIPT (content/index.ts)                      │
+│  Listens for messages, manages ModeManager              │
+└─────────────┬───────────────────────────────────────────┘
+              │
+              ↓
+┌─────────────────────────────────────────────────────────┐
+│  MODE SYSTEM                                            │
+│  ├─ Registry: Stores all registered modes (singleton)   │
+│  ├─ Manager: Coordinates activation/deactivation        │
+│  └─ 6 Mode Implementations (each exports singleton)     │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Key patterns:**
+- **Registry Pattern** - Central mode registration, easy to add new modes
+- **Result Pattern** - `{ success: true, value } | { success: false, error }`
+- **Singleton Instances** - Each mode exports a singleton for stateful tracking
+- **ModeContext** - Runtime data (contentArea, viewport, preset) passed to modes
+
 ## Message Flow
 
 ```
 Popup (App.tsx)                    Content Script (content/index.ts)
-      │                                      │
-      │─── toggle-scan + config + preset ───>│
-      │<── isScanning + analytics ──────────│
-      │                                      │
-      │─── update-config + preset ─────────>│
-      │<── isScanning ─────────────────────│
-      │                                      │
-      │─── get-state ─────────────────────>│
-      │<── isScanning + config ────────────│
+      │                                           │
+      │─── toggle-scan + config + preset ────────>│
+      │<── isScanning + activeModes + analytics ──│
+      │                                           │
+      │─── toggle-mode + modeId ─────────────────>│
+      │<── isScanning + activeModes ──────────────│
+      │                                           │
+      │─── update-config + preset ───────────────>│
+      │<── isScanning ────────────────────────────│
+      │                                           │
+      │─── get-state ────────────────────────────>│
+      │<── isScanning + config + activeModes ─────│
 ```
+
+**Message actions:** `toggle-scan`, `toggle-mode`, `update-config`, `get-state`, `analyze`
 
 ## Development Setup
 
@@ -88,7 +155,7 @@ Popup (App.tsx)                    Content Script (content/index.ts)
 
 Edit `src/presets/platforms.ts`:
 
-```typescript
+```json lines
 {
   id: 'my-platform',
   name: 'My Platform',
@@ -102,21 +169,68 @@ Edit `src/presets/platforms.ts`:
 }
 ```
 
-## TypeScript Configuration
+## Adding a New Visualization Mode
 
-Uses project references with separate configs:
+1. Create implementation in `src/modes/implementations/my-mode.ts`:
+
+```typescript
+import type { VisualizationMode, ModeContext, ModeConfig } from '../types';
+
+class MyMode implements VisualizationMode {
+  readonly id = 'my-mode';
+  readonly name = 'My Mode';
+  readonly description = 'What this mode does';
+  readonly icon = 'Eye';  // lucide-react icon name
+  readonly category = 'overlay';  // 'overlay' | 'indicator' | 'simulation'
+  readonly incompatibleWith = ['other-mode'];  // IDs of conflicting modes
+
+  private active = false;
+
+  activate(context: ModeContext, config: ModeConfig): void {
+    // Add overlays, inject styles, etc.
+    this.active = true;
+  }
+
+  deactivate(): void {
+    // Clean up overlays, remove styles
+    this.active = false;
+  }
+
+  isActive(): boolean { return this.active; }
+  getConfig(): ModeConfig { return {}; }
+}
+
+export const myMode = new MyMode();  // Export singleton
+```
+
+2. Register in `src/modes/registry.ts`:
+
+```typescript
+import { myMode } from './implementations/my-mode';
+// Add to register() calls at bottom of file
+register(myMode);
+```
+
+3. The mode will automatically appear in the popup UI grouped by category.
+
+## TypeScript & Linting
+
+**TypeScript** uses project references:
 - `tsconfig.app.json` - Application code, includes Chrome types (`@types/chrome`)
 - `tsconfig.node.json` - Vite config, includes Node types
+- Use `import type` for type-only imports due to `verbatimModuleSyntax`
 
-**Important:** Use `import type` for type-only imports due to `verbatimModuleSyntax`.
+**Biome** (replaces ESLint/Prettier):
+- Config in `biome.json`
+- Run `npm run lint` for linting
+- Fast, single-tool solution for linting and formatting
 
 ## Documentation
 
-| File | Description |
-|------|-------------|
-| `PROJECT.md` | Project vision, problem statement, roadmap |
-| `IMPLEMENTATION_PLAN.md` | Detailed task breakdown by phase |
-| `VISUALIZATION_MODES_ARCHITECTURE.md` | Architecture for modular visualization modes system |
+| File                     | Description                                |
+|--------------------------|--------------------------------------------|
+| `PROJECT.md`             | Project vision, problem statement, roadmap |
+| `IMPLEMENTATION_PLAN.md` | Detailed task breakdown by phase           |
 
 ## Privacy
 
