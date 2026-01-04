@@ -67,7 +67,7 @@ function createHotSpotStyles(scope: string): string {
 
   /* Emphasis */
   ${scope} strong, ${scope} b, ${scope} mark, ${scope} em {
-    color: CanvasText !important;
+    color: inherit !important;
     filter: none !important;
     opacity: 1 !important;
     outline: 2px solid rgba(37, 99, 235, 0.5);
@@ -196,12 +196,30 @@ function createNavigationStyles(preset: PlatformPreset): string {
   }`
   }
 
-  // Generic fallback for default/unknown platforms
+  // More specific fallback selectors to avoid false positives
   return `
-  /* Generic navigation visibility */
-  nav, aside, [role="navigation"], [role="complementary"],
-  [class*="sidebar"], [class*="Sidebar"], [class*="nav"], [class*="Nav"],
-  [class*="menu"], [class*="Menu"], header, footer {
+  /* Generic navigation visibility - using specific patterns */
+  body > nav,
+  body > header,
+  body > aside,
+  body > footer,
+  [role="navigation"],
+  [role="banner"],
+  [role="complementary"],
+  [aria-label*="navigation" i],
+  [aria-label*="sidebar" i],
+  [aria-label*="menu" i],
+  .site-header,
+  .site-nav,
+  .site-sidebar,
+  .site-footer,
+  .main-nav,
+  .main-header,
+  .page-header,
+  #header,
+  #nav,
+  #sidebar,
+  #footer {
     opacity: 0.5 !important;
     filter: none !important;
     pointer-events: auto !important;
@@ -211,6 +229,11 @@ function createNavigationStyles(preset: PlatformPreset): string {
 /**
  * Creates CSS styles for scan mode
  * Styles are scoped to contentArea to avoid affecting page navigation/UI
+ *
+ * NOTE: !important is used extensively because as a browser extension,
+ * we need to override page styles reliably. CSS Cascade Layers could be
+ * an alternative in the future, but !important ensures consistent behavior
+ * across all documentation platforms.
  */
 function createStyles(config: ScanModeConfig, context: ModeContext): string {
   const preset = context.preset
