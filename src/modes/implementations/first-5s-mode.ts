@@ -11,7 +11,7 @@
 
 import { Timer } from 'lucide-react'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
-import { SCAN_COLORS, withOpacity } from '../utils/colors'
+import { getBodyBgColor, SCAN_COLORS, withOpacity } from '../utils/colors'
 import { cloneModeConfig } from '../utils/config'
 import { Z_INDEX } from '../utils/constants'
 import { createOverlayTracker, type OverlayTracker } from '../utils/overlay-tracker'
@@ -33,21 +33,6 @@ const DEFAULT_CONFIG: First5sConfig = {
     blur: 2,
     opacity: 0.7,
   },
-}
-
-/**
- * Gets the background color of the page body
- */
-function getBodyBgColor(): string {
-  const bodyBg = window.getComputedStyle(document.body).backgroundColor
-  if (bodyBg === 'rgba(0, 0, 0, 0)' || bodyBg === 'transparent') {
-    const htmlBg = window.getComputedStyle(document.documentElement).backgroundColor
-    if (htmlBg !== 'rgba(0, 0, 0, 0)' && htmlBg !== 'transparent') {
-      return htmlBg
-    }
-    return '#ffffff'
-  }
-  return bodyBg
 }
 
 /**

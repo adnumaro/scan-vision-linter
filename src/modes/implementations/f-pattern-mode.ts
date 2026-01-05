@@ -72,14 +72,20 @@ class FPatternMode extends ViewportTrackingMode<FPatternConfig> {
     const bgColor = hexToRgba(color, opacity)
     const borderColor = hexToRgba(color, opacity + 0.1)
 
-    // Position overlay to match content area bounds
+    // Calculate visible area (intersection of content area and viewport)
+    const viewportHeight = window.innerHeight
+    const visibleTop = Math.max(rect.top, 0)
+    const visibleBottom = Math.min(rect.bottom, viewportHeight)
+    const visibleHeight = Math.max(0, visibleBottom - visibleTop)
+
+    // Position overlay to match visible content area
     this.overlayElement.style.cssText = `
       position: fixed;
-      top: ${rect.top}px;
+      top: ${visibleTop}px;
       left: ${rect.left}px;
       width: ${rect.width}px;
-      height: ${rect.height}px;
-      z-index: ${Z_INDEX.OVERLAY};
+      height: ${visibleHeight}px;
+      z-index: ${Z_INDEX.PATTERN_OVERLAY};
       pointer-events: none;
       overflow: hidden;
     `
@@ -87,8 +93,8 @@ class FPatternMode extends ViewportTrackingMode<FPatternConfig> {
     // Clear previous content safely
     this.overlayElement.textContent = ''
 
-    // F-Pattern zones (percentages of content area)
-    const ch = rect.height
+    // F-Pattern zones (percentages of VISIBLE area, not total content)
+    const ch = visibleHeight
     const cw = rect.width
 
     const topBarHeight = ch * F_PATTERN.TOP_BAR_HEIGHT

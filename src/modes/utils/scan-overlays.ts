@@ -3,7 +3,7 @@
  * Works on any background color (light, dark, or colored)
  */
 
-import { SCAN_COLORS, withOpacity } from './colors'
+import { getBodyBgColor, SCAN_COLORS, withOpacity } from './colors'
 import { Z_INDEX } from './constants'
 import { createOverlayTracker, type OverlayTracker } from './overlay-tracker'
 
@@ -26,21 +26,6 @@ export interface ScanOverlayConfig {
 const DEFAULT_CONFIG: ScanOverlayConfig = {
   blur: 1.5,
   opacity: 0.5,
-}
-
-/**
- * Gets the background color of the page body
- */
-function getBodyBgColor(): string {
-  const bodyBg = window.getComputedStyle(document.body).backgroundColor
-  if (bodyBg === 'rgba(0, 0, 0, 0)' || bodyBg === 'transparent') {
-    const htmlBg = window.getComputedStyle(document.documentElement).backgroundColor
-    if (htmlBg !== 'rgba(0, 0, 0, 0)' && htmlBg !== 'transparent') {
-      return htmlBg
-    }
-    return '#ffffff'
-  }
-  return bodyBg
 }
 
 /**

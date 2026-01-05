@@ -64,19 +64,27 @@ class HeatZonesMode extends ViewportTrackingMode<HeatZonesConfig> {
 
     const rect = this.contentArea.getBoundingClientRect()
     const { intensity } = this.config.settings
-    const alpha = intensity * 0.25
+    // Increased alpha for more visible gradient (was 0.25, now 0.5)
+    const alpha = intensity * 0.5
+
+    // Calculate visible area (intersection of content area and viewport)
+    const viewportHeight = window.innerHeight
+    const visibleTop = Math.max(rect.top, 0)
+    const visibleBottom = Math.min(rect.bottom, viewportHeight)
+    const visibleHeight = Math.max(0, visibleBottom - visibleTop)
 
     const gradientStops = generateHeatGradientStops(alpha)
     const gradient = generateRadialGradient(gradientStops, 'top left')
 
-    // Position overlay to match content area bounds
+    // Position overlay to match visible content area
+    // Uses HEAT_OVERLAY z-index to appear above scan overlays
     this.overlayElement.style.cssText = `
       position: fixed;
-      top: ${rect.top}px;
+      top: ${visibleTop}px;
       left: ${rect.left}px;
       width: ${rect.width}px;
-      height: ${rect.height}px;
-      z-index: ${Z_INDEX.OVERLAY};
+      height: ${visibleHeight}px;
+      z-index: ${Z_INDEX.HEAT_OVERLAY};
       pointer-events: none;
       background: ${gradient};
       mix-blend-mode: multiply;

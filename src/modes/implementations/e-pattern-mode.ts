@@ -73,14 +73,20 @@ class EPatternMode extends ViewportTrackingMode<EPatternConfig> {
     const bgColor = hexToRgba(color, opacity)
     const borderColor = hexToRgba(color, opacity + 0.1)
 
-    // Position overlay to match content area bounds
+    // Calculate visible area (intersection of content area and viewport)
+    const viewportHeight = window.innerHeight
+    const visibleTop = Math.max(rect.top, 0)
+    const visibleBottom = Math.min(rect.bottom, viewportHeight)
+    const visibleHeight = Math.max(0, visibleBottom - visibleTop)
+
+    // Position overlay to match visible content area
     this.overlayElement.style.cssText = `
       position: fixed;
-      top: ${rect.top}px;
+      top: ${visibleTop}px;
       left: ${rect.left}px;
       width: ${rect.width}px;
-      height: ${rect.height}px;
-      z-index: ${Z_INDEX.OVERLAY};
+      height: ${visibleHeight}px;
+      z-index: ${Z_INDEX.PATTERN_OVERLAY};
       pointer-events: none;
       overflow: hidden;
     `
@@ -88,9 +94,9 @@ class EPatternMode extends ViewportTrackingMode<EPatternConfig> {
     // Clear previous content safely
     this.overlayElement.textContent = ''
 
-    // E-Pattern zones (percentages of content area)
+    // E-Pattern zones (percentages of VISIBLE area, not total content)
     const cw = rect.width
-    const ch = rect.height
+    const ch = visibleHeight
 
     const barHeight = ch * E_PATTERN.BAR_HEIGHT
     const topBarTop = 0

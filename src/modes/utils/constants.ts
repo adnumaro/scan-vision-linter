@@ -7,8 +7,12 @@
  * All scanvision overlays should use these values to avoid conflicts
  */
 export const Z_INDEX = {
-  /** Base overlay layer (pattern overlays, heat zones) */
+  /** Base overlay layer (scan dim overlays) */
   OVERLAY: 999990,
+  /** Pattern overlays (F-pattern, E-pattern) - above scan highlights */
+  PATTERN_OVERLAY: 999993,
+  /** Heat zones layer (above patterns) */
+  HEAT_OVERLAY: 999994,
   /** Indicator layer (fold line) */
   INDICATOR: 999995,
   /** Top-most layer (labels, tooltips) */

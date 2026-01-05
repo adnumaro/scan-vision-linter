@@ -150,3 +150,19 @@ export function withOpacity(color: string, opacity: number): string {
   const percent = Math.round(clamped * 100)
   return `color-mix(in srgb, ${color} ${percent}%, transparent)`
 }
+
+/**
+ * Gets the background color of the page body
+ * Falls back to white if body/html have transparent backgrounds
+ */
+export function getBodyBgColor(): string {
+  const bodyBg = window.getComputedStyle(document.body).backgroundColor
+  if (bodyBg === 'rgba(0, 0, 0, 0)' || bodyBg === 'transparent') {
+    const htmlBg = window.getComputedStyle(document.documentElement).backgroundColor
+    if (htmlBg !== 'rgba(0, 0, 0, 0)' && htmlBg !== 'transparent') {
+      return htmlBg
+    }
+    return '#ffffff'
+  }
+  return bodyBg
+}
