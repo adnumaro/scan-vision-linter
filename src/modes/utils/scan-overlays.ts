@@ -31,8 +31,8 @@ export interface ScanOverlayConfig {
 }
 
 const DEFAULT_CONFIG: ScanOverlayConfig = {
-  blur: 2,
-  opacity: 0,
+  blur: 1.5,
+  opacity: 0.5,
 }
 
 /**
@@ -44,13 +44,31 @@ function addOverlayToBody(overlay: HTMLElement): void {
 }
 
 /**
- * Creates a dim overlay for a text block using backdrop-filter
+ * Gets the background color of the page body (hoisted for use in createDimOverlay)
+ */
+function getBodyBgColor(): string {
+  const bodyBg = window.getComputedStyle(document.body).backgroundColor
+  if (bodyBg === 'rgba(0, 0, 0, 0)' || bodyBg === 'transparent') {
+    const htmlBg = window.getComputedStyle(document.documentElement).backgroundColor
+    if (htmlBg !== 'rgba(0, 0, 0, 0)' && htmlBg !== 'transparent') {
+      return htmlBg
+    }
+    return '#ffffff'
+  }
+  return bodyBg
+}
+
+/**
+ * Creates a dim overlay for a text block using backdrop-filter and body-colored background
  */
 function createDimOverlay(rect: DOMRect, config: ScanOverlayConfig): HTMLElement {
   const overlay = document.createElement('div')
   overlay.className = OVERLAY_CLASSES.dimOverlay
-  // Use transparent background, only backdrop-filter for blur effect
-  const bgStyle = config.opacity > 0 ? `background: rgba(128, 128, 128, ${config.opacity});` : ''
+
+  // Use body background color with opacity to dim text
+  const bgColor = getBodyBgColor()
+  const bgStyle = config.opacity > 0 ? `background: ${withOpacity(bgColor, config.opacity)};` : ''
+
   overlay.style.cssText = `
     position: fixed;
     top: ${rect.top}px;
@@ -314,23 +332,6 @@ function createInlineAnchorHighlights(paragraph: Element, ignoreSelector: string
 }
 
 /**
- * Gets the background color of the page body
- */
-function getBodyBackgroundColor(): string {
-  const bodyBg = window.getComputedStyle(document.body).backgroundColor
-  // If body is transparent, try html element
-  if (bodyBg === 'rgba(0, 0, 0, 0)' || bodyBg === 'transparent') {
-    const htmlBg = window.getComputedStyle(document.documentElement).backgroundColor
-    if (htmlBg !== 'rgba(0, 0, 0, 0)' && htmlBg !== 'transparent') {
-      return htmlBg
-    }
-    // Default to white if both are transparent
-    return '#ffffff'
-  }
-  return bodyBg
-}
-
-/**
  * Creates an inline highlight element that shows anchor text above the blur
  * Background is always solid (body color), text color opacity varies by attention level
  */
@@ -349,7 +350,7 @@ function createInlineHighlight(
   const computed = window.getComputedStyle(anchor)
 
   // Get body background color for the highlight background (always solid)
-  const bgColor = getBodyBackgroundColor()
+  const bgColor = getBodyBgColor()
 
   // Apply opacity to text color only, not the whole element
   const textColor = textOpacity >= 1 ? computed.color : withOpacity(computed.color, textOpacity)
@@ -473,6 +474,8 @@ export function createProblemOverlays(
  * Updates the config for all dim overlays
  */
 export function updateDimOverlayConfig(config: ScanOverlayConfig): void {
+  const bgColor = getBodyBgColor()
+
   for (const tracked of trackedElements) {
     if (tracked.type === 'dim') {
       const blurValue = `blur(${config.blur}px)`
@@ -481,7 +484,7 @@ export function updateDimOverlayConfig(config: ScanOverlayConfig): void {
       ;(tracked.overlay.style as unknown as Record<string, string>)['-webkit-backdrop-filter'] =
         blurValue
       tracked.overlay.style.background =
-        config.opacity > 0 ? `rgba(128, 128, 128, ${config.opacity})` : 'transparent'
+        config.opacity > 0 ? withOpacity(bgColor, config.opacity) : 'transparent'
     }
   }
 }

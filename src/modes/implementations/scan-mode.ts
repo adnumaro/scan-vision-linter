@@ -16,8 +16,6 @@ import { cloneModeConfig } from '../utils/config'
 import { batchAnalyzeParagraphs } from '../utils/dom'
 import {
   createDimOverlays,
-  createHotspotOverlays,
-  createProblemOverlays,
   removeAllScanOverlays,
   type ScanOverlayConfig,
   updateDimOverlayConfig,
@@ -37,8 +35,8 @@ interface ScanModeConfig extends ModeConfig {
 const DEFAULT_CONFIG: ScanModeConfig = {
   enabled: true,
   settings: {
-    blur: 2,
-    opacity: 0,
+    blur: 1.5,
+    opacity: 0.5,
   },
 }
 
@@ -128,18 +126,7 @@ class ScanMode implements VisualizationMode {
       ignoreSelector,
     )
 
-    // 3. Create hotspot overlays for anchor elements
-    createHotspotOverlays(
-      context.contentArea,
-      {
-        hotSpots: context.preset.selectors.hotSpots,
-        codeBlocks: context.preset.selectors.codeBlocks,
-      },
-      ignoreSelector,
-    )
-
-    // 4. Create problem overlays
-    createProblemOverlays(problemBlocks, 'problem')
+    // 3. Create overlays for unformatted code (antipatterns)
     markUnformattedCodeBlocks(unformattedCode)
 
     this.active = true
