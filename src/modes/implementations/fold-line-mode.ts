@@ -4,12 +4,12 @@
  */
 
 import { Minus } from 'lucide-react'
-import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
+import type { ModeConfig } from '../types'
+import { ViewportTrackingMode } from '../utils/base-mode'
 import { COLORS } from '../utils/colors'
-import { cloneModeConfig } from '../utils/config'
 import { OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
 import { removeOverlayElement } from '../utils/overlay'
-import { getFoldLinePosition, onViewportChange } from '../utils/viewport'
+import { getFoldLinePosition } from '../utils/viewport'
 
 const MODE_ID = 'fold-line'
 const LINE_ID = 'fold-line-line'
@@ -35,7 +35,7 @@ const DEFAULT_CONFIG: FoldLineConfig = {
 /**
  * Fold Line Mode implementation
  */
-class FoldLineMode implements VisualizationMode {
+class FoldLineMode extends ViewportTrackingMode<FoldLineConfig> {
   readonly id = MODE_ID
   readonly name = 'Fold Line'
   readonly description = 'Shows what users see without scrolling'
@@ -43,99 +43,14 @@ class FoldLineMode implements VisualizationMode {
   readonly category = 'indicator' as const
   readonly incompatibleWith: string[] = []
 
-  private active = false
-  private config: FoldLineConfig = DEFAULT_CONFIG
-  private cleanup: (() => void) | null = null
   private lineElement: HTMLElement | null = null
   private labelElement: HTMLElement | null = null
-  private contentArea: Element | null = null
 
-  activate(context: ModeContext): void {
-    if (this.active) return
-
-    // Clean up previous listener to prevent memory leak
-    this.cleanup?.()
-
-    this.contentArea = context.contentArea
-    this.createElements()
-    this.positionElements()
-
-    // Update on resize and scroll
-    this.cleanup = onViewportChange(() => {
-      this.positionElements()
-    })
-
-    this.active = true
+  constructor() {
+    super(DEFAULT_CONFIG)
   }
 
-  deactivate(): void {
-    if (!this.active) return
-
-    removeOverlayElement(LINE_ID)
-    removeOverlayElement(LABEL_ID)
-
-    this.cleanup?.()
-    this.cleanup = null
-    this.lineElement = null
-    this.labelElement = null
-    this.contentArea = null
-    this.active = false
-  }
-
-  update(config: ModeConfig): void {
-    this.config = {
-      ...this.config,
-      ...config,
-      settings: {
-        ...this.config.settings,
-        ...(config.settings as FoldLineConfig['settings']),
-      },
-    }
-
-    if (this.active && this.contentArea) {
-      // Update styles without recreating elements
-      this.updateElementStyles()
-      this.positionElements()
-    }
-  }
-
-  /**
-   * Updates element styles without recreating them
-   */
-  private updateElementStyles(): void {
-    const { color, showLabel, labelText } = this.config.settings
-
-    if (this.lineElement) {
-      this.lineElement.style.borderTopColor = color
-    }
-
-    if (this.labelElement) {
-      if (showLabel) {
-        this.labelElement.textContent = labelText
-        this.labelElement.style.backgroundColor = color
-        this.labelElement.style.display = 'block'
-      } else {
-        this.labelElement.style.display = 'none'
-      }
-    }
-  }
-
-  isActive(): boolean {
-    return this.active
-  }
-
-  getDefaultConfig(): ModeConfig {
-    return DEFAULT_CONFIG
-  }
-
-  getConfig(): ModeConfig {
-    return cloneModeConfig(this.config)
-  }
-
-  /**
-   * Creates the line and label elements constrained to content area
-   */
-  private createElements(): void {
+  protected createOverlay(): void {
     const { color, showLabel, labelText } = this.config.settings
 
     // Create line element
@@ -181,12 +96,11 @@ class FoldLineMode implements VisualizationMode {
       `
       this.labelElement = labelEl
     }
+
+    this.updateOverlay()
   }
 
-  /**
-   * Positions the line and label at the fold within content area
-   */
-  private positionElements(): void {
+  protected updateOverlay(): void {
     if (!this.contentArea) return
 
     const rect = this.contentArea.getBoundingClientRect()
@@ -211,6 +125,50 @@ class FoldLineMode implements VisualizationMode {
         this.labelElement.style.display = 'block'
         this.labelElement.style.top = `${foldY - 24}px`
         this.labelElement.style.left = `${rect.left + rect.width - 100}px`
+      } else {
+        this.labelElement.style.display = 'none'
+      }
+    }
+  }
+
+  protected removeOverlay(): void {
+    removeOverlayElement(LINE_ID)
+    removeOverlayElement(LABEL_ID)
+    this.lineElement = null
+    this.labelElement = null
+  }
+
+  /**
+   * Override update to handle label visibility changes
+   */
+  override update(config: ModeConfig): void {
+    const hadLabel = this.config.settings.showLabel
+    super.update(config)
+
+    // If label visibility changed while active, recreate elements
+    if (this.active && hadLabel !== this.config.settings.showLabel) {
+      this.removeOverlay()
+      this.createOverlay()
+    } else if (this.active) {
+      this.updateElementStyles()
+    }
+  }
+
+  /**
+   * Updates element styles without recreating them
+   */
+  private updateElementStyles(): void {
+    const { color, showLabel, labelText } = this.config.settings
+
+    if (this.lineElement) {
+      this.lineElement.style.borderTopColor = color
+    }
+
+    if (this.labelElement) {
+      if (showLabel) {
+        this.labelElement.textContent = labelText
+        this.labelElement.style.backgroundColor = color
+        this.labelElement.style.display = 'block'
       } else {
         this.labelElement.style.display = 'none'
       }

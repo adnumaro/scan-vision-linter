@@ -5,13 +5,12 @@
  */
 
 import { Flame } from 'lucide-react'
-import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
+import type { ModeConfig } from '../types'
+import { ViewportTrackingMode } from '../utils/base-mode'
 import { generateHeatGradientStops } from '../utils/colors'
-import { cloneModeConfig } from '../utils/config'
 import { OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
 import { removeOverlayElement } from '../utils/overlay'
 import { generateRadialGradient } from '../utils/styles'
-import { onViewportChange } from '../utils/viewport'
 
 const MODE_ID = 'heat-zones'
 const OVERLAY_ID = 'heat-zones-overlay'
@@ -32,7 +31,7 @@ const DEFAULT_CONFIG: HeatZonesConfig = {
 /**
  * Heat Zones Mode implementation
  */
-class HeatZonesMode implements VisualizationMode {
+class HeatZonesMode extends ViewportTrackingMode<HeatZonesConfig> {
   readonly id = MODE_ID
   readonly name = 'Heat Zones'
   readonly description = 'Shows attention gradient (green = high, red = low)'
@@ -40,71 +39,13 @@ class HeatZonesMode implements VisualizationMode {
   readonly category = 'overlay' as const
   readonly incompatibleWith: string[] = []
 
-  private active = false
-  private config: HeatZonesConfig = DEFAULT_CONFIG
-  private cleanup: (() => void) | null = null
   private overlayElement: HTMLElement | null = null
-  private contentArea: Element | null = null
 
-  activate(context: ModeContext): void {
-    if (this.active) return
-
-    // Clean up previous listener to prevent memory leak
-    this.cleanup?.()
-
-    this.contentArea = context.contentArea
-    this.createOverlay()
-
-    // Update on resize and scroll (content area position changes)
-    this.cleanup = onViewportChange(() => {
-      this.updateOverlay()
-    })
-
-    this.active = true
+  constructor() {
+    super(DEFAULT_CONFIG)
   }
 
-  deactivate(): void {
-    if (!this.active) return
-
-    removeOverlayElement(OVERLAY_ID)
-    this.cleanup?.()
-    this.cleanup = null
-    this.overlayElement = null
-    this.contentArea = null
-    this.active = false
-  }
-
-  update(config: ModeConfig): void {
-    this.config = {
-      ...this.config,
-      ...config,
-      settings: {
-        ...this.config.settings,
-        ...(config.settings as HeatZonesConfig['settings']),
-      },
-    }
-
-    if (this.active) {
-      this.updateOverlay()
-    }
-  }
-
-  isActive(): boolean {
-    return this.active
-  }
-
-  getDefaultConfig(): ModeConfig {
-    return DEFAULT_CONFIG
-  }
-
-  getConfig(): ModeConfig {
-    return cloneModeConfig(this.config)
-  }
-
-  /**
-   * Creates the heat zones overlay positioned over content area
-   */
-  private createOverlay(): void {
+  protected createOverlay(): void {
     const fullId = OVERLAY_PREFIX + OVERLAY_ID
     let overlay = document.getElementById(fullId)
 
@@ -118,10 +59,7 @@ class HeatZonesMode implements VisualizationMode {
     this.updateOverlay()
   }
 
-  /**
-   * Updates the overlay with current content area dimensions
-   */
-  private updateOverlay(): void {
+  protected updateOverlay(): void {
     if (!this.overlayElement || !this.contentArea) return
 
     const rect = this.contentArea.getBoundingClientRect()
@@ -143,6 +81,11 @@ class HeatZonesMode implements VisualizationMode {
       background: ${gradient};
       mix-blend-mode: multiply;
     `
+  }
+
+  protected removeOverlay(): void {
+    removeOverlayElement(OVERLAY_ID)
+    this.overlayElement = null
   }
 }
 

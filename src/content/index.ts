@@ -47,6 +47,58 @@ registry.register(first5sMode)
 // Create manager
 const manager = createModeManager(registry)
 
+// Use the first preset (default) from platforms.ts - single source of truth
+const DEFAULT_PRESET = PRESETS[0]
+
+/**
+ * Consolidated content script state
+ * Single source of truth for all mutable state
+ */
+interface ContentState {
+  config: ScanConfig
+  preset: PlatformPreset
+  cache: {
+    data: AnalyticsData | null
+    timestamp: number
+    contentHash: string
+  }
+}
+
+const state: ContentState = {
+  config: DEFAULT_CONFIG,
+  preset: DEFAULT_PRESET,
+  cache: {
+    data: null,
+    timestamp: 0,
+    contentHash: '',
+  },
+}
+
+const CACHE_TTL = 1000 // 1 second TTL
+
+/**
+ * Valid message actions
+ */
+const VALID_ACTIONS = [
+  'get-state',
+  'analyze',
+  'update-config',
+  'toggle-mode',
+  'toggle-scan',
+] as const
+type ValidAction = (typeof VALID_ACTIONS)[number]
+
+/**
+ * Type guard for valid message structure
+ */
+function isValidMessage(msg: unknown): msg is Message {
+  if (typeof msg !== 'object' || msg === null) {
+    return false
+  }
+  const message = msg as Record<string, unknown>
+  return typeof message.action === 'string' && VALID_ACTIONS.includes(message.action as ValidAction)
+}
+
 /**
  * Validates that a modeId is registered in the registry
  * Returns the modeId if valid, null otherwise
@@ -59,39 +111,18 @@ function validateModeId(modeId: unknown): string | null {
   return registry.has(trimmedId) ? trimmedId : null
 }
 
-// Use the first preset (default) from platforms.ts - single source of truth
-const DEFAULT_PRESET = PRESETS[0]
-
-let currentConfig: ScanConfig = DEFAULT_CONFIG
-let currentPreset: PlatformPreset = DEFAULT_PRESET
-
-// Analytics cache to avoid recalculating on every toggle
-interface AnalyticsCache {
-  data: AnalyticsData | null
-  timestamp: number
-  contentHash: string
-}
-
-let analyticsCache: AnalyticsCache = {
-  data: null,
-  timestamp: 0,
-  contentHash: '',
-}
-
-const CACHE_TTL = 1000 // 1 second TTL
-
 /**
  * Computes a simple hash of content area for cache invalidation
  */
 function getContentHash(contentArea: Element): string {
-  return `${contentArea.childElementCount}-${contentArea.textContent?.length || 0}-${currentPreset.id}`
+  return `${contentArea.childElementCount}-${contentArea.textContent?.length || 0}-${state.preset.id}`
 }
 
 /**
  * Invalidates the analytics cache
  */
 function invalidateCache(): void {
-  analyticsCache = { data: null, timestamp: 0, contentHash: '' }
+  state.cache = { data: null, timestamp: 0, contentHash: '' }
 }
 
 /**
@@ -99,7 +130,7 @@ function invalidateCache(): void {
  * Safely handles empty or invalid selectors
  */
 function getContentArea(): Element {
-  const contentAreaSelector = currentPreset.selectors.contentArea
+  const contentAreaSelector = state.preset.selectors.contentArea
   if (!contentAreaSelector || !contentAreaSelector.trim()) {
     return document.body
   }
@@ -128,7 +159,7 @@ function createContext(): ModeContext {
   return {
     contentArea: getContentArea(),
     viewport: getViewportInfo(),
-    preset: currentPreset,
+    preset: state.preset,
   }
 }
 
@@ -152,22 +183,22 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
   // Check if cache is valid
   if (
     !forceRefresh &&
-    analyticsCache.data &&
-    analyticsCache.contentHash === currentHash &&
-    now - analyticsCache.timestamp < CACHE_TTL
+    state.cache.data &&
+    state.cache.contentHash === currentHash &&
+    now - state.cache.timestamp < CACHE_TTL
   ) {
-    return analyticsCache.data
+    return state.cache.data
   }
 
   // Use platform-specific selectors, with fallbacks
-  const textBlockSelector = currentPreset.selectors.textBlocks || 'p'
-  const codeBlockSelector = currentPreset.selectors.codeBlocks || 'pre'
-  const ignoreSelector = currentPreset.selectors.ignoreElements?.join(', ') || ''
+  const textBlockSelector = state.preset.selectors.textBlocks || 'p'
+  const codeBlockSelector = state.preset.selectors.codeBlocks || 'pre'
+  const ignoreSelector = state.preset.selectors.ignoreElements?.join(', ') || ''
 
   // Calculate weighted anchors for more accurate scannability scoring
   const weightedAnchors = calculateWeightedAnchors(
     mainContent,
-    currentPreset.selectors.hotSpots,
+    state.preset.selectors.hotSpots,
     ignoreSelector,
     codeBlockSelector,
   )
@@ -275,7 +306,7 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
   // Evaluate platform-specific suggestions (informative only, don't affect score)
   // Use local preset (with validate functions) instead of message-passed preset
   // because Chrome messaging strips functions during serialization
-  const localPreset = getPresetById(currentPreset.id)
+  const localPreset = getPresetById(state.preset.id)
   const platformSuggestions = localPreset.analysis?.suggestions || []
   const triggeredSuggestions = evaluatePlatformSuggestions(platformSuggestions, mainContent)
 
@@ -299,7 +330,7 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
   }
 
   // Update cache
-  analyticsCache = {
+  state.cache = {
     data,
     timestamp: now,
     contentHash: currentHash,
@@ -316,8 +347,8 @@ function syncScanModeConfig(): void {
     scan: {
       enabled: manager.isActive('scan'),
       settings: {
-        opacity: currentConfig.opacity,
-        blur: currentConfig.blur,
+        opacity: state.config.opacity,
+        blur: state.config.blur,
       },
     },
   }
@@ -325,136 +356,124 @@ function syncScanModeConfig(): void {
   manager.updateConfig('scan', modesState.scan)
 }
 
-// Message handler
-chrome.runtime.onMessage.addListener(
-  (message: Message, _sender, sendResponse: (response: ScanResponse) => void) => {
-    if (message.action === 'get-state') {
-      sendResponse({
-        isScanning: manager.isActive('scan'),
-        config: currentConfig,
-        activeModes: manager.getActiveModes(),
-      })
+/**
+ * Creates a standard response object
+ */
+function createResponse(includeAnalytics = false): ScanResponse {
+  return {
+    isScanning: manager.isActive('scan'),
+    config: state.config,
+    activeModes: manager.getActiveModes(),
+    analytics: includeAnalytics && manager.isActive('scan') ? analyzeScannability() : undefined,
+  }
+}
+
+/**
+ * Handles incoming messages from popup
+ */
+function handleMessage(message: Message, sendResponse: (response: ScanResponse) => void): boolean {
+  switch (message.action) {
+    case 'get-state': {
+      sendResponse(createResponse())
       return true
     }
 
-    if (message.action === 'analyze') {
+    case 'analyze': {
       const analytics = analyzeScannability()
       sendResponse({
-        isScanning: manager.isActive('scan'),
-        config: currentConfig,
+        ...createResponse(),
         analytics,
-        activeModes: manager.getActiveModes(),
       })
       return true
     }
 
-    if (message.action === 'update-config') {
+    case 'update-config': {
       if (message.config) {
-        currentConfig = message.config
+        state.config = message.config
       }
       if (message.preset) {
-        // Check if preset changed BEFORE updating to avoid race condition
-        const presetChanged = message.preset.id !== currentPreset.id
-        currentPreset = message.preset
+        const presetChanged = message.preset.id !== state.preset.id
+        state.preset = message.preset
         if (presetChanged) {
           invalidateCache()
         }
       }
 
       if (manager.isActive('scan')) {
-        // Re-initialize with new context and sync config
         initializeManager()
         syncScanModeConfig()
       }
 
-      sendResponse({
-        isScanning: manager.isActive('scan'),
-        config: currentConfig,
-        activeModes: manager.getActiveModes(),
-      })
+      sendResponse(createResponse())
       return true
     }
 
-    if (message.action === 'toggle-mode') {
+    case 'toggle-mode': {
       if (message.config) {
-        currentConfig = message.config
+        state.config = message.config
       }
       if (message.preset) {
-        currentPreset = message.preset
+        state.preset = message.preset
       }
 
-      // Validate modeId against registered modes
       const validatedModeId = validateModeId(message.modeId)
-      const enabled = message.enabled
 
       if (validatedModeId) {
-        // Initialize manager if not already done
         if (!manager.getContext()) {
           initializeManager()
         }
 
-        // Sync scan mode config if toggling scan
         if (validatedModeId === 'scan') {
           syncScanModeConfig()
         }
 
-        if (enabled) {
+        if (message.enabled) {
           manager.activate(validatedModeId)
         } else {
           manager.deactivate(validatedModeId)
         }
       } else if (message.modeId) {
-        // Log warning for invalid modeId attempts (helps debugging)
         console.warn(`[ScanVision] Invalid modeId received: ${message.modeId}`)
       }
 
-      const analytics = manager.isActive('scan') ? analyzeScannability() : undefined
-
-      sendResponse({
-        isScanning: manager.isActive('scan'),
-        config: currentConfig,
-        activeModes: manager.getActiveModes(),
-        analytics,
-      })
+      sendResponse(createResponse(true))
       return true
     }
 
-    if (message.action === 'toggle-scan') {
+    case 'toggle-scan': {
       if (message.config) {
-        currentConfig = message.config
+        state.config = message.config
       }
       if (message.preset) {
-        currentPreset = message.preset
+        state.preset = message.preset
       }
 
       if (manager.isActive('scan')) {
-        // Deactivate
         manager.deactivate('scan')
-        sendResponse({
-          isScanning: false,
-          config: currentConfig,
-          activeModes: manager.getActiveModes(),
-        })
+        sendResponse(createResponse())
       } else {
-        // Activate
         initializeManager()
         syncScanModeConfig()
         manager.activate('scan')
-
-        // Analyze AFTER activating so markers get applied
-        const analytics = analyzeScannability()
-
         sendResponse({
-          isScanning: true,
-          config: currentConfig,
-          analytics,
-          activeModes: manager.getActiveModes(),
+          ...createResponse(),
+          analytics: analyzeScannability(),
         })
       }
       return true
     }
+  }
+}
 
-    return false
+// Message handler
+chrome.runtime.onMessage.addListener(
+  (message: unknown, _sender, sendResponse: (response: ScanResponse) => void) => {
+    // Validate message structure
+    if (!isValidMessage(message)) {
+      return false
+    }
+
+    return handleMessage(message, sendResponse)
   },
 )
 
@@ -477,25 +496,3 @@ function cleanup(): void {
 
 // Clean up when page unloads
 window.addEventListener('beforeunload', cleanup)
-
-// Clean up when extension context invalidates (extension update/disable)
-// This happens when the extension is updated or disabled while the page is open
-if (chrome.runtime?.id) {
-  chrome.runtime.onMessage.addListener((_message, _sender, _sendResponse) => {
-    // Check if context is still valid - if not, clean up
-    try {
-      void chrome.runtime.id
-    } catch {
-      cleanup()
-    }
-    return false
-  })
-}
-
-// Handle visibility change to clean up when tab becomes hidden and extension updates
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') {
-    // Don't fully cleanup, but prepare for potential context invalidation
-    // Full cleanup happens on beforeunload or context invalidation
-  }
-})
