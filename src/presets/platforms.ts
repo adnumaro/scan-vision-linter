@@ -1,10 +1,11 @@
 import type { PlatformPreset } from '../types/messages'
+import { t } from '../utils/i18n'
 
 export const PRESETS: PlatformPreset[] = [
   {
     id: 'default',
-    name: 'Default',
-    description: 'Generic settings for any website',
+    name: t('presetDefaultName'),
+    description: t('presetDefaultDesc'),
     domains: [],
     selectors: {
       contentArea: 'main, article, [role="main"], .content, #content, body',
@@ -14,8 +15,8 @@ export const PRESETS: PlatformPreset[] = [
   },
   {
     id: 'notion',
-    name: 'Notion',
-    description: 'Optimized for Notion pages',
+    name: t('presetNotionName'),
+    description: t('presetNotionDesc'),
     domains: ['notion.so', 'notion.site'],
     selectors: {
       contentArea: '.notion-page-content',
@@ -52,8 +53,8 @@ export const PRESETS: PlatformPreset[] = [
       suggestions: [
         {
           id: 'notion-callouts',
-          name: 'Use Callout Blocks',
-          description: 'Highlight important notes with callout blocks',
+          name: t('suggestionNotionCallouts'),
+          description: t('suggestionNotionCalloutsDesc'),
           validate: (content) => {
             const text = content.textContent || ''
             const hasImportantText = /\b(important|note|tip|warning|caution)\b[:\s]/i.test(text)
@@ -63,8 +64,8 @@ export const PRESETS: PlatformPreset[] = [
         },
         {
           id: 'notion-toggles',
-          name: 'Use Toggle Blocks',
-          description: 'Organize long lists with collapsible toggles',
+          name: t('suggestionNotionToggles'),
+          description: t('suggestionNotionTogglesDesc'),
           validate: (content) => {
             const lists = content.querySelectorAll('[class*="notion-bulleted_list"]')
             // Check if any list has more than 8 items (siblings)
@@ -85,8 +86,8 @@ export const PRESETS: PlatformPreset[] = [
         },
         {
           id: 'notion-code-blocks',
-          name: 'Use Code Blocks',
-          description: 'Format code snippets with proper code blocks',
+          name: t('suggestionNotionCodeBlocks'),
+          description: t('suggestionNotionCodeBlocksDesc'),
           validate: (content) => {
             const hasCodeBlock = content.querySelector('[class*="notion-code"]') !== null
             // If there's unformatted code detected but no code blocks, suggest
@@ -101,8 +102,8 @@ export const PRESETS: PlatformPreset[] = [
   },
   {
     id: 'confluence',
-    name: 'Confluence',
-    description: 'Optimized for Atlassian Confluence',
+    name: t('presetConfluenceName'),
+    description: t('presetConfluenceDesc'),
     domains: ['atlassian.net', 'confluence.com'],
     selectors: {
       contentArea:
@@ -160,8 +161,8 @@ export const PRESETS: PlatformPreset[] = [
       suggestions: [
         {
           id: 'confluence-info-panels',
-          name: 'Use Info Panels',
-          description: 'Highlight notes and warnings with Info Panels',
+          name: t('suggestionConfluenceInfoPanels'),
+          description: t('suggestionConfluenceInfoPanelsDesc'),
           validate: (content) => {
             const text = content.textContent || ''
             const hasWarningText = /\b(note|warning|important|caution)\b[:\s]/i.test(text)
@@ -171,8 +172,8 @@ export const PRESETS: PlatformPreset[] = [
         },
         {
           id: 'confluence-status',
-          name: 'Use Status Macros',
-          description: 'Show project status with colored status labels',
+          name: t('suggestionConfluenceStatus'),
+          description: t('suggestionConfluenceStatusDesc'),
           validate: (content) => {
             const text = content.textContent || ''
             // Common status words that could benefit from status macros

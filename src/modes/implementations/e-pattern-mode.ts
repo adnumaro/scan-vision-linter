@@ -8,6 +8,7 @@
  */
 
 import { LayoutList } from 'lucide-react'
+import { t } from '../../utils/i18n'
 import type { ModeConfig } from '../types'
 import { ViewportTrackingMode } from '../utils/base-mode'
 import { COLORS, hexToRgba } from '../utils/colors'
@@ -118,7 +119,7 @@ class EPatternMode extends ViewportTrackingMode<EPatternConfig> {
       borderColor,
       borderBottom: true,
       borderRight: true,
-      label: showLabels ? { text: '1st scan', color, position: 'right' } : undefined,
+      label: showLabels ? { text: t('pattern1stScan'), color, position: 'right' } : undefined,
     })
     this.overlayElement.appendChild(firstBar)
 
@@ -132,7 +133,7 @@ class EPatternMode extends ViewportTrackingMode<EPatternConfig> {
       borderColor,
       borderBottom: true,
       borderRight: true,
-      label: showLabels ? { text: '2nd scan', color, position: 'right' } : undefined,
+      label: showLabels ? { text: t('pattern2ndScan'), color, position: 'right' } : undefined,
     })
     this.overlayElement.appendChild(secondBar)
 
@@ -146,7 +147,7 @@ class EPatternMode extends ViewportTrackingMode<EPatternConfig> {
       borderColor,
       borderBottom: true,
       borderRight: true,
-      label: showLabels ? { text: '3rd scan', color, position: 'right' } : undefined,
+      label: showLabels ? { text: t('pattern3rdScan'), color, position: 'right' } : undefined,
     })
     this.overlayElement.appendChild(thirdBar)
 
@@ -159,7 +160,7 @@ class EPatternMode extends ViewportTrackingMode<EPatternConfig> {
       backgroundColor: bgColor,
       borderColor,
       borderRight: true,
-      label: showLabels ? { text: 'Down', color, position: 'vertical' } : undefined,
+      label: showLabels ? { text: t('patternDown'), color, position: 'vertical' } : undefined,
     })
     this.overlayElement.appendChild(downBar)
   }

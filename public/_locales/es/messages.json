@@ -1,0 +1,260 @@
+{
+  "extName": {
+    "message": "ScanVision Linter Pro"
+  },
+  "extDescription": {
+    "message": "Herramienta de auditoria visual de escaneabilidad para documentacion tecnica. Analiza lo que los usuarios ven en los primeros 3-5 segundos."
+  },
+
+  "btnStartScan": {
+    "message": "Iniciar Escaneo"
+  },
+  "btnScanActive": {
+    "message": "Escaneo Activo"
+  },
+  "btnReanalyze": {
+    "message": "Re-analizar pagina"
+  },
+  "btnResetDefaults": {
+    "message": "Restaurar valores"
+  },
+
+  "lblAnalysis": {
+    "message": "ANALISIS"
+  },
+  "lblAnchors": {
+    "message": "Anclas"
+  },
+  "lblTextBlocks": {
+    "message": "Bloques de texto"
+  },
+  "lblProblems": {
+    "message": "Problemas"
+  },
+  "lblProblemsCount": {
+    "message": "Problemas ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "lblHeadings": {
+    "message": "Titulos"
+  },
+  "lblEmphasis": {
+    "message": "Enfasis"
+  },
+  "lblCode": {
+    "message": "Codigo"
+  },
+  "lblLinks": {
+    "message": "Enlaces"
+  },
+  "lblImages": {
+    "message": "Imagenes"
+  },
+  "lblLists": {
+    "message": "Listas"
+  },
+  "lblAnchorsBreakdown": {
+    "message": "Desglose de Anclas"
+  },
+  "lblColorGuide": {
+    "message": "Guia de Colores"
+  },
+  "lblUnformattedCode": {
+    "message": "Codigo sin formato"
+  },
+  "lblPlatformPreset": {
+    "message": "Preset de Plataforma"
+  },
+  "lblAutoDetected": {
+    "message": "Auto-detectado"
+  },
+  "lblTextVisibility": {
+    "message": "Visibilidad del texto"
+  },
+  "lblBlurAmount": {
+    "message": "Cantidad de desenfoque"
+  },
+  "lblVisualizationModes": {
+    "message": "Modos de Visualizacion"
+  },
+  "lblSuggestionsFor": {
+    "message": "Sugerencias para $PLATFORM$",
+    "placeholders": {
+      "platform": {
+        "content": "$1",
+        "example": "Confluence"
+      }
+    }
+  },
+  "lblTodayAt": {
+    "message": "Hoy a las $TIME$",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "14:30"
+      }
+    }
+  },
+
+  "msgNoAnalysis": {
+    "message": "Sin analisis aun. Inicia un escaneo para analizar la pagina."
+  },
+  "msgNoIssues": {
+    "message": "No se encontraron problemas"
+  },
+  "msgGoodScannability": {
+    "message": "Buena escaneabilidad"
+  },
+  "msgNeedsImprovement": {
+    "message": "Necesita mejoras"
+  },
+  "msgPoorScannability": {
+    "message": "Escaneabilidad deficiente"
+  },
+  "msgIncompatibleWith": {
+    "message": "Incompatible con $MODE$",
+    "placeholders": {
+      "mode": {
+        "content": "$1",
+        "example": "Modo Escaneo"
+      }
+    }
+  },
+
+  "errReloadPage": {
+    "message": "Recarga la pagina e intentalo de nuevo"
+  },
+  "errNoActiveTab": {
+    "message": "No se encontro pestana activa"
+  },
+  "errCannotScanBrowser": {
+    "message": "No se pueden escanear paginas del navegador"
+  },
+
+  "catSimulations": {
+    "message": "Simulaciones"
+  },
+  "catOverlays": {
+    "message": "Superposiciones"
+  },
+  "catIndicators": {
+    "message": "Indicadores"
+  },
+
+  "modeScanName": {
+    "message": "Modo Escaneo"
+  },
+  "modeScanDesc": {
+    "message": "Atenua el texto y resalta anclas visuales"
+  },
+  "modeFirst5sName": {
+    "message": "Primeros 5 Segundos"
+  },
+  "modeFirst5sDesc": {
+    "message": "Muestra lo que los usuarios ven durante un escaneo rapido"
+  },
+  "modeFPatternName": {
+    "message": "Patron F"
+  },
+  "modeFPatternDesc": {
+    "message": "Muestra superposicion del patron de lectura en F"
+  },
+  "modeEPatternName": {
+    "message": "Patron E"
+  },
+  "modeEPatternDesc": {
+    "message": "Muestra superposicion del patron de lectura en E"
+  },
+  "modeHeatZonesName": {
+    "message": "Zonas de Calor"
+  },
+  "modeHeatZonesDesc": {
+    "message": "Muestra gradiente de atencion"
+  },
+  "modeFoldLineName": {
+    "message": "Linea de Pliegue"
+  },
+  "modeFoldLineDesc": {
+    "message": "Muestra indicador \"sobre el pliegue\""
+  },
+
+  "patternAboveTheFold": {
+    "message": "Sobre el pliegue"
+  },
+  "patternPrimaryScan": {
+    "message": "Zona de escaneo principal"
+  },
+  "patternSecondaryScan": {
+    "message": "Escaneo secundario"
+  },
+  "patternVerticalScan": {
+    "message": "Escaneo vertical"
+  },
+  "pattern1stScan": {
+    "message": "1er escaneo"
+  },
+  "pattern2ndScan": {
+    "message": "2do escaneo"
+  },
+  "pattern3rdScan": {
+    "message": "3er escaneo"
+  },
+  "patternDown": {
+    "message": "Abajo"
+  },
+
+  "presetDefaultName": {
+    "message": "Por defecto"
+  },
+  "presetDefaultDesc": {
+    "message": "Configuracion generica para cualquier sitio web"
+  },
+  "presetNotionName": {
+    "message": "Notion"
+  },
+  "presetNotionDesc": {
+    "message": "Optimizado para paginas de Notion"
+  },
+  "presetConfluenceName": {
+    "message": "Confluence"
+  },
+  "presetConfluenceDesc": {
+    "message": "Optimizado para Atlassian Confluence"
+  },
+
+  "suggestionNotionCallouts": {
+    "message": "Usa bloques de llamada"
+  },
+  "suggestionNotionCalloutsDesc": {
+    "message": "Resalta notas importantes con bloques de llamada"
+  },
+  "suggestionNotionToggles": {
+    "message": "Usa bloques desplegables"
+  },
+  "suggestionNotionTogglesDesc": {
+    "message": "Organiza listas largas con desplegables"
+  },
+  "suggestionNotionCodeBlocks": {
+    "message": "Usa bloques de codigo"
+  },
+  "suggestionNotionCodeBlocksDesc": {
+    "message": "Formatea fragmentos de codigo con bloques apropiados"
+  },
+  "suggestionConfluenceInfoPanels": {
+    "message": "Usa paneles de informacion"
+  },
+  "suggestionConfluenceInfoPanelsDesc": {
+    "message": "Resalta notas y advertencias con paneles de info"
+  },
+  "suggestionConfluenceStatus": {
+    "message": "Usa macros de estado"
+  },
+  "suggestionConfluenceStatusDesc": {
+    "message": "Muestra el estado del proyecto con etiquetas de color"
+  }
+}

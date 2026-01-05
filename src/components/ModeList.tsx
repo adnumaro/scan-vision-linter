@@ -3,6 +3,7 @@
  */
 
 import { getModeById, getModesGroupedByCategory, type ModeInfo } from '../modes/metadata'
+import { t } from '../utils/i18n'
 import { ModeToggle } from './ModeToggle'
 
 interface ModeListProps {
@@ -21,7 +22,7 @@ export function ModeList({ activeModes, onToggle }: ModeListProps) {
         const conflictingMode = getModeById(incompatibleId)
         return {
           disabled: true,
-          reason: `Incompatible with ${conflictingMode?.name || incompatibleId}`,
+          reason: t('msgIncompatibleWith', conflictingMode?.name || incompatibleId),
         }
       }
     }

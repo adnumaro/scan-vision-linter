@@ -5,6 +5,7 @@
 
 import type { LucideIcon } from 'lucide-react'
 import { Flame, LayoutList, LayoutTemplate, Minus, ScanText, Timer } from 'lucide-react'
+import { t } from '../utils/i18n'
 import type { ModeCategory } from './types'
 
 /**
@@ -29,66 +30,77 @@ export interface ModeInfo extends ModeMetadata {
 
 /**
  * Mode metadata definitions - single source of truth
+ * Uses i18n for localized names and descriptions
  */
-export const MODE_METADATA: ModeInfo[] = [
-  {
-    id: 'scan',
-    name: 'Scan Mode',
-    description: 'Dims text and highlights visual anchors',
-    icon: ScanText,
-    category: 'simulation',
-    incompatibleWith: ['first-5s'],
-  },
-  {
-    id: 'first-5s',
-    name: 'First 5 Seconds',
-    description: 'Shows what users see during quick scanning',
-    icon: Timer,
-    category: 'simulation',
-    incompatibleWith: ['scan'],
-  },
-  {
-    id: 'f-pattern',
-    name: 'F-Pattern',
-    description: 'Shows F-shaped reading pattern overlay',
-    icon: LayoutTemplate,
-    category: 'overlay',
-    incompatibleWith: ['e-pattern'],
-  },
-  {
-    id: 'e-pattern',
-    name: 'E-Pattern',
-    description: 'Shows E-shaped reading pattern overlay',
-    icon: LayoutList,
-    category: 'overlay',
-    incompatibleWith: ['f-pattern'],
-  },
-  {
-    id: 'heat-zones',
-    name: 'Heat Zones',
-    description: 'Shows attention gradient overlay',
-    icon: Flame,
-    category: 'overlay',
-    incompatibleWith: [],
-  },
-  {
-    id: 'fold-line',
-    name: 'Fold Line',
-    description: 'Shows "above the fold" indicator',
-    icon: Minus,
-    category: 'indicator',
-    incompatibleWith: [],
-  },
-]
+export function getModeMetadata(): ModeInfo[] {
+  return [
+    {
+      id: 'scan',
+      name: t('modeScanName'),
+      description: t('modeScanDesc'),
+      icon: ScanText,
+      category: 'simulation',
+      incompatibleWith: ['first-5s'],
+    },
+    {
+      id: 'first-5s',
+      name: t('modeFirst5sName'),
+      description: t('modeFirst5sDesc'),
+      icon: Timer,
+      category: 'simulation',
+      incompatibleWith: ['scan'],
+    },
+    {
+      id: 'f-pattern',
+      name: t('modeFPatternName'),
+      description: t('modeFPatternDesc'),
+      icon: LayoutTemplate,
+      category: 'overlay',
+      incompatibleWith: ['e-pattern'],
+    },
+    {
+      id: 'e-pattern',
+      name: t('modeEPatternName'),
+      description: t('modeEPatternDesc'),
+      icon: LayoutList,
+      category: 'overlay',
+      incompatibleWith: ['f-pattern'],
+    },
+    {
+      id: 'heat-zones',
+      name: t('modeHeatZonesName'),
+      description: t('modeHeatZonesDesc'),
+      icon: Flame,
+      category: 'overlay',
+      incompatibleWith: [],
+    },
+    {
+      id: 'fold-line',
+      name: t('modeFoldLineName'),
+      description: t('modeFoldLineDesc'),
+      icon: Minus,
+      category: 'indicator',
+      incompatibleWith: [],
+    },
+  ]
+}
+
+// For backward compatibility - lazily evaluated
+export const MODE_METADATA: ModeInfo[] = getModeMetadata()
 
 /**
  * Category labels for UI display
  */
-export const CATEGORY_LABELS: Record<ModeCategory, string> = {
-  simulation: 'Simulations',
-  overlay: 'Overlays',
-  indicator: 'Indicators',
+export function getCategoryLabels(): Record<ModeCategory, string> {
+  return {
+    simulation: t('catSimulations'),
+    overlay: t('catOverlays'),
+    indicator: t('catIndicators'),
+  }
 }
+
+// For backward compatibility
+export const CATEGORY_LABELS: Record<ModeCategory, string> = getCategoryLabels()
 
 /**
  * Category display order

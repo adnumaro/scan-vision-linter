@@ -7,6 +7,7 @@
  */
 
 import { LayoutTemplate } from 'lucide-react'
+import { t } from '../../utils/i18n'
 import type { ModeConfig } from '../types'
 import { ViewportTrackingMode } from '../utils/base-mode'
 import { COLORS, hexToRgba } from '../utils/colors'
@@ -113,7 +114,7 @@ class FPatternMode extends ViewportTrackingMode<FPatternConfig> {
       backgroundColor: bgColor,
       borderColor,
       borderBottom: true,
-      label: showLabels ? { text: 'Primary scan zone', color, position: 'right' } : undefined,
+      label: showLabels ? { text: t('patternPrimaryScan'), color, position: 'right' } : undefined,
     })
     this.overlayElement.appendChild(topBar)
 
@@ -127,7 +128,7 @@ class FPatternMode extends ViewportTrackingMode<FPatternConfig> {
       borderColor,
       borderBottom: true,
       borderRight: true,
-      label: showLabels ? { text: 'Secondary scan', color, position: 'right' } : undefined,
+      label: showLabels ? { text: t('patternSecondaryScan'), color, position: 'right' } : undefined,
     })
     this.overlayElement.appendChild(secondBar)
 
@@ -140,7 +141,9 @@ class FPatternMode extends ViewportTrackingMode<FPatternConfig> {
       backgroundColor: bgColor,
       borderColor,
       borderRight: true,
-      label: showLabels ? { text: 'Vertical scan', color, position: 'vertical' } : undefined,
+      label: showLabels
+        ? { text: t('patternVerticalScan'), color, position: 'vertical' }
+        : undefined,
     })
     this.overlayElement.appendChild(leftBar)
   }

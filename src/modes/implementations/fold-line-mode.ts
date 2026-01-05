@@ -4,6 +4,7 @@
  */
 
 import { Minus } from 'lucide-react'
+import { t } from '../../utils/i18n'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
 import { COLORS } from '../utils/colors'
 import { cloneModeConfig } from '../utils/config'
@@ -25,7 +26,7 @@ const DEFAULT_CONFIG: FoldLineConfig = {
   settings: {
     color: COLORS.indicator.foldLine,
     showLabel: true,
-    labelText: 'Above the fold',
+    labelText: '', // Will use i18n
   },
 }
 
@@ -109,7 +110,7 @@ class FoldLineMode implements VisualizationMode {
     if (showLabel) {
       const label = document.createElement('div')
       label.className = 'scanvision-fold-label'
-      label.textContent = labelText
+      label.textContent = labelText || t('patternAboveTheFold')
       label.style.cssText = `
         position: fixed;
         top: ${this.initialFoldY - 24}px;

@@ -5,6 +5,7 @@ import { ModeList } from './components/ModeList'
 import { detectPlatform, getPresetById, PRESETS } from './presets/platforms'
 import type { AnalyticsData, ScanConfig } from './types/messages'
 import { DEFAULT_CONFIG } from './types/messages'
+import { t } from './utils/i18n'
 import {
   clearAnalytics,
   getAnalytics,
@@ -177,7 +178,7 @@ function App() {
           }
         }
       } catch {
-        setError('Reload the page and try again')
+        setError(t('errReloadPage'))
       }
     },
     [config],
@@ -189,12 +190,12 @@ function App() {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
 
       if (!tab.id) {
-        setError('No active tab found')
+        setError(t('errNoActiveTab'))
         return
       }
 
       if (tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) {
-        setError('Cannot scan browser pages')
+        setError(t('errCannotScanBrowser'))
         return
       }
 
@@ -215,7 +216,7 @@ function App() {
         }
       }
     } catch {
-      setError('Reload the page and try again')
+      setError(t('errReloadPage'))
     }
   }
 
@@ -227,7 +228,7 @@ function App() {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
 
       if (!tab.id || !tab.url) {
-        setError('No active tab found')
+        setError(t('errNoActiveTab'))
         setIsReanalyzing(false)
         return
       }
@@ -262,7 +263,7 @@ function App() {
         setIsActive(response.isScanning)
       }
     } catch {
-      setError('Reload the page and try again')
+      setError(t('errReloadPage'))
     } finally {
       setIsReanalyzing(false)
     }
@@ -275,9 +276,9 @@ function App() {
   }
 
   const getScoreLabel = (score: number): string => {
-    if (score >= 70) return 'Good scannability'
-    if (score >= 40) return 'Needs improvement'
-    return 'Poor scannability'
+    if (score >= 70) return t('msgGoodScannability')
+    if (score >= 40) return t('msgNeedsImprovement')
+    return t('msgPoorScannability')
   }
 
   const formatTimestamp = (timestamp: number | undefined): string => {
@@ -287,7 +288,7 @@ function App() {
     const isToday = date.toDateString() === now.toDateString()
 
     if (isToday) {
-      return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+      return t('lblTodayAt', date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
     }
     return date.toLocaleDateString([], {
       month: 'short',
@@ -303,10 +304,10 @@ function App() {
 
   return (
     <div className="popup">
-      <h3 className="popup-title">ScanVision Linter</h3>
+      <h3 className="popup-title">{t('extName')}</h3>
 
       <button type="button" onClick={toggleScan} className={buttonClass}>
-        {isActive ? 'Scan Active' : 'Start Scan'}
+        {isActive ? t('btnScanActive') : t('btnStartScan')}
       </button>
 
       {error && <div className="error-message">{error}</div>}
@@ -320,7 +321,7 @@ function App() {
             onClick={() => setAnalyticsExpanded(!analyticsExpanded)}
           >
             {analyticsExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            <span className="analytics-title">ANALYSIS</span>
+            <span className="analytics-title">{t('lblAnalysis')}</span>
           </button>
           <button
             type="button"
@@ -329,7 +330,7 @@ function App() {
               if (!isReanalyzing) reAnalyze()
             }}
             disabled={isReanalyzing}
-            title="Re-analyze page"
+            title={t('btnReanalyze')}
           >
             <RefreshCw size={14} />
           </button>
@@ -337,9 +338,7 @@ function App() {
 
         {analyticsExpanded && !analytics && (
           <div className="analytics-content analytics-content--empty">
-            <span className="analytics-empty-text">
-              No analysis yet. Start a scan to analyze the page.
-            </span>
+            <span className="analytics-empty-text">{t('msgNoAnalysis')}</span>
           </div>
         )}
 
@@ -358,11 +357,11 @@ function App() {
             <div className="stats-grid">
               <div className="stat-item">
                 <div className="stat-value">{analytics.totalAnchors}</div>
-                <div className="stat-label">Anchors</div>
+                <div className="stat-label">{t('lblAnchors')}</div>
               </div>
               <div className="stat-item">
                 <div className="stat-value">{analytics.totalTextBlocks}</div>
-                <div className="stat-label">Text Blocks</div>
+                <div className="stat-label">{t('lblTextBlocks')}</div>
               </div>
             </div>
 
@@ -371,7 +370,9 @@ function App() {
               <div className="problems-section">
                 <div className="problems-header">
                   <span className="problems-icon">⚠️</span>
-                  <span className="problems-title">Problems ({analytics.problems.length})</span>
+                  <span className="problems-title">
+                    {t('lblProblemsCount', analytics.problems.length.toString())}
+                  </span>
                 </div>
                 <ul className="problems-list">
                   {analytics.problems.map((problem) => (
@@ -388,16 +389,16 @@ function App() {
             ) : (
               <div className="problem-alert problem-alert--none">
                 <span className="problem-icon">✓</span>
-                <span>No issues found</span>
+                <span>{t('msgNoIssues')}</span>
               </div>
             )}
 
             <div className="breakdown">
-              <div className="breakdown-title">Anchors Breakdown</div>
+              <div className="breakdown-title">{t('lblAnchorsBreakdown')}</div>
               <div className="breakdown-grid">
                 <div className="breakdown-item">
                   <span className="breakdown-value">{analytics.anchorsBreakdown.headings}</span>
-                  <span className="breakdown-label">Headings</span>
+                  <span className="breakdown-label">{t('lblHeadings')}</span>
                 </div>
                 <div
                   className={`breakdown-item ${analytics.anchorsBreakdown.emphasis === 0 ? 'breakdown-item--warning' : ''}`}
@@ -408,7 +409,7 @@ function App() {
                       <span className="breakdown-warning">⚠️</span>
                     )}
                   </span>
-                  <span className="breakdown-label">Emphasis</span>
+                  <span className="breakdown-label">{t('lblEmphasis')}</span>
                 </div>
                 <div
                   className={`breakdown-item ${analytics.anchorsBreakdown.code === 0 && analytics.unformattedCodeBlocks > 0 ? 'breakdown-item--warning' : ''}`}
@@ -420,19 +421,19 @@ function App() {
                         <span className="breakdown-warning">⚠️</span>
                       )}
                   </span>
-                  <span className="breakdown-label">Code</span>
+                  <span className="breakdown-label">{t('lblCode')}</span>
                 </div>
                 <div className="breakdown-item">
                   <span className="breakdown-value">{analytics.anchorsBreakdown.links}</span>
-                  <span className="breakdown-label">Links</span>
+                  <span className="breakdown-label">{t('lblLinks')}</span>
                 </div>
                 <div className="breakdown-item">
                   <span className="breakdown-value">{analytics.anchorsBreakdown.images}</span>
-                  <span className="breakdown-label">Images</span>
+                  <span className="breakdown-label">{t('lblImages')}</span>
                 </div>
                 <div className="breakdown-item">
                   <span className="breakdown-value">{analytics.anchorsBreakdown.lists}</span>
-                  <span className="breakdown-label">Lists</span>
+                  <span className="breakdown-label">{t('lblLists')}</span>
                 </div>
               </div>
             </div>
@@ -440,11 +441,11 @@ function App() {
             {/* Color Legend */}
             {analytics.unformattedCodeBlocks > 0 && (
               <div className="color-legend">
-                <div className="legend-title">Color Guide</div>
+                <div className="legend-title">{t('lblColorGuide')}</div>
                 <div className="legend-grid">
                   <div className="legend-item">
                     <span className="legend-color legend-color--orange-dashed" />
-                    <span className="legend-label">Unformatted code</span>
+                    <span className="legend-label">{t('lblUnformattedCode')}</span>
                   </div>
                 </div>
               </div>
@@ -455,7 +456,7 @@ function App() {
               <div className="suggestions">
                 <div className="suggestions-title">
                   <span className="suggestions-icon">💡</span>
-                  <span>Suggestions for {currentPreset.name}</span>
+                  <span>{t('lblSuggestionsFor', currentPreset.name)}</span>
                 </div>
                 <ul className="suggestions-list">
                   {analytics.suggestions.map((suggestion) => (
@@ -474,14 +475,14 @@ function App() {
       {/* Preset Selector */}
       <div className="preset-section">
         <div className="preset-label">
-          <span>Platform Preset</span>
-          {isAutoDetected && <span className="preset-auto">Auto-detected</span>}
+          <span>{t('lblPlatformPreset')}</span>
+          {isAutoDetected && <span className="preset-auto">{t('lblAutoDetected')}</span>}
         </div>
         <select
           className="preset-select"
           value={config.presetId}
           onChange={(e) => handleConfigChange('presetId', e.target.value)}
-          aria-label="Platform Preset"
+          aria-label={t('lblPlatformPreset')}
         >
           {PRESETS.map((preset) => (
             <option key={preset.id} value={preset.id}>
@@ -496,7 +497,7 @@ function App() {
       <div className="controls">
         <div className="control-group">
           <div className="control-label">
-            <span>Text Visibility</span>
+            <span>{t('lblTextVisibility')}</span>
             <span className="control-value">{Math.round(config.opacity * 100)}%</span>
           </div>
           <input
@@ -507,13 +508,13 @@ function App() {
             step="0.05"
             value={config.opacity}
             onChange={(e) => handleConfigChange('opacity', parseFloat(e.target.value))}
-            aria-label="Text Visibility"
+            aria-label={t('lblTextVisibility')}
           />
         </div>
 
         <div className="control-group">
           <div className="control-label">
-            <span>Blur Amount</span>
+            <span>{t('lblBlurAmount')}</span>
             <span className="control-value">{config.blur}px</span>
           </div>
           <input
@@ -524,19 +525,19 @@ function App() {
             step="0.25"
             value={config.blur}
             onChange={(e) => handleConfigChange('blur', parseFloat(e.target.value))}
-            aria-label="Blur Amount"
+            aria-label={t('lblBlurAmount')}
           />
         </div>
 
         <button type="button" onClick={handleReset} className="reset-button">
-          Reset to Defaults
+          {t('btnResetDefaults')}
         </button>
       </div>
 
       {/* Visualization Modes */}
       <div className="modes-section">
         <div className="modes-header">
-          <span className="modes-title">Visualization Modes</span>
+          <span className="modes-title">{t('lblVisualizationModes')}</span>
         </div>
         <ModeList activeModes={activeModes} onToggle={handleModeToggle} />
       </div>

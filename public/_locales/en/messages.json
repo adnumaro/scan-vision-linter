@@ -1,0 +1,260 @@
+{
+  "extName": {
+    "message": "ScanVision Linter Pro"
+  },
+  "extDescription": {
+    "message": "Visual scannability auditing tool for technical documentation. Analyze what users see in the first 3-5 seconds."
+  },
+
+  "btnStartScan": {
+    "message": "Start Scan"
+  },
+  "btnScanActive": {
+    "message": "Scan Active"
+  },
+  "btnReanalyze": {
+    "message": "Re-analyze page"
+  },
+  "btnResetDefaults": {
+    "message": "Reset to Defaults"
+  },
+
+  "lblAnalysis": {
+    "message": "ANALYSIS"
+  },
+  "lblAnchors": {
+    "message": "Anchors"
+  },
+  "lblTextBlocks": {
+    "message": "Text Blocks"
+  },
+  "lblProblems": {
+    "message": "Problems"
+  },
+  "lblProblemsCount": {
+    "message": "Problems ($COUNT$)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "lblHeadings": {
+    "message": "Headings"
+  },
+  "lblEmphasis": {
+    "message": "Emphasis"
+  },
+  "lblCode": {
+    "message": "Code"
+  },
+  "lblLinks": {
+    "message": "Links"
+  },
+  "lblImages": {
+    "message": "Images"
+  },
+  "lblLists": {
+    "message": "Lists"
+  },
+  "lblAnchorsBreakdown": {
+    "message": "Anchors Breakdown"
+  },
+  "lblColorGuide": {
+    "message": "Color Guide"
+  },
+  "lblUnformattedCode": {
+    "message": "Unformatted code"
+  },
+  "lblPlatformPreset": {
+    "message": "Platform Preset"
+  },
+  "lblAutoDetected": {
+    "message": "Auto-detected"
+  },
+  "lblTextVisibility": {
+    "message": "Text Visibility"
+  },
+  "lblBlurAmount": {
+    "message": "Blur Amount"
+  },
+  "lblVisualizationModes": {
+    "message": "Visualization Modes"
+  },
+  "lblSuggestionsFor": {
+    "message": "Suggestions for $PLATFORM$",
+    "placeholders": {
+      "platform": {
+        "content": "$1",
+        "example": "Confluence"
+      }
+    }
+  },
+  "lblTodayAt": {
+    "message": "Today at $TIME$",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "14:30"
+      }
+    }
+  },
+
+  "msgNoAnalysis": {
+    "message": "No analysis yet. Start a scan to analyze the page."
+  },
+  "msgNoIssues": {
+    "message": "No issues found"
+  },
+  "msgGoodScannability": {
+    "message": "Good scannability"
+  },
+  "msgNeedsImprovement": {
+    "message": "Needs improvement"
+  },
+  "msgPoorScannability": {
+    "message": "Poor scannability"
+  },
+  "msgIncompatibleWith": {
+    "message": "Incompatible with $MODE$",
+    "placeholders": {
+      "mode": {
+        "content": "$1",
+        "example": "Scan Mode"
+      }
+    }
+  },
+
+  "errReloadPage": {
+    "message": "Reload the page and try again"
+  },
+  "errNoActiveTab": {
+    "message": "No active tab found"
+  },
+  "errCannotScanBrowser": {
+    "message": "Cannot scan browser pages"
+  },
+
+  "catSimulations": {
+    "message": "Simulations"
+  },
+  "catOverlays": {
+    "message": "Overlays"
+  },
+  "catIndicators": {
+    "message": "Indicators"
+  },
+
+  "modeScanName": {
+    "message": "Scan Mode"
+  },
+  "modeScanDesc": {
+    "message": "Dims text and highlights visual anchors"
+  },
+  "modeFirst5sName": {
+    "message": "First 5 Seconds"
+  },
+  "modeFirst5sDesc": {
+    "message": "Shows what users see during quick scanning"
+  },
+  "modeFPatternName": {
+    "message": "F-Pattern"
+  },
+  "modeFPatternDesc": {
+    "message": "Shows F-shaped reading pattern overlay"
+  },
+  "modeEPatternName": {
+    "message": "E-Pattern"
+  },
+  "modeEPatternDesc": {
+    "message": "Shows E-shaped reading pattern overlay"
+  },
+  "modeHeatZonesName": {
+    "message": "Heat Zones"
+  },
+  "modeHeatZonesDesc": {
+    "message": "Shows attention gradient overlay"
+  },
+  "modeFoldLineName": {
+    "message": "Fold Line"
+  },
+  "modeFoldLineDesc": {
+    "message": "Shows \"above the fold\" indicator"
+  },
+
+  "patternAboveTheFold": {
+    "message": "Above the fold"
+  },
+  "patternPrimaryScan": {
+    "message": "Primary scan zone"
+  },
+  "patternSecondaryScan": {
+    "message": "Secondary scan"
+  },
+  "patternVerticalScan": {
+    "message": "Vertical scan"
+  },
+  "pattern1stScan": {
+    "message": "1st scan"
+  },
+  "pattern2ndScan": {
+    "message": "2nd scan"
+  },
+  "pattern3rdScan": {
+    "message": "3rd scan"
+  },
+  "patternDown": {
+    "message": "Down"
+  },
+
+  "presetDefaultName": {
+    "message": "Default"
+  },
+  "presetDefaultDesc": {
+    "message": "Generic settings for any website"
+  },
+  "presetNotionName": {
+    "message": "Notion"
+  },
+  "presetNotionDesc": {
+    "message": "Optimized for Notion pages"
+  },
+  "presetConfluenceName": {
+    "message": "Confluence"
+  },
+  "presetConfluenceDesc": {
+    "message": "Optimized for Atlassian Confluence"
+  },
+
+  "suggestionNotionCallouts": {
+    "message": "Use Callout Blocks"
+  },
+  "suggestionNotionCalloutsDesc": {
+    "message": "Highlight important notes with callout blocks"
+  },
+  "suggestionNotionToggles": {
+    "message": "Use Toggle Blocks"
+  },
+  "suggestionNotionTogglesDesc": {
+    "message": "Organize long lists with collapsible toggles"
+  },
+  "suggestionNotionCodeBlocks": {
+    "message": "Use Code Blocks"
+  },
+  "suggestionNotionCodeBlocksDesc": {
+    "message": "Format code snippets with proper code blocks"
+  },
+  "suggestionConfluenceInfoPanels": {
+    "message": "Use Info Panels"
+  },
+  "suggestionConfluenceInfoPanelsDesc": {
+    "message": "Highlight notes and warnings with Info Panels"
+  },
+  "suggestionConfluenceStatus": {
+    "message": "Use Status Macros"
+  },
+  "suggestionConfluenceStatusDesc": {
+    "message": "Show project status with colored status labels"
+  }
+}

@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "ScanVision Linter Pro",
+  "name": "__MSG_extName__",
   "version": "1.0.0",
-  "description": "Visual scannability auditing tool for technical documentation. Analyze what users see in the first 3-5 seconds.",
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
   "action": { "default_popup": "index.html" },
   "content_scripts": [
     {
