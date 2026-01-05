@@ -14,7 +14,7 @@ import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
 import { SCAN_COLORS, withOpacity } from '../utils/colors'
 import { cloneModeConfig } from '../utils/config'
 import { Z_INDEX } from '../utils/constants'
-import { onViewportChange } from '../utils/viewport'
+import { createOverlayTracker, type OverlayTracker } from '../utils/overlay-tracker'
 
 const MODE_ID = 'first-5s'
 
@@ -34,16 +34,6 @@ const DEFAULT_CONFIG: First5sConfig = {
     opacity: 0.7,
   },
 }
-
-/** Tracked overlay elements for repositioning */
-interface TrackedOverlay {
-  element: Element
-  overlay: HTMLElement
-  type: 'dim' | 'highlight' | 'image-outline'
-}
-
-let trackedOverlays: TrackedOverlay[] = []
-let cleanup: (() => void) | null = null
 
 /**
  * Gets the background color of the page body
@@ -137,50 +127,13 @@ function isHotspot(element: Element): boolean {
 }
 
 /**
- * Updates all overlay positions
+ * Creates all overlays for the content area using the tracker
  */
-function updateOverlayPositions(): void {
-  for (const tracked of trackedOverlays) {
-    const rect = tracked.element.getBoundingClientRect()
-
-    if (tracked.type === 'dim') {
-      tracked.overlay.style.top = `${rect.top}px`
-      tracked.overlay.style.left = `${rect.left}px`
-      tracked.overlay.style.width = `${rect.width}px`
-      tracked.overlay.style.height = `${rect.height}px`
-    } else if (tracked.type === 'highlight') {
-      tracked.overlay.style.top = `${rect.top - 4}px`
-      tracked.overlay.style.left = `${rect.left - 8}px`
-      tracked.overlay.style.width = `${rect.width + 16}px`
-      tracked.overlay.style.height = `${rect.height + 8}px`
-    } else if (tracked.type === 'image-outline') {
-      tracked.overlay.style.top = `${rect.top - 3}px`
-      tracked.overlay.style.left = `${rect.left - 3}px`
-      tracked.overlay.style.width = `${rect.width + 6}px`
-      tracked.overlay.style.height = `${rect.height + 6}px`
-    }
-  }
-}
-
-/**
- * Removes all first-5s overlays
- */
-function removeAllOverlays(): void {
-  for (const tracked of trackedOverlays) {
-    tracked.overlay.remove()
-  }
-  trackedOverlays = []
-
-  if (cleanup) {
-    cleanup()
-    cleanup = null
-  }
-}
-
-/**
- * Creates all overlays for the content area
- */
-function createOverlays(context: ModeContext, config: First5sConfig['settings']): void {
+function createOverlays(
+  tracker: OverlayTracker,
+  context: ModeContext,
+  config: First5sConfig['settings'],
+): void {
   const { contentArea, preset } = context
   const ignoreSelector = preset.selectors.ignoreElements?.join(', ') || ''
   const textBlockSelector = preset.selectors.textBlocks || 'p'
@@ -199,8 +152,12 @@ function createOverlays(context: ModeContext, config: First5sConfig['settings'])
     if (rect.width === 0 || rect.height === 0) continue
 
     const overlay = createDimOverlay(rect, config)
-    document.body.appendChild(overlay)
-    trackedOverlays.push({ element, overlay, type: 'dim' })
+    tracker.track({
+      element,
+      overlay,
+      offset: { top: 0, left: 0, width: 0, height: 0 },
+      type: 'dim',
+    })
   }
 
   // Highlight headings
@@ -212,8 +169,12 @@ function createOverlays(context: ModeContext, config: First5sConfig['settings'])
     if (rect.width === 0 || rect.height === 0) continue
 
     const overlay = createHeadingHighlight(rect)
-    document.body.appendChild(overlay)
-    trackedOverlays.push({ element: heading, overlay, type: 'highlight' })
+    tracker.track({
+      element: heading,
+      overlay,
+      offset: { top: -4, left: -8, width: 16, height: 8 },
+      type: 'highlight',
+    })
   }
 
   // Outline images
@@ -230,14 +191,13 @@ function createOverlays(context: ModeContext, config: First5sConfig['settings'])
     if (rect.width === 0 || rect.height === 0) continue
 
     const overlay = createImageOutline(rect)
-    document.body.appendChild(overlay)
-    trackedOverlays.push({ element: img, overlay, type: 'image-outline' })
+    tracker.track({
+      element: img,
+      overlay,
+      offset: { top: -3, left: -3, width: 6, height: 6 },
+      type: 'image-outline',
+    })
   }
-
-  // Setup scroll/resize listeners
-  cleanup = onViewportChange(() => {
-    requestAnimationFrame(updateOverlayPositions)
-  })
 }
 
 /**
@@ -254,22 +214,25 @@ class First5sMode implements VisualizationMode {
   private active = false
   private config: First5sConfig = DEFAULT_CONFIG
   private context: ModeContext | null = null
+  private tracker: OverlayTracker | null = null
 
   activate(context: ModeContext): void {
     if (this.active) return
 
     // Clean up any previous state
-    cleanup?.()
+    this.tracker?.clear()
 
     this.context = context
-    createOverlays(context, this.config.settings)
+    this.tracker = createOverlayTracker()
+    createOverlays(this.tracker, context, this.config.settings)
     this.active = true
   }
 
   deactivate(): void {
     if (!this.active) return
 
-    removeAllOverlays()
+    this.tracker?.clear()
+    this.tracker = null
     this.context = null
     this.active = false
   }
@@ -285,9 +248,10 @@ class First5sMode implements VisualizationMode {
     }
 
     // Recreate overlays with new config
-    if (this.active && this.context) {
-      removeAllOverlays()
-      createOverlays(this.context, this.config.settings)
+    if (this.active && this.context && this.tracker) {
+      this.tracker.clear()
+      this.tracker = createOverlayTracker()
+      createOverlays(this.tracker, this.context, this.config.settings)
     }
   }
 

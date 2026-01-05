@@ -5,6 +5,7 @@
 
 import { SCAN_COLORS, withOpacity } from './colors'
 import { Z_INDEX } from './constants'
+import { createOverlayTracker, type OverlayTracker } from './overlay-tracker'
 
 /** Class names for different overlay types */
 const OVERLAY_CLASSES = {
@@ -28,15 +29,7 @@ const DEFAULT_CONFIG: ScanOverlayConfig = {
 }
 
 /**
- * Adds an overlay directly to document.body with proper z-index
- */
-function addOverlayToBody(overlay: HTMLElement): void {
-  overlay.style.zIndex = String(Z_INDEX.OVERLAY)
-  document.body.appendChild(overlay)
-}
-
-/**
- * Gets the background color of the page body (hoisted for use in createDimOverlay)
+ * Gets the background color of the page body
  */
 function getBodyBgColor(): string {
   const bodyBg = window.getComputedStyle(document.body).backgroundColor
@@ -72,6 +65,7 @@ function createDimOverlay(rect: DOMRect, config: ScanOverlayConfig): HTMLElement
     ${bgStyle}
     pointer-events: none;
     border-radius: 2px;
+    z-index: ${Z_INDEX.OVERLAY};
   `
   return overlay
 }
@@ -110,95 +104,26 @@ function createProblemOverlay(rect: DOMRect, type: ProblemCategory): HTMLElement
     background: ${bgColor};
     pointer-events: none;
     box-sizing: border-box;
+    z-index: ${Z_INDEX.OVERLAY};
   `
   return overlay
 }
 
-/**
- * Tracked element data for repositioning on scroll/resize
- */
-interface TrackedElement {
-  element: Element
-  overlay: HTMLElement
-  type: 'dim' | 'problem' | 'highlight'
-  category?: ProblemCategory
-}
-
-/** All currently tracked elements */
-let trackedElements: TrackedElement[] = []
-
-/** Scroll/resize handlers */
-let scrollHandler: (() => void) | null = null
-let resizeHandler: (() => void) | null = null
-let rafId: number | null = null
-
-/**
- * Updates all overlay positions based on current element positions
- */
-function updateOverlayPositions(): void {
-  if (rafId !== null) {
-    cancelAnimationFrame(rafId)
-  }
-
-  rafId = requestAnimationFrame(() => {
-    for (const tracked of trackedElements) {
-      const rect = tracked.element.getBoundingClientRect()
-
-      if (tracked.type === 'dim') {
-        tracked.overlay.style.top = `${rect.top}px`
-        tracked.overlay.style.left = `${rect.left}px`
-        tracked.overlay.style.width = `${rect.width}px`
-        tracked.overlay.style.height = `${rect.height}px`
-      } else if (tracked.type === 'highlight') {
-        // Highlights have -4px vertical offset for alignment
-        tracked.overlay.style.top = `${rect.top - 4}px`
-        tracked.overlay.style.left = `${rect.left}px`
-      } else if (tracked.type === 'problem') {
-        tracked.overlay.style.top = `${rect.top - 4}px`
-        tracked.overlay.style.left = `${rect.left - 4}px`
-        tracked.overlay.style.width = `${rect.width + 8}px`
-        tracked.overlay.style.height = `${rect.height + 8}px`
-      }
-    }
-    rafId = null
-  })
-}
-
-/**
- * Sets up scroll and resize listeners for overlay repositioning
- * Uses capture:true to catch scroll events on internal scrollable elements (like Notion)
- */
-function setupPositionListeners(): void {
-  if (scrollHandler) return // Already set up
-
-  scrollHandler = () => requestAnimationFrame(updateOverlayPositions)
-  resizeHandler = () => requestAnimationFrame(updateOverlayPositions)
-
-  // Use capture:true to catch scroll on internal elements, not just window
-  window.addEventListener('scroll', scrollHandler, true)
-  window.addEventListener('resize', resizeHandler)
-}
-
-/**
- * Removes scroll and resize listeners
- */
-function removePositionListeners(): void {
-  if (scrollHandler) {
-    window.removeEventListener('scroll', scrollHandler, true)
-    scrollHandler = null
-  }
-  if (resizeHandler) {
-    window.removeEventListener('resize', resizeHandler)
-    resizeHandler = null
-  }
-  if (rafId !== null) {
-    cancelAnimationFrame(rafId)
-    rafId = null
-  }
-}
-
 /** Selector for inline anchors that should be highlighted above blur */
 const INLINE_ANCHOR_SELECTOR = 'strong, b, mark, em, a'
+
+/** Singleton tracker instance for scan overlays */
+let tracker: OverlayTracker | null = null
+
+/**
+ * Gets or creates the tracker instance
+ */
+function getTracker(): OverlayTracker {
+  if (!tracker) {
+    tracker = createOverlayTracker()
+  }
+  return tracker
+}
 
 /**
  * Creates dim overlays for all text blocks in the content area
@@ -209,6 +134,7 @@ export function createDimOverlays(
   config: ScanOverlayConfig = DEFAULT_CONFIG,
   ignoreSelector = '',
 ): void {
+  const t = getTracker()
   const elements = ignoreSelector
     ? Array.from(textBlocks).filter((el) => !el.closest(ignoreSelector))
     : Array.from(textBlocks)
@@ -222,14 +148,16 @@ export function createDimOverlays(
 
     // Create blur overlay for the paragraph
     const overlay = createDimOverlay(rect, config)
-    addOverlayToBody(overlay)
-    trackedElements.push({ element, overlay, type: 'dim' })
+    t.track({
+      element,
+      overlay,
+      offset: { top: 0, left: 0, width: 0, height: 0 },
+      type: 'dim',
+    })
 
     // Create highlights for inline anchors within this paragraph
-    createInlineAnchorHighlights(element, ignoreSelector)
+    createInlineAnchorHighlights(t, element, ignoreSelector)
   }
-
-  setupPositionListeners()
 }
 
 /**
@@ -262,7 +190,11 @@ function getTextOpacity(anchor: HTMLElement, paragraph: Element): number {
  * Creates highlight overlays for inline anchors within a blurred paragraph
  * These highlights appear ABOVE the blur overlay to show the anchor text clearly
  */
-function createInlineAnchorHighlights(paragraph: Element, ignoreSelector: string): void {
+function createInlineAnchorHighlights(
+  t: OverlayTracker,
+  paragraph: Element,
+  ignoreSelector: string,
+): void {
   const inlineAnchors = paragraph.querySelectorAll(INLINE_ANCHOR_SELECTOR)
 
   for (const anchor of inlineAnchors) {
@@ -277,8 +209,12 @@ function createInlineAnchorHighlights(paragraph: Element, ignoreSelector: string
 
     // Create a highlight that clones the anchor content
     const highlight = createInlineHighlight(anchor as HTMLElement, rect, textOpacity)
-    addOverlayToBody(highlight)
-    trackedElements.push({ element: anchor, overlay: highlight, type: 'highlight' })
+    t.track({
+      element: anchor,
+      overlay: highlight,
+      offset: { top: -4, left: 0, width: 0, height: 0 },
+      type: 'highlight',
+    })
   }
 }
 
@@ -323,6 +259,7 @@ function createInlineHighlight(
     margin-left: -2px;
     pointer-events: none;
     white-space: pre-wrap;
+    z-index: ${Z_INDEX.OVERLAY + 1};
   `
 
   return highlight
@@ -341,18 +278,18 @@ function isBlockLevelHotspot(element: Element): boolean {
  * Updates the config for all dim overlays
  */
 export function updateDimOverlayConfig(config: ScanOverlayConfig): void {
+  if (!tracker) return
+
   const bgColor = getBodyBgColor()
 
-  for (const tracked of trackedElements) {
-    if (tracked.type === 'dim') {
-      const blurValue = `blur(${config.blur}px)`
-      tracked.overlay.style.backdropFilter = blurValue
-      // Safari prefix - use type assertion for vendor prefix
-      ;(tracked.overlay.style as unknown as Record<string, string>)['-webkit-backdrop-filter'] =
-        blurValue
-      tracked.overlay.style.background =
-        config.opacity > 0 ? withOpacity(bgColor, config.opacity) : 'transparent'
-    }
+  for (const tracked of tracker.getByType('dim')) {
+    const blurValue = `blur(${config.blur}px)`
+    tracked.overlay.style.backdropFilter = blurValue
+    // Safari prefix - use type assertion for vendor prefix
+    ;(tracked.overlay.style as unknown as Record<string, string>)['-webkit-backdrop-filter'] =
+      blurValue
+    tracked.overlay.style.background =
+      config.opacity > 0 ? withOpacity(bgColor, config.opacity) : 'transparent'
   }
 }
 
@@ -360,13 +297,10 @@ export function updateDimOverlayConfig(config: ScanOverlayConfig): void {
  * Removes all scan overlays and cleans up
  */
 export function removeAllScanOverlays(): void {
-  removePositionListeners()
-
-  // Remove each overlay from the DOM
-  for (const tracked of trackedElements) {
-    tracked.overlay.remove()
+  if (tracker) {
+    tracker.clear()
+    tracker = null
   }
-  trackedElements = []
 
   // Remove tooltip styles
   const tooltipStyles = document.getElementById('scanvision-tooltip-styles')
@@ -509,12 +443,14 @@ export interface UnformattedCodeInfo {
  * Creates overlays for unformatted code blocks with tooltips
  */
 export function createUnformattedCodeOverlays(matches: UnformattedCodeInfo[]): void {
+  const t = getTracker()
+
   // Inject tooltip styles
   injectTooltipStyles()
 
   for (const { element, type, description } of matches) {
     // Skip if already tracked
-    if (trackedElements.some((t) => t.element === element && t.category === 'unformatted')) {
+    if (t.isTracked(element, 'unformatted')) {
       continue
     }
 
@@ -528,9 +464,12 @@ export function createUnformattedCodeOverlays(matches: UnformattedCodeInfo[]): v
     const infoIcon = createInfoIcon(type, description)
     overlay.appendChild(infoIcon)
 
-    addOverlayToBody(overlay)
-    trackedElements.push({ element, overlay, type: 'problem', category: 'unformatted' })
+    t.track({
+      element,
+      overlay,
+      offset: { top: -4, left: -4, width: 8, height: 8 },
+      type: 'problem',
+      category: 'unformatted',
+    })
   }
-
-  setupPositionListeners()
 }
