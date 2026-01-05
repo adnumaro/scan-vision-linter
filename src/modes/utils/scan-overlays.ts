@@ -10,19 +10,11 @@ import { Z_INDEX } from './constants'
 const OVERLAY_CLASSES = {
   container: 'scanvision-scan-container',
   dimOverlay: 'scanvision-dim-overlay',
-  hotspotOverlay: 'scanvision-hotspot-overlay',
   problemOverlay: 'scanvision-problem-overlay',
 } as const
 
-/** Hotspot categories for different outline colors */
-export type HotspotCategory =
-  | 'heading'
-  | 'code'
-  | 'image'
-  | 'callout'
-  | 'platform'
-  | 'problem'
-  | 'unformatted'
+/** Problem overlay categories */
+type ProblemCategory = 'problem' | 'unformatted'
 
 /** Configuration for scan overlays */
 export interface ScanOverlayConfig {
@@ -85,56 +77,20 @@ function createDimOverlay(rect: DOMRect, config: ScanOverlayConfig): HTMLElement
 }
 
 /**
- * Gets the outline color for a hotspot category
+ * Gets the outline color for a problem category
  */
-function getHotspotColor(category: HotspotCategory): { color: string; style: 'solid' | 'dashed' } {
-  switch (category) {
-    case 'heading':
-      return { color: SCAN_COLORS.headings.rgba(0.6), style: 'solid' }
-    case 'code':
-      return { color: SCAN_COLORS.code.rgba(0.6), style: 'dashed' }
-    case 'image':
-      return { color: SCAN_COLORS.images.rgba(0.6), style: 'solid' }
-    case 'callout':
-      return { color: SCAN_COLORS.callouts.rgba(0.6), style: 'solid' }
-    case 'platform':
-      return { color: SCAN_COLORS.platform.rgba(0.6), style: 'solid' }
-    case 'problem':
-      return { color: SCAN_COLORS.denseParagraph.rgba(0.7), style: 'dashed' }
-    case 'unformatted':
-      return { color: SCAN_COLORS.unformattedCode.rgba(0.8), style: 'dashed' }
-    default:
-      return { color: SCAN_COLORS.headings.rgba(0.5), style: 'solid' }
+function getProblemColor(category: ProblemCategory): { color: string; style: 'dashed' } {
+  if (category === 'unformatted') {
+    return { color: SCAN_COLORS.unformattedCode.rgba(0.8), style: 'dashed' }
   }
+  return { color: SCAN_COLORS.denseParagraph.rgba(0.7), style: 'dashed' }
 }
 
 /**
- * Creates a hotspot overlay (colored border) for an anchor element
+ * Creates a problem overlay (for unformatted code)
  */
-function createHotspotOverlay(rect: DOMRect, category: HotspotCategory): HTMLElement {
-  const { color, style } = getHotspotColor(category)
-  const overlay = document.createElement('div')
-  overlay.className = OVERLAY_CLASSES.hotspotOverlay
-  overlay.dataset.category = category
-  overlay.style.cssText = `
-    position: fixed;
-    top: ${rect.top - 2}px;
-    left: ${rect.left - 2}px;
-    width: ${rect.width + 4}px;
-    height: ${rect.height + 4}px;
-    border: 2px ${style} ${color};
-    border-radius: 3px;
-    pointer-events: none;
-    box-sizing: border-box;
-  `
-  return overlay
-}
-
-/**
- * Creates a problem overlay (for dense paragraphs or unformatted code)
- */
-function createProblemOverlay(rect: DOMRect, type: 'problem' | 'unformatted'): HTMLElement {
-  const { color, style } = getHotspotColor(type)
+function createProblemOverlay(rect: DOMRect, type: ProblemCategory): HTMLElement {
+  const { color, style } = getProblemColor(type)
   const bgColor =
     type === 'problem'
       ? SCAN_COLORS.denseParagraph.rgba(0.05)
@@ -164,8 +120,8 @@ function createProblemOverlay(rect: DOMRect, type: 'problem' | 'unformatted'): H
 interface TrackedElement {
   element: Element
   overlay: HTMLElement
-  type: 'dim' | 'hotspot' | 'problem' | 'highlight'
-  category?: HotspotCategory
+  type: 'dim' | 'problem' | 'highlight'
+  category?: ProblemCategory
 }
 
 /** All currently tracked elements */
@@ -197,11 +153,6 @@ function updateOverlayPositions(): void {
         // Highlights have -4px vertical offset for alignment
         tracked.overlay.style.top = `${rect.top - 4}px`
         tracked.overlay.style.left = `${rect.left}px`
-      } else if (tracked.type === 'hotspot') {
-        tracked.overlay.style.top = `${rect.top - 2}px`
-        tracked.overlay.style.left = `${rect.left - 2}px`
-        tracked.overlay.style.width = `${rect.width + 4}px`
-        tracked.overlay.style.height = `${rect.height + 4}px`
       } else if (tracked.type === 'problem') {
         tracked.overlay.style.top = `${rect.top - 4}px`
         tracked.overlay.style.left = `${rect.left - 4}px`
@@ -387,90 +338,6 @@ function isBlockLevelHotspot(element: Element): boolean {
 }
 
 /**
- * Creates hotspot overlays for anchor elements
- */
-export function createHotspotOverlays(
-  contentArea: Element,
-  preset: { hotSpots?: string[]; codeBlocks?: string },
-  ignoreSelector = '',
-): void {
-  // Define hotspot selectors with their categories
-  const hotspotGroups: Array<{ selector: string; category: HotspotCategory }> = [
-    { selector: 'h1, h2, h3, h4, h5, h6', category: 'heading' },
-    { selector: 'strong, b, mark, em', category: 'heading' },
-    { selector: 'code, pre, kbd, samp', category: 'code' },
-    { selector: 'img, picture, video, canvas, figure', category: 'image' },
-    {
-      selector:
-        '[class*="alert"], [class*="callout"], [class*="admonition"], [class*="warning"], [class*="info"], [class*="tip"], [class*="note"]',
-      category: 'callout',
-    },
-  ]
-
-  // Add platform-specific code blocks
-  if (preset.codeBlocks) {
-    hotspotGroups.push({ selector: preset.codeBlocks, category: 'code' })
-  }
-
-  // Add platform-specific hotspots
-  if (preset.hotSpots && preset.hotSpots.length > 0) {
-    hotspotGroups.push({ selector: preset.hotSpots.join(', '), category: 'platform' })
-  }
-
-  const processedElements = new Set<Element>()
-
-  for (const { selector, category } of hotspotGroups) {
-    try {
-      const elements = contentArea.querySelectorAll(selector)
-
-      for (const element of elements) {
-        // Skip if already processed or inside ignored area
-        if (processedElements.has(element)) continue
-        if (ignoreSelector && element.closest(ignoreSelector)) continue
-
-        // Skip inline elements inside paragraphs (they'll be visible through the blur)
-        // Only highlight block-level hotspots
-        const isInline = ['STRONG', 'B', 'MARK', 'EM', 'CODE', 'KBD', 'SAMP', 'A'].includes(
-          element.tagName,
-        )
-        if (isInline && element.closest('p')) continue
-
-        const rect = element.getBoundingClientRect()
-        if (rect.width === 0 || rect.height === 0) continue
-
-        const overlay = createHotspotOverlay(rect, category)
-        addOverlayToBody(overlay)
-        trackedElements.push({ element, overlay, type: 'hotspot', category })
-        processedElements.add(element)
-      }
-    } catch {
-      // Invalid selector, skip
-    }
-  }
-
-  setupPositionListeners()
-}
-
-/**
- * Creates problem overlays for dense paragraphs
- */
-export function createProblemOverlays(
-  problemElements: Element[],
-  type: 'problem' | 'unformatted' = 'problem',
-): void {
-  for (const element of problemElements) {
-    const rect = element.getBoundingClientRect()
-    if (rect.width === 0 || rect.height === 0) continue
-
-    const overlay = createProblemOverlay(rect, type)
-    addOverlayToBody(overlay)
-    trackedElements.push({ element, overlay, type: 'problem', category: type })
-  }
-
-  setupPositionListeners()
-}
-
-/**
  * Updates the config for all dim overlays
  */
 export function updateDimOverlayConfig(config: ScanOverlayConfig): void {
@@ -611,7 +478,11 @@ function createInfoIcon(type: string, description: string): HTMLDivElement {
 
   const titleDiv = document.createElement('div')
   titleDiv.className = 'scanvision-tooltip-title'
-  titleDiv.innerHTML = `<span>⚠️</span> ${description}`
+  // Use textContent instead of innerHTML to prevent XSS
+  const emoji = document.createElement('span')
+  emoji.textContent = '⚠️'
+  titleDiv.appendChild(emoji)
+  titleDiv.appendChild(document.createTextNode(` ${description}`))
 
   const suggestionDiv = document.createElement('div')
   suggestionDiv.className = 'scanvision-tooltip-suggestion'

@@ -54,6 +54,9 @@ class FPatternMode implements VisualizationMode {
   activate(context: ModeContext): void {
     if (this.active) return
 
+    // Clean up previous listener to prevent memory leak
+    this.cleanup?.()
+
     this.contentArea = context.contentArea
     this.createOverlay()
 

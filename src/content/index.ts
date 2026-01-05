@@ -18,7 +18,7 @@ import { foldLineMode } from '../modes/implementations/fold-line-mode'
 import { heatZonesMode } from '../modes/implementations/heat-zones-mode'
 import { scanMode } from '../modes/implementations/scan-mode'
 import { estimateLines, MAX_LINES_WITHOUT_ANCHOR } from '../modes/utils/dom'
-import { getPresetById } from '../presets/platforms'
+import { getPresetById, PRESETS } from '../presets/platforms'
 import type {
   AnalyticsData,
   DetectedProblem,
@@ -59,17 +59,8 @@ function validateModeId(modeId: unknown): string | null {
   return registry.has(trimmedId) ? trimmedId : null
 }
 
-const DEFAULT_PRESET: PlatformPreset = {
-  id: 'default',
-  name: 'Default',
-  description: 'Generic settings',
-  domains: [],
-  selectors: {
-    contentArea: 'main, article, [role="main"], .content, #content, body',
-    hotSpots: [],
-    ignoreElements: [],
-  },
-}
+// Use the first preset (default) from platforms.ts - single source of truth
+const DEFAULT_PRESET = PRESETS[0]
 
 let currentConfig: ScanConfig = DEFAULT_CONFIG
 let currentPreset: PlatformPreset = DEFAULT_PRESET
@@ -362,11 +353,12 @@ chrome.runtime.onMessage.addListener(
         currentConfig = message.config
       }
       if (message.preset) {
-        // Invalidate cache when preset changes
-        if (message.preset.id !== currentPreset.id) {
+        // Check if preset changed BEFORE updating to avoid race condition
+        const presetChanged = message.preset.id !== currentPreset.id
+        currentPreset = message.preset
+        if (presetChanged) {
           invalidateCache()
         }
-        currentPreset = message.preset
       }
 
       if (manager.isActive('scan')) {
