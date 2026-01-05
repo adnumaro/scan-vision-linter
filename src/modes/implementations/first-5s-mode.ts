@@ -112,12 +112,47 @@ function isHotspot(element: Element): boolean {
 }
 
 /**
+ * Checks if an element is completely above the fold line
+ */
+function isAboveFold(rect: DOMRect, foldY: number): boolean {
+  return rect.bottom <= foldY
+}
+
+/**
+ * Creates a full blur overlay for elements below the fold (no highlights)
+ */
+function createBelowFoldOverlay(rect: DOMRect, config: First5sConfig['settings']): HTMLElement {
+  const overlay = document.createElement('div')
+  overlay.className = 'scanvision-first5s-below-fold'
+
+  const bgColor = getBodyBgColor()
+
+  // Stronger blur and opacity for below-fold content
+  overlay.style.cssText = `
+    position: fixed;
+    top: ${rect.top}px;
+    left: ${rect.left}px;
+    width: ${rect.width}px;
+    height: ${rect.height}px;
+    backdrop-filter: blur(${config.blur * 1.5}px);
+    -webkit-backdrop-filter: blur(${config.blur * 1.5}px);
+    background: ${withOpacity(bgColor, Math.min(config.opacity * 1.3, 0.9))};
+    pointer-events: none;
+    z-index: ${Z_INDEX.OVERLAY};
+    border-radius: 2px;
+  `
+  return overlay
+}
+
+/**
  * Creates all overlays for the content area using the tracker
+ * Only shows highlights for elements above the initial fold line
  */
 function createOverlays(
   tracker: OverlayTracker,
   context: ModeContext,
   config: First5sConfig['settings'],
+  foldY: number,
 ): void {
   const { contentArea, preset } = context
   const ignoreSelector = preset.selectors.ignoreElements?.join(', ') || ''
@@ -130,7 +165,7 @@ function createOverlays(
     // Skip if inside ignored area
     if (ignoreSelector && element.closest(ignoreSelector)) continue
 
-    // Skip hotspots (headings, images, etc.)
+    // Skip hotspots (headings, images, etc.) - but only above fold
     if (isHotspot(element)) continue
 
     const rect = element.getBoundingClientRect()
@@ -145,7 +180,7 @@ function createOverlays(
     })
   }
 
-  // Highlight headings
+  // Process headings - only highlight if above fold
   const headings = contentArea.querySelectorAll('h1, h2, h3, h4, h5, h6')
   for (const heading of headings) {
     if (ignoreSelector && heading.closest(ignoreSelector)) continue
@@ -153,16 +188,28 @@ function createOverlays(
     const rect = heading.getBoundingClientRect()
     if (rect.width === 0 || rect.height === 0) continue
 
-    const overlay = createHeadingHighlight(rect)
-    tracker.track({
-      element: heading,
-      overlay,
-      offset: { top: -4, left: -8, width: 16, height: 8 },
-      type: 'highlight',
-    })
+    if (isAboveFold(rect, foldY)) {
+      // Above fold: show highlight
+      const overlay = createHeadingHighlight(rect)
+      tracker.track({
+        element: heading,
+        overlay,
+        offset: { top: -4, left: -8, width: 16, height: 8 },
+        type: 'highlight',
+      })
+    } else {
+      // Below fold: blur without highlight
+      const overlay = createBelowFoldOverlay(rect, config)
+      tracker.track({
+        element: heading,
+        overlay,
+        offset: { top: 0, left: 0, width: 0, height: 0 },
+        type: 'below-fold',
+      })
+    }
   }
 
-  // Outline images
+  // Process images - only outline if above fold
   const images = contentArea.querySelectorAll('img, picture, video')
   for (const img of images) {
     if (ignoreSelector && img.closest(ignoreSelector)) continue
@@ -175,18 +222,31 @@ function createOverlays(
     const rect = img.getBoundingClientRect()
     if (rect.width === 0 || rect.height === 0) continue
 
-    const overlay = createImageOutline(rect)
-    tracker.track({
-      element: img,
-      overlay,
-      offset: { top: -3, left: -3, width: 6, height: 6 },
-      type: 'image-outline',
-    })
+    if (isAboveFold(rect, foldY)) {
+      // Above fold: show outline
+      const overlay = createImageOutline(rect)
+      tracker.track({
+        element: img,
+        overlay,
+        offset: { top: -3, left: -3, width: 6, height: 6 },
+        type: 'image-outline',
+      })
+    } else {
+      // Below fold: blur without outline
+      const overlay = createBelowFoldOverlay(rect, config)
+      tracker.track({
+        element: img,
+        overlay,
+        offset: { top: 0, left: 0, width: 0, height: 0 },
+        type: 'below-fold',
+      })
+    }
   }
 }
 
 /**
  * First 5 Seconds Mode implementation using overlays
+ * Captures fold position on activation and only highlights content above it
  */
 class First5sMode implements VisualizationMode {
   readonly id = MODE_ID
@@ -200,6 +260,8 @@ class First5sMode implements VisualizationMode {
   private config: First5sConfig = DEFAULT_CONFIG
   private context: ModeContext | null = null
   private tracker: OverlayTracker | null = null
+  /** Fold line position captured at activation time */
+  private initialFoldY: number = 0
 
   activate(context: ModeContext): void {
     if (this.active) return
@@ -207,9 +269,12 @@ class First5sMode implements VisualizationMode {
     // Clean up any previous state
     this.tracker?.clear()
 
+    // Capture fold position at activation time
+    this.initialFoldY = window.innerHeight
+
     this.context = context
     this.tracker = createOverlayTracker()
-    createOverlays(this.tracker, context, this.config.settings)
+    createOverlays(this.tracker, context, this.config.settings, this.initialFoldY)
     this.active = true
   }
 
@@ -219,6 +284,7 @@ class First5sMode implements VisualizationMode {
     this.tracker?.clear()
     this.tracker = null
     this.context = null
+    this.initialFoldY = 0
     this.active = false
   }
 
@@ -232,11 +298,11 @@ class First5sMode implements VisualizationMode {
       },
     }
 
-    // Recreate overlays with new config
+    // Recreate overlays with new config (keep same foldY)
     if (this.active && this.context && this.tracker) {
       this.tracker.clear()
       this.tracker = createOverlayTracker()
-      createOverlays(this.tracker, this.context, this.config.settings)
+      createOverlays(this.tracker, this.context, this.config.settings, this.initialFoldY)
     }
   }
 

@@ -1,19 +1,16 @@
 /**
  * Fold Line Mode - Shows "above the fold" indicator
- * Displays a horizontal line at the viewport height within content area
+ * Captures fold position on activation and tracks it with scroll
  */
 
 import { Minus } from 'lucide-react'
-import type { ModeConfig } from '../types'
-import { ViewportTrackingMode } from '../utils/base-mode'
+import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
 import { COLORS } from '../utils/colors'
-import { OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
-import { removeOverlayElement } from '../utils/overlay'
-import { getFoldLinePosition } from '../utils/viewport'
+import { cloneModeConfig } from '../utils/config'
+import { Z_INDEX } from '../utils/constants'
+import { createOverlayTracker, type OverlayTracker } from '../utils/overlay-tracker'
 
 const MODE_ID = 'fold-line'
-const LINE_ID = 'fold-line-line'
-const LABEL_ID = 'fold-line-label'
 
 interface FoldLineConfig extends ModeConfig {
   settings: {
@@ -34,8 +31,9 @@ const DEFAULT_CONFIG: FoldLineConfig = {
 
 /**
  * Fold Line Mode implementation
+ * Captures fold position on activation and uses tracker to follow scroll
  */
-class FoldLineMode extends ViewportTrackingMode<FoldLineConfig> {
+class FoldLineMode implements VisualizationMode {
   readonly id = MODE_ID
   readonly name = 'Fold Line'
   readonly description = 'Shows what users see without scrolling'
@@ -43,45 +41,79 @@ class FoldLineMode extends ViewportTrackingMode<FoldLineConfig> {
   readonly category = 'indicator' as const
   readonly incompatibleWith: string[] = []
 
-  private lineElement: HTMLElement | null = null
-  private labelElement: HTMLElement | null = null
+  private active = false
+  private config: FoldLineConfig = DEFAULT_CONFIG
+  private context: ModeContext | null = null
+  private tracker: OverlayTracker | null = null
+  /** Fold position captured at activation */
+  private initialFoldY: number = 0
 
-  constructor() {
-    super(DEFAULT_CONFIG)
+  activate(context: ModeContext): void {
+    if (this.active) return
+
+    this.tracker?.clear()
+
+    // Capture fold position at activation
+    this.initialFoldY = window.innerHeight
+
+    this.context = context
+    this.tracker = createOverlayTracker()
+    this.createFoldLine()
+    this.active = true
   }
 
-  protected createOverlay(): void {
+  deactivate(): void {
+    if (!this.active) return
+
+    this.tracker?.clear()
+    this.tracker = null
+    this.context = null
+    this.initialFoldY = 0
+    this.active = false
+  }
+
+  private createFoldLine(): void {
+    if (!this.context || !this.tracker) return
+
+    const { contentArea } = this.context
     const { color, showLabel, labelText } = this.config.settings
+    const contentRect = contentArea.getBoundingClientRect()
 
-    // Create line element
-    const lineFullId = OVERLAY_PREFIX + LINE_ID
-    let lineEl = document.getElementById(lineFullId)
-    if (!lineEl) {
-      lineEl = document.createElement('div')
-      lineEl.id = lineFullId
-      document.body.appendChild(lineEl)
-    }
-    lineEl.style.cssText = `
+    // Calculate offset relative to contentArea
+    const foldOffsetY = this.initialFoldY - contentRect.top
+
+    // Create dotted line
+    const line = document.createElement('div')
+    line.className = 'scanvision-fold-line'
+    line.style.cssText = `
       position: fixed;
+      top: ${this.initialFoldY}px;
+      left: ${contentRect.left}px;
+      width: ${contentRect.width}px;
       height: 0;
-      border-top: 2px dashed ${color};
-      z-index: ${Z_INDEX.INDICATOR};
+      border-top: 2px dotted ${color};
       pointer-events: none;
+      z-index: ${Z_INDEX.INDICATOR};
     `
-    this.lineElement = lineEl
 
-    // Create label element
+    // Track line relative to contentArea
+    this.tracker.track({
+      element: contentArea,
+      overlay: line,
+      offset: { top: foldOffsetY, left: 0, width: 0 },
+      type: 'fold-line',
+      fixedDimensions: true,
+    })
+
+    // Create label if enabled
     if (showLabel) {
-      const labelFullId = OVERLAY_PREFIX + LABEL_ID
-      let labelEl = document.getElementById(labelFullId)
-      if (!labelEl) {
-        labelEl = document.createElement('div')
-        labelEl.id = labelFullId
-        document.body.appendChild(labelEl)
-      }
-      labelEl.textContent = labelText
-      labelEl.style.cssText = `
+      const label = document.createElement('div')
+      label.className = 'scanvision-fold-label'
+      label.textContent = labelText
+      label.style.cssText = `
         position: fixed;
+        top: ${this.initialFoldY - 24}px;
+        left: ${contentRect.left + contentRect.width - 110}px;
         padding: 4px 8px;
         background-color: ${color};
         color: ${COLORS.indicator.label};
@@ -89,90 +121,49 @@ class FoldLineMode extends ViewportTrackingMode<FoldLineConfig> {
         font-family: system-ui, -apple-system, sans-serif;
         font-weight: 500;
         border-radius: 4px;
-        z-index: ${Z_INDEX.TOP};
         pointer-events: none;
+        z-index: ${Z_INDEX.TOP};
         white-space: nowrap;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       `
-      this.labelElement = labelEl
-    }
 
-    this.updateOverlay()
-  }
-
-  protected updateOverlay(): void {
-    if (!this.contentArea) return
-
-    const rect = this.contentArea.getBoundingClientRect()
-    const foldY = getFoldLinePosition()
-
-    // Only show if fold line is within content area bounds
-    const showLine = foldY > rect.top && foldY < rect.bottom
-
-    if (this.lineElement) {
-      if (showLine) {
-        this.lineElement.style.display = 'block'
-        this.lineElement.style.top = `${foldY}px`
-        this.lineElement.style.left = `${rect.left}px`
-        this.lineElement.style.width = `${rect.width}px`
-      } else {
-        this.lineElement.style.display = 'none'
-      }
-    }
-
-    if (this.labelElement) {
-      if (showLine) {
-        this.labelElement.style.display = 'block'
-        this.labelElement.style.top = `${foldY - 24}px`
-        this.labelElement.style.left = `${rect.left + rect.width - 100}px`
-      } else {
-        this.labelElement.style.display = 'none'
-      }
+      this.tracker.track({
+        element: contentArea,
+        overlay: label,
+        offset: { top: foldOffsetY - 24, left: contentRect.width - 110 },
+        type: 'fold-label',
+        fixedDimensions: true,
+      })
     }
   }
 
-  protected removeOverlay(): void {
-    removeOverlayElement(LINE_ID)
-    removeOverlayElement(LABEL_ID)
-    this.lineElement = null
-    this.labelElement = null
-  }
+  update(config: ModeConfig): void {
+    this.config = {
+      ...this.config,
+      ...config,
+      settings: {
+        ...this.config.settings,
+        ...(config.settings as FoldLineConfig['settings']),
+      },
+    }
 
-  /**
-   * Override update to handle label visibility changes
-   */
-  override update(config: ModeConfig): void {
-    const hadLabel = this.config.settings.showLabel
-    super.update(config)
-
-    // If label visibility changed while active, recreate elements
-    if (this.active && hadLabel !== this.config.settings.showLabel) {
-      this.removeOverlay()
-      this.createOverlay()
-    } else if (this.active) {
-      this.updateElementStyles()
+    // Recreate with new config
+    if (this.active && this.context && this.tracker) {
+      this.tracker.clear()
+      this.tracker = createOverlayTracker()
+      this.createFoldLine()
     }
   }
 
-  /**
-   * Updates element styles without recreating them
-   */
-  private updateElementStyles(): void {
-    const { color, showLabel, labelText } = this.config.settings
+  isActive(): boolean {
+    return this.active
+  }
 
-    if (this.lineElement) {
-      this.lineElement.style.borderTopColor = color
-    }
+  getDefaultConfig(): ModeConfig {
+    return DEFAULT_CONFIG
+  }
 
-    if (this.labelElement) {
-      if (showLabel) {
-        this.labelElement.textContent = labelText
-        this.labelElement.style.backgroundColor = color
-        this.labelElement.style.display = 'block'
-      } else {
-        this.labelElement.style.display = 'none'
-      }
-    }
+  getConfig(): ModeConfig {
+    return cloneModeConfig(this.config)
   }
 }
 

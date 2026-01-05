@@ -11,7 +11,6 @@
 import type { LucideIcon } from 'lucide-react'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
 import { cloneModeConfig } from './config'
-import { onViewportChange } from './viewport'
 
 /**
  * Base class for modes that need to track viewport changes
@@ -52,9 +51,15 @@ export abstract class ViewportTrackingMode<TConfig extends ModeConfig>
     this.createOverlay()
 
     // Update on resize and scroll
-    this.cleanup = onViewportChange(() => {
-      this.updateOverlay()
-    })
+    // Uses capture:true to catch scroll events on internal containers (Confluence, Notion)
+    const handleUpdate = () => this.updateOverlay()
+    window.addEventListener('scroll', handleUpdate, true)
+    window.addEventListener('resize', handleUpdate)
+
+    this.cleanup = () => {
+      window.removeEventListener('scroll', handleUpdate, true)
+      window.removeEventListener('resize', handleUpdate)
+    }
 
     this.active = true
   }

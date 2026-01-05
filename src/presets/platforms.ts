@@ -105,7 +105,8 @@ export const PRESETS: PlatformPreset[] = [
     description: 'Optimized for Atlassian Confluence',
     domains: ['atlassian.net', 'confluence.com'],
     selectors: {
-      contentArea: '.ak-editor-content-area, #content-body, [data-testid="page-content"], .wiki-content',
+      contentArea:
+        '.ak-editor-content-area, #content-body, [data-testid="page-content"], .wiki-content',
       textBlocks: 'p, [data-node-type="text"], [data-node-type="paragraph"]',
       codeBlocks: '[data-prosemirror-node-name="codeBlock"]',
       hotSpots: [

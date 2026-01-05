@@ -32,6 +32,8 @@ export interface TrackedOverlay {
   /** Optional metadata for filtering */
   type?: string
   category?: string
+  /** If true, don't update width/height (useful for lines) */
+  fixedDimensions?: boolean
 }
 
 /**
@@ -71,13 +73,17 @@ export function createOverlayTracker() {
 
         const top = rect.top + (offset.top ?? 0)
         const left = rect.left + (offset.left ?? 0)
-        const width = rect.width + (offset.width ?? 0)
-        const height = rect.height + (offset.height ?? 0)
 
         tracked.overlay.style.top = `${top}px`
         tracked.overlay.style.left = `${left}px`
-        tracked.overlay.style.width = `${width}px`
-        tracked.overlay.style.height = `${height}px`
+
+        // Only update dimensions if not fixed
+        if (!tracked.fixedDimensions) {
+          const width = rect.width + (offset.width ?? 0)
+          const height = rect.height + (offset.height ?? 0)
+          tracked.overlay.style.width = `${width}px`
+          tracked.overlay.style.height = `${height}px`
+        }
       }
       state.rafId = null
     })
