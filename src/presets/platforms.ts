@@ -120,6 +120,7 @@ export const PRESETS: PlatformPreset[] = [
         // Navigation and header
         '[data-testid="grid-left-sidebar"]',
         '[data-testid="space-navigation"]',
+        '[data-testid="toolbar-above-title-wrapper"]',
         '[data-vc="space-navigation"]',
         'nav[aria-label]',
         'header',

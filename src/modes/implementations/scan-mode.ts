@@ -37,7 +37,7 @@ interface ScanModeConfig extends ModeConfig {
 const DEFAULT_CONFIG: ScanModeConfig = {
   enabled: true,
   settings: {
-    blur: 4,
+    blur: 2,
     opacity: 0,
   },
 }

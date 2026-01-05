@@ -3,7 +3,7 @@
  * Works on any background color (light, dark, or colored)
  */
 
-import { SCAN_COLORS } from './colors'
+import { SCAN_COLORS, withOpacity } from './colors'
 import { Z_INDEX } from './constants'
 
 /** Class names for different overlay types */
@@ -31,7 +31,7 @@ export interface ScanOverlayConfig {
 }
 
 const DEFAULT_CONFIG: ScanOverlayConfig = {
-  blur: 4,
+  blur: 2,
   opacity: 0,
 }
 
@@ -170,14 +170,15 @@ function updateOverlayPositions(): void {
     for (const tracked of trackedElements) {
       const rect = tracked.element.getBoundingClientRect()
 
-      if (tracked.type === 'dim' || tracked.type === 'highlight') {
-        // Dim overlays and highlights use exact positioning
+      if (tracked.type === 'dim') {
         tracked.overlay.style.top = `${rect.top}px`
         tracked.overlay.style.left = `${rect.left}px`
-        if (tracked.type === 'dim') {
-          tracked.overlay.style.width = `${rect.width}px`
-          tracked.overlay.style.height = `${rect.height}px`
-        }
+        tracked.overlay.style.width = `${rect.width}px`
+        tracked.overlay.style.height = `${rect.height}px`
+      } else if (tracked.type === 'highlight') {
+        // Highlights have -4px vertical offset for alignment
+        tracked.overlay.style.top = `${rect.top - 4}px`
+        tracked.overlay.style.left = `${rect.left}px`
       } else if (tracked.type === 'hotspot') {
         tracked.overlay.style.top = `${rect.top - 2}px`
         tracked.overlay.style.left = `${rect.left - 2}px`
@@ -263,6 +264,32 @@ export function createDimOverlays(
 }
 
 /**
+ * Determines the text opacity for an inline anchor based on attention level
+ * - Different color from paragraph text → full opacity (stands out visually)
+ * - Bold (strong, b, mark) → full opacity (high attention)
+ * - Italic, links with same color → reduced opacity (lower attention)
+ */
+function getTextOpacity(anchor: HTMLElement, paragraph: Element): number {
+  const anchorColor = window.getComputedStyle(anchor).color
+  const paragraphColor = window.getComputedStyle(paragraph).color
+
+  // If color is different from paragraph, it stands out → full opacity
+  if (anchorColor !== paragraphColor) {
+    return 1
+  }
+
+  const tagName = anchor.tagName.toUpperCase()
+
+  // Bold text - high attention → full opacity
+  if (tagName === 'STRONG' || tagName === 'B' || tagName === 'MARK') {
+    return 1
+  }
+
+  // Italic, links with same color - lower attention → reduced opacity
+  return 0.5
+}
+
+/**
  * Creates highlight overlays for inline anchors within a blurred paragraph
  * These highlights appear ABOVE the blur overlay to show the anchor text clearly
  */
@@ -276,17 +303,42 @@ function createInlineAnchorHighlights(paragraph: Element, ignoreSelector: string
     const rect = anchor.getBoundingClientRect()
     if (rect.width === 0 || rect.height === 0) continue
 
+    // Determine text opacity based on attention level
+    const textOpacity = getTextOpacity(anchor as HTMLElement, paragraph)
+
     // Create a highlight that clones the anchor content
-    const highlight = createInlineHighlight(anchor as HTMLElement, rect)
+    const highlight = createInlineHighlight(anchor as HTMLElement, rect, textOpacity)
     addOverlayToBody(highlight)
     trackedElements.push({ element: anchor, overlay: highlight, type: 'highlight' })
   }
 }
 
 /**
- * Creates an inline highlight element that shows anchor text above the blur
+ * Gets the background color of the page body
  */
-function createInlineHighlight(anchor: HTMLElement, rect: DOMRect): HTMLElement {
+function getBodyBackgroundColor(): string {
+  const bodyBg = window.getComputedStyle(document.body).backgroundColor
+  // If body is transparent, try html element
+  if (bodyBg === 'rgba(0, 0, 0, 0)' || bodyBg === 'transparent') {
+    const htmlBg = window.getComputedStyle(document.documentElement).backgroundColor
+    if (htmlBg !== 'rgba(0, 0, 0, 0)' && htmlBg !== 'transparent') {
+      return htmlBg
+    }
+    // Default to white if both are transparent
+    return '#ffffff'
+  }
+  return bodyBg
+}
+
+/**
+ * Creates an inline highlight element that shows anchor text above the blur
+ * Background is always solid (body color), text color opacity varies by attention level
+ */
+function createInlineHighlight(
+  anchor: HTMLElement,
+  rect: DOMRect,
+  textOpacity: number,
+): HTMLElement {
   const highlight = document.createElement('span')
   highlight.className = 'scanvision-inline-highlight'
 
@@ -296,18 +348,27 @@ function createInlineHighlight(anchor: HTMLElement, rect: DOMRect): HTMLElement 
   // Get computed styles from original element
   const computed = window.getComputedStyle(anchor)
 
+  // Get body background color for the highlight background (always solid)
+  const bgColor = getBodyBackgroundColor()
+
+  // Apply opacity to text color only, not the whole element
+  const textColor = textOpacity >= 1 ? computed.color : withOpacity(computed.color, textOpacity)
+
   highlight.style.cssText = `
     position: fixed;
-    top: ${rect.top}px;
+    top: ${rect.top - 4}px;
     left: ${rect.left}px;
     font-family: ${computed.fontFamily};
     font-size: ${computed.fontSize};
     font-weight: ${computed.fontWeight};
     font-style: ${computed.fontStyle};
     text-decoration: ${computed.textDecoration};
-    color: ${computed.color};
+    color: ${textColor};
     line-height: ${computed.lineHeight};
     letter-spacing: ${computed.letterSpacing};
+    background-color: ${bgColor};
+    padding: 0 2px;
+    margin-left: -2px;
     pointer-events: none;
     white-space: pre-wrap;
   `
