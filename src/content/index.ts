@@ -210,7 +210,11 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
   })
 
   // Detect unformatted code blocks
-  const unformattedCodeMatches = detectUnformattedCode(mainContent, textBlockSelector, ignoreSelector)
+  const unformattedCodeMatches = detectUnformattedCode(
+    mainContent,
+    textBlockSelector,
+    ignoreSelector,
+  )
   const unformattedCodeBlocks = unformattedCodeMatches.length
 
   // Mark unformatted code blocks visually (cleared on deactivate)

@@ -5,8 +5,8 @@ export interface ScanConfig {
 }
 
 export const DEFAULT_CONFIG: ScanConfig = {
-  opacity: 0.3,
-  blur: 0.5,
+  opacity: 0,
+  blur: 4,
   presetId: 'default',
 }
 

@@ -224,23 +224,22 @@
   margin-bottom: 0;
 }
 
-.analytics-header--clickable {
-  cursor: pointer;
-  padding: 8px;
-  margin: -8px -8px 0 -8px;
-  border-radius: 6px;
-  transition: background-color 0.15s ease;
-}
-
-.analytics-header--clickable:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.analytics-header-left {
+.analytics-header-toggle {
   display: flex;
   align-items: center;
   gap: 4px;
   color: #9ca3af;
+  background: none;
+  border: none;
+  padding: 8px;
+  margin: -8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.analytics-header-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .analytics-content {

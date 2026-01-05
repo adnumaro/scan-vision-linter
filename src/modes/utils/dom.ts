@@ -145,30 +145,3 @@ export function batchAnalyzeParagraphs(
 
   return results
 }
-
-/**
- * Batch applies problem block classes based on analysis
- * Batches all DOM writes together to minimize reflows
- *
- * @param analyses - Results from batchAnalyzeParagraphs
- * @param problemClass - CSS class to apply to problem blocks
- * @returns Number of problem blocks found
- */
-export function batchApplyProblemClasses(
-  analyses: ParagraphAnalysis[],
-  problemClass: string,
-): number {
-  let problemCount = 0
-
-  // Batch all class modifications together
-  for (const { element, isProblem } of analyses) {
-    if (isProblem) {
-      problemCount++
-      element.classList.add(problemClass)
-    } else {
-      element.classList.remove(problemClass)
-    }
-  }
-
-  return problemCount
-}

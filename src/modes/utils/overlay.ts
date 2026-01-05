@@ -63,7 +63,12 @@ export function createLineElement(
     zIndex?: number
   } = {},
 ): HTMLElement {
-  const { color = COLORS.indicator.foldLine, width = '2px', style = 'dashed', zIndex = Z_INDEX.INDICATOR } = options
+  const {
+    color = COLORS.indicator.foldLine,
+    width = '2px',
+    style = 'dashed',
+    zIndex = Z_INDEX.INDICATOR,
+  } = options
 
   const existingLine = document.getElementById(OVERLAY_PREFIX + id)
   if (existingLine) {

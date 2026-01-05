@@ -5,7 +5,14 @@ import { ModeList } from './components/ModeList'
 import { detectPlatform, getPresetById, PRESETS } from './presets/platforms'
 import type { AnalyticsData, ScanConfig } from './types/messages'
 import { DEFAULT_CONFIG } from './types/messages'
-import { clearAnalytics, getAnalytics, getConfig, resetConfig, saveAnalytics, saveConfig } from './utils/storage'
+import {
+  clearAnalytics,
+  getAnalytics,
+  getConfig,
+  resetConfig,
+  saveAnalytics,
+  saveConfig,
+} from './utils/storage'
 
 function App() {
   const [isActive, setIsActive] = useState(false)
@@ -282,7 +289,12 @@ function App() {
     if (isToday) {
       return `Today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
     }
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    return date.toLocaleDateString([], {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
   }
 
   const currentPreset = getPresetById(config.presetId)
@@ -301,22 +313,19 @@ function App() {
 
       {/* Analytics Section */}
       <div className="analytics">
-        <div
-          className="analytics-header analytics-header--clickable"
-          onClick={() => setAnalyticsExpanded(!analyticsExpanded)}
-          onKeyDown={(e) => e.key === 'Enter' && setAnalyticsExpanded(!analyticsExpanded)}
-          role="button"
-          tabIndex={0}
-        >
-          <div className="analytics-header-left">
+        <div className="analytics-header">
+          <button
+            type="button"
+            className="analytics-header-toggle"
+            onClick={() => setAnalyticsExpanded(!analyticsExpanded)}
+          >
             {analyticsExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             <span className="analytics-title">ANALYSIS</span>
-          </div>
+          </button>
           <button
             type="button"
             className={`reanalyze-button ${isReanalyzing ? 'reanalyze-button--spinning' : ''}`}
-            onClick={(e) => {
-              e.stopPropagation()
+            onClick={() => {
               if (!isReanalyzing) reAnalyze()
             }}
             disabled={isReanalyzing}
@@ -328,153 +337,158 @@ function App() {
 
         {analyticsExpanded && !analytics && (
           <div className="analytics-content analytics-content--empty">
-            <span className="analytics-empty-text">No analysis yet. Start a scan to analyze the page.</span>
+            <span className="analytics-empty-text">
+              No analysis yet. Start a scan to analyze the page.
+            </span>
           </div>
         )}
 
         {analyticsExpanded && analytics && (
           <div className="analytics-content">
-          <div className="score-container">
-            <div className={`score-value ${getScoreClass(analytics.score)}`}>{analytics.score}</div>
-            <div className="score-label">{getScoreLabel(analytics.score)}</div>
-            {analytics.timestamp && (
-              <div className="score-timestamp">{formatTimestamp(analytics.timestamp)}</div>
+            <div className="score-container">
+              <div className={`score-value ${getScoreClass(analytics.score)}`}>
+                {analytics.score}
+              </div>
+              <div className="score-label">{getScoreLabel(analytics.score)}</div>
+              {analytics.timestamp && (
+                <div className="score-timestamp">{formatTimestamp(analytics.timestamp)}</div>
+              )}
+            </div>
+
+            <div className="stats-grid">
+              <div className="stat-item">
+                <div className="stat-value">{analytics.totalAnchors}</div>
+                <div className="stat-label">Anchors</div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-value">{analytics.totalTextBlocks}</div>
+                <div className="stat-label">Text Blocks</div>
+              </div>
+            </div>
+
+            {/* Problems Section */}
+            {analytics.problems && analytics.problems.length > 0 ? (
+              <div className="problems-section">
+                <div className="problems-header">
+                  <span className="problems-icon">⚠️</span>
+                  <span className="problems-title">Problems ({analytics.problems.length})</span>
+                </div>
+                <ul className="problems-list">
+                  {analytics.problems.map((problem) => (
+                    <li key={problem.id} className="problem-item">
+                      <span className="problem-info">
+                        <span className="problem-count">{problem.count}×</span>
+                        <span className="problem-desc">{problem.description}</span>
+                      </span>
+                      <span className="problem-penalty">-{problem.penalty}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div className="problem-alert problem-alert--none">
+                <span className="problem-icon">✓</span>
+                <span>No issues found</span>
+              </div>
             )}
-          </div>
 
-          <div className="stats-grid">
-            <div className="stat-item">
-              <div className="stat-value">{analytics.totalAnchors}</div>
-              <div className="stat-label">Anchors</div>
+            <div className="breakdown">
+              <div className="breakdown-title">Anchors Breakdown</div>
+              <div className="breakdown-grid">
+                <div className="breakdown-item">
+                  <span className="breakdown-value">{analytics.anchorsBreakdown.headings}</span>
+                  <span className="breakdown-label">Headings</span>
+                </div>
+                <div
+                  className={`breakdown-item ${analytics.anchorsBreakdown.emphasis === 0 ? 'breakdown-item--warning' : ''}`}
+                >
+                  <span className="breakdown-value">
+                    {analytics.anchorsBreakdown.emphasis}
+                    {analytics.anchorsBreakdown.emphasis === 0 && (
+                      <span className="breakdown-warning">⚠️</span>
+                    )}
+                  </span>
+                  <span className="breakdown-label">Emphasis</span>
+                </div>
+                <div
+                  className={`breakdown-item ${analytics.anchorsBreakdown.code === 0 && analytics.unformattedCodeBlocks > 0 ? 'breakdown-item--warning' : ''}`}
+                >
+                  <span className="breakdown-value">
+                    {analytics.anchorsBreakdown.code}
+                    {analytics.anchorsBreakdown.code === 0 &&
+                      analytics.unformattedCodeBlocks > 0 && (
+                        <span className="breakdown-warning">⚠️</span>
+                      )}
+                  </span>
+                  <span className="breakdown-label">Code</span>
+                </div>
+                <div className="breakdown-item">
+                  <span className="breakdown-value">{analytics.anchorsBreakdown.links}</span>
+                  <span className="breakdown-label">Links</span>
+                </div>
+                <div className="breakdown-item">
+                  <span className="breakdown-value">{analytics.anchorsBreakdown.images}</span>
+                  <span className="breakdown-label">Images</span>
+                </div>
+                <div className="breakdown-item">
+                  <span className="breakdown-value">{analytics.anchorsBreakdown.lists}</span>
+                  <span className="breakdown-label">Lists</span>
+                </div>
+              </div>
             </div>
-            <div className="stat-item">
-              <div className="stat-value">{analytics.totalTextBlocks}</div>
-              <div className="stat-label">Text Blocks</div>
-            </div>
-          </div>
 
-          {/* Problems Section */}
-          {analytics.problems && analytics.problems.length > 0 ? (
-            <div className="problems-section">
-              <div className="problems-header">
-                <span className="problems-icon">⚠️</span>
-                <span className="problems-title">Problems ({analytics.problems.length})</span>
+            {/* Color Legend */}
+            <div className="color-legend">
+              <div className="legend-title">Color Guide</div>
+              <div className="legend-grid">
+                <div className="legend-item">
+                  <span className="legend-color legend-color--blue" />
+                  <span className="legend-label">Headings & Emphasis</span>
+                </div>
+                <div className="legend-item">
+                  <span className="legend-color legend-color--green" />
+                  <span className="legend-label">Code blocks</span>
+                </div>
+                <div className="legend-item">
+                  <span className="legend-color legend-color--pink" />
+                  <span className="legend-label">Images & Media</span>
+                </div>
+                <div className="legend-item">
+                  <span className="legend-color legend-color--violet" />
+                  <span className="legend-label">Platform hot spots</span>
+                </div>
+                <div className="legend-item">
+                  <span className="legend-color legend-color--yellow-solid" />
+                  <span className="legend-label">Callouts & Alerts</span>
+                </div>
+                <div className="legend-item">
+                  <span className="legend-color legend-color--orange-dashed" />
+                  <span className="legend-label">Unformatted code</span>
+                </div>
+                <div className="legend-item">
+                  <span className="legend-color legend-color--red-dashed" />
+                  <span className="legend-label">Dense paragraphs</span>
+                </div>
               </div>
-              <ul className="problems-list">
-                {analytics.problems.map((problem) => (
-                  <li key={problem.id} className="problem-item">
-                    <span className="problem-info">
-                      <span className="problem-count">{problem.count}×</span>
-                      <span className="problem-desc">{problem.description}</span>
-                    </span>
-                    <span className="problem-penalty">-{problem.penalty}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
-          ) : (
-            <div className="problem-alert problem-alert--none">
-              <span className="problem-icon">✓</span>
-              <span>No issues found</span>
-            </div>
-          )}
 
-          <div className="breakdown">
-            <div className="breakdown-title">Anchors Breakdown</div>
-            <div className="breakdown-grid">
-              <div className="breakdown-item">
-                <span className="breakdown-value">{analytics.anchorsBreakdown.headings}</span>
-                <span className="breakdown-label">Headings</span>
+            {/* Platform-specific Suggestions */}
+            {analytics.suggestions && analytics.suggestions.length > 0 && (
+              <div className="suggestions">
+                <div className="suggestions-title">
+                  <span className="suggestions-icon">💡</span>
+                  <span>Suggestions for {currentPreset.name}</span>
+                </div>
+                <ul className="suggestions-list">
+                  {analytics.suggestions.map((suggestion) => (
+                    <li key={suggestion.id} className="suggestion-item">
+                      <span className="suggestion-name">{suggestion.name}</span>
+                      <span className="suggestion-description">{suggestion.description}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <div
-                className={`breakdown-item ${analytics.anchorsBreakdown.emphasis === 0 ? 'breakdown-item--warning' : ''}`}
-              >
-                <span className="breakdown-value">
-                  {analytics.anchorsBreakdown.emphasis}
-                  {analytics.anchorsBreakdown.emphasis === 0 && (
-                    <span className="breakdown-warning">⚠️</span>
-                  )}
-                </span>
-                <span className="breakdown-label">Emphasis</span>
-              </div>
-              <div
-                className={`breakdown-item ${analytics.anchorsBreakdown.code === 0 && analytics.unformattedCodeBlocks > 0 ? 'breakdown-item--warning' : ''}`}
-              >
-                <span className="breakdown-value">
-                  {analytics.anchorsBreakdown.code}
-                  {analytics.anchorsBreakdown.code === 0 && analytics.unformattedCodeBlocks > 0 && (
-                    <span className="breakdown-warning">⚠️</span>
-                  )}
-                </span>
-                <span className="breakdown-label">Code</span>
-              </div>
-              <div className="breakdown-item">
-                <span className="breakdown-value">{analytics.anchorsBreakdown.links}</span>
-                <span className="breakdown-label">Links</span>
-              </div>
-              <div className="breakdown-item">
-                <span className="breakdown-value">{analytics.anchorsBreakdown.images}</span>
-                <span className="breakdown-label">Images</span>
-              </div>
-              <div className="breakdown-item">
-                <span className="breakdown-value">{analytics.anchorsBreakdown.lists}</span>
-                <span className="breakdown-label">Lists</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Color Legend */}
-          <div className="color-legend">
-            <div className="legend-title">Color Guide</div>
-            <div className="legend-grid">
-              <div className="legend-item">
-                <span className="legend-color legend-color--blue" />
-                <span className="legend-label">Headings & Emphasis</span>
-              </div>
-              <div className="legend-item">
-                <span className="legend-color legend-color--green" />
-                <span className="legend-label">Code blocks</span>
-              </div>
-              <div className="legend-item">
-                <span className="legend-color legend-color--pink" />
-                <span className="legend-label">Images & Media</span>
-              </div>
-              <div className="legend-item">
-                <span className="legend-color legend-color--violet" />
-                <span className="legend-label">Platform hot spots</span>
-              </div>
-              <div className="legend-item">
-                <span className="legend-color legend-color--yellow-solid" />
-                <span className="legend-label">Callouts & Alerts</span>
-              </div>
-              <div className="legend-item">
-                <span className="legend-color legend-color--orange-dashed" />
-                <span className="legend-label">Unformatted code</span>
-              </div>
-              <div className="legend-item">
-                <span className="legend-color legend-color--red-dashed" />
-                <span className="legend-label">Dense paragraphs</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Platform-specific Suggestions */}
-          {analytics.suggestions && analytics.suggestions.length > 0 && (
-            <div className="suggestions">
-              <div className="suggestions-title">
-                <span className="suggestions-icon">💡</span>
-                <span>Suggestions for {currentPreset.name}</span>
-              </div>
-              <ul className="suggestions-list">
-                {analytics.suggestions.map((suggestion) => (
-                  <li key={suggestion.id} className="suggestion-item">
-                    <span className="suggestion-name">{suggestion.name}</span>
-                    <span className="suggestion-description">{suggestion.description}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+            )}
           </div>
         )}
       </div>

@@ -1,8 +1,5 @@
 import type { PlatformPreset } from '../types/messages'
 
-// Re-export for convenience
-export type { PlatformPreset } from '../types/messages'
-
 export const PRESETS: PlatformPreset[] = [
   {
     id: 'default',
