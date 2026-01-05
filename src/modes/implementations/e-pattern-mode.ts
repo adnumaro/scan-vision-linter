@@ -11,7 +11,7 @@ import { LayoutList } from 'lucide-react'
 import type { ModeConfig } from '../types'
 import { ViewportTrackingMode } from '../utils/base-mode'
 import { COLORS, hexToRgba } from '../utils/colors'
-import { OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
+import { E_PATTERN, OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
 import { createPatternZone, removeOverlayElement } from '../utils/overlay'
 
 const MODE_ID = 'e-pattern'
@@ -92,14 +92,14 @@ class EPatternMode extends ViewportTrackingMode<EPatternConfig> {
     const cw = rect.width
     const ch = rect.height
 
-    const barHeight = ch * 0.1
+    const barHeight = ch * E_PATTERN.BAR_HEIGHT
     const topBarTop = 0
-    const secondBarTop = ch * 0.18
-    const thirdBarTop = ch * 0.36
-    const barWidth1 = cw * 0.85
-    const barWidth2 = cw * 0.7
-    const barWidth3 = cw * 0.55
-    const leftBarWidth = cw * 0.18
+    const secondBarTop = ch * E_PATTERN.SECOND_BAR_TOP
+    const thirdBarTop = ch * E_PATTERN.THIRD_BAR_TOP
+    const barWidth1 = cw * E_PATTERN.FIRST_BAR_WIDTH
+    const barWidth2 = cw * E_PATTERN.SECOND_BAR_WIDTH
+    const barWidth3 = cw * E_PATTERN.THIRD_BAR_WIDTH
+    const leftBarWidth = cw * E_PATTERN.LEFT_BAR_WIDTH
     const leftBarTop = thirdBarTop + barHeight
 
     // First scan bar

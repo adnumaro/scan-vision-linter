@@ -10,7 +10,7 @@ import { LayoutTemplate } from 'lucide-react'
 import type { ModeConfig } from '../types'
 import { ViewportTrackingMode } from '../utils/base-mode'
 import { COLORS, hexToRgba } from '../utils/colors'
-import { OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
+import { F_PATTERN, OVERLAY_PREFIX, Z_INDEX } from '../utils/constants'
 import { createPatternZone, removeOverlayElement } from '../utils/overlay'
 
 const MODE_ID = 'f-pattern'
@@ -91,11 +91,11 @@ class FPatternMode extends ViewportTrackingMode<FPatternConfig> {
     const ch = rect.height
     const cw = rect.width
 
-    const topBarHeight = ch * 0.15
-    const secondBarHeight = ch * 0.12
-    const secondBarTop = ch * 0.22
-    const secondBarWidth = cw * 0.65
-    const leftBarWidth = cw * 0.2
+    const topBarHeight = ch * F_PATTERN.TOP_BAR_HEIGHT
+    const secondBarHeight = ch * F_PATTERN.SECOND_BAR_HEIGHT
+    const secondBarTop = ch * F_PATTERN.SECOND_BAR_TOP
+    const secondBarWidth = cw * F_PATTERN.SECOND_BAR_WIDTH
+    const leftBarWidth = cw * F_PATTERN.LEFT_BAR_WIDTH
     const leftBarTop = secondBarTop + secondBarHeight
 
     // Top bar - primary scan zone

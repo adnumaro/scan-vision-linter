@@ -17,6 +17,7 @@ import { first5sMode } from '../modes/implementations/first-5s-mode'
 import { foldLineMode } from '../modes/implementations/fold-line-mode'
 import { heatZonesMode } from '../modes/implementations/heat-zones-mode'
 import { scanMode } from '../modes/implementations/scan-mode'
+import { SCORING } from '../modes/utils/constants'
 import { estimateLines, MAX_LINES_WITHOUT_ANCHOR } from '../modes/utils/dom'
 import { getPresetById, PRESETS } from '../presets/platforms'
 import type {
@@ -254,11 +255,21 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
   if (totalTextBlocks > 0) {
     // Use weighted total for ratio calculation
     const anchorRatio = weightedAnchors.totalWeighted / totalTextBlocks
-    const idealRatio = 1.5 // Slightly lower since weights are more meaningful
 
-    const ratioScore = Math.min(70, (anchorRatio / idealRatio) * 70)
-    const problemPenalty = Math.round(Math.min(30, (problemBlocks / totalTextBlocks) * 50))
-    const unformattedCodePenalty = Math.min(25, unformattedCodeBlocks * 5)
+    const ratioScore = Math.min(
+      SCORING.MAX_RATIO_SCORE,
+      (anchorRatio / SCORING.IDEAL_ANCHOR_RATIO) * SCORING.MAX_RATIO_SCORE,
+    )
+    const problemPenalty = Math.round(
+      Math.min(
+        SCORING.MAX_PROBLEM_PENALTY,
+        (problemBlocks / totalTextBlocks) * SCORING.PROBLEM_PENALTY_MULTIPLIER,
+      ),
+    )
+    const unformattedCodePenalty = Math.min(
+      SCORING.MAX_UNFORMATTED_CODE_PENALTY,
+      unformattedCodeBlocks * SCORING.UNFORMATTED_CODE_PENALTY_PER_BLOCK,
+    )
 
     // Build problems array with penalties
     if (problemBlocks > 0) {
@@ -282,10 +293,19 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
     }
 
     // Bonuses based on weighted values (not raw counts)
-    const headingBonus = Math.min(15, weightedAnchors.headings.weight * 3)
-    const imageBonus = Math.min(15, weightedAnchors.images.weight * 5)
+    const headingBonus = Math.min(
+      SCORING.MAX_HEADING_BONUS,
+      weightedAnchors.headings.weight * SCORING.HEADING_BONUS_MULTIPLIER,
+    )
+    const imageBonus = Math.min(
+      SCORING.MAX_IMAGE_BONUS,
+      weightedAnchors.images.weight * SCORING.IMAGE_BONUS_MULTIPLIER,
+    )
     // Code blocks are valuable - small bonus for proper code formatting
-    const codeBonus = Math.min(10, weightedAnchors.codeBlocks.weight * 2)
+    const codeBonus = Math.min(
+      SCORING.MAX_CODE_BONUS,
+      weightedAnchors.codeBlocks.weight * SCORING.CODE_BONUS_MULTIPLIER,
+    )
 
     score = Math.round(
       Math.max(
