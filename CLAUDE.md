@@ -29,24 +29,29 @@ src/
 ├── App.css                     # Popup styles
 ├── index.css                   # Base reset styles
 ├── types/
-│   └── messages.ts             # Shared TypeScript interfaces
+│   └── messages.ts             # Chrome messaging interfaces
 ├── utils/
-│   └── storage.ts              # Chrome storage helpers
-├── presets/
-│   └── platforms.ts            # Platform presets (GitHub, Notion, etc.)
+│   ├── storage.ts              # Chrome storage helpers
+│   └── i18n.ts                 # Internationalization helper
 ├── components/
 │   ├── ModeList.tsx            # Mode grouping by category
 │   └── ModeToggle.tsx          # Individual mode toggle UI
+├── config/                     # Configuration layer (no UI dependencies)
+│   ├── types.ts                # Shared interfaces (PlatformPreset, AntiPattern, etc.)
+│   ├── merge.ts                # Deep merge utility for presets
+│   ├── analysis.ts             # Scannability analysis logic
+│   └── presets/                # Platform-specific configurations
+│       ├── index.ts            # Exports, platform detection, merged presets
+│       ├── global/             # Base preset (fallback)
+│       ├── confluence/         # Confluence-specific
+│       └── notion/             # Notion-specific
 ├── content/
-│   ├── index.ts                # Content script - mode management & analytics
-│   └── analysis/               # Content analysis modules
-│       ├── antiPatterns.ts     # Unformatted code detection
-│       ├── suggestions.ts      # Platform-specific suggestions
-│       └── weights.ts          # Weighted anchor calculation
-└── modes/                      # Modular visualization system
+│   └── index.ts                # Content script - orchestrates modes & analytics
+└── modes/                      # Visualization system
     ├── types.ts                # VisualizationMode interface, ModeContext
     ├── registry.ts             # Singleton mode registry
     ├── manager.ts              # Mode lifecycle coordinator
+    ├── metadata.ts             # Mode metadata for UI
     ├── index.ts                # Public API exports
     ├── implementations/        # 6 visualization modes
     │   ├── scan-mode.ts        # Core: dims text, highlights anchors
@@ -55,19 +60,31 @@ src/
     │   ├── fold-line-mode.ts   # "Above the fold" indicator line
     │   ├── heat-zones-mode.ts  # Attention gradient overlay
     │   └── first-5s-mode.ts    # Quick scan simulation
-    └── utils/
-        ├── colors.ts           # Color utilities & heat map gradients
-        ├── config.ts           # Config cloning utilities
-        ├── dom.ts              # DOM utilities, paragraph analysis, exclusions
-        ├── overlay.ts          # DOM overlay creation helpers
-        ├── security.ts         # CSS/selector sanitization
-        ├── styles.ts           # Style injection utilities
-        └── viewport.ts         # Viewport & fold line calculations
+    └── utils/                  # Mode utilities
+        ├── base-mode.ts, colors.ts, config.ts, constants.ts
+        ├── dom.ts, overlay.ts, overlay-tracker.ts
+        ├── scan-overlays.ts, security.ts, styles.ts, viewport.ts
 
 manifest.json                   # Chrome extension manifest (MV3)
 vite.config.ts                  # Vite + CRXJS plugin config
 biome.json                      # Biome linter configuration
 ```
+
+## Preset System
+
+Each platform has its own folder with independent configuration:
+
+| File              | Description                                              |
+|-------------------|----------------------------------------------------------|
+| `antiPatterns.ts` | Regex patterns to detect unformatted code                |
+| `weights.ts`      | Anchor weights for scannability scoring                  |
+| `suggestions.ts`  | Platform-specific improvement suggestions (informative)  |
+| `preset.ts`       | Selectors (contentArea, codeBlocks, ignoreElements, etc) |
+
+**Merge behavior:** Platform-specific presets are merged with `global`:
+- Arrays (antiPatterns, suggestions): concatenated (global + specific)
+- Objects (weights, selectors): deep merge (specific overrides global)
+- Primitives (id, name): specific wins
 
 ## Key Features
 
@@ -96,26 +113,11 @@ biome.json                      # Biome linter configuration
 
 ### 3. Platform Presets
 - Auto-detects platform from URL on every popup open
-- Supported: GitHub, Notion, Confluence, MDN, and more
-- Each preset defines: content area, platform-specific hot spots, elements to ignore
+- Supported: Notion, Confluence (more can be added)
+- Each preset defines: content area, code elements, hot spots, elements to ignore
 - User can manually override preset selection
 
-### 4. Confluence-Specific Exclusions
-Elements excluded from analysis and styling (comments, reactions):
-- `[data-testid="object-comment-wrapper"]`
-- `[data-testid="footer-reply-container"]`
-- `[data-testid="reactions-container"]`
-- `[data-testid="render-reactions"]`
-- `.ak-renderer-wrapper.is-comment`
-- `[class*="pm-breakout-resize-handle"]` (resize handles)
-- `[class*="_tip"]` (Atlassian internal classes)
-
-These exclusions are defined in 3 places (keep in sync):
-- `scan-mode.ts` - CSS exclusions
-- `dom.ts` - JS analysis exclusions
-- `antiPatterns.ts` - JS detection exclusions
-
-### 5. Customization
+### 4. Customization
 - Text visibility slider (10%-50%)
 - Blur amount slider (0-2px)
 - Settings persist in `chrome.storage.local`
@@ -149,26 +151,6 @@ These exclusions are defined in 3 places (keep in sync):
 - **Singleton Instances** - Each mode exports a singleton for stateful tracking
 - **ModeContext** - Runtime data (contentArea, viewport, preset) passed to modes
 
-## Message Flow
-
-```
-Popup (App.tsx)                    Content Script (content/index.ts)
-      │                                           │
-      │─── toggle-scan + config + preset ────────>│
-      │<── isScanning + activeModes + analytics ──│
-      │                                           │
-      │─── toggle-mode + modeId ─────────────────>│
-      │<── isScanning + activeModes ──────────────│
-      │                                           │
-      │─── update-config + preset ───────────────>│
-      │<── isScanning ────────────────────────────│
-      │                                           │
-      │─── get-state ────────────────────────────>│
-      │<── isScanning + config + activeModes ─────│
-```
-
-**Message actions:** `toggle-scan`, `toggle-mode`, `update-config`, `get-state`, `analyze`
-
 ## Development Setup
 
 1. `npm install`
@@ -178,65 +160,35 @@ Popup (App.tsx)                    Content Script (content/index.ts)
 
 ## Adding a New Platform Preset
 
-Edit `src/presets/platforms.ts`:
+Create folder `src/config/presets/{platform}/` with these files (see `confluence/` or `notion/` as examples):
 
-```json lines
-{
-  id: 'my-platform',
-  name: 'My Platform',
-  description: 'Optimized for My Platform docs',
-  domains: ['myplatform.com', 'docs.myplatform.io'],
-  selectors: {
-    contentArea: '.main-content, article',
-    hotSpots: ['.custom-callout', '.special-note'],
-    ignoreElements: ['.sidebar', '.footer'],
-  },
-}
-```
+| File | Purpose |
+|------|---------|
+| `preset.ts` | ID, name, domains, selectors (contentArea, hotSpots, ignoreElements) |
+| `antiPatterns.ts` | Regex patterns for unformatted code detection |
+| `weights.ts` | Partial anchor weights (overrides global) |
+| `suggestions.ts` | Platform-specific suggestions with validators |
+| `index.ts` | Export `PartialPlatformPreset` combining all above |
+
+Then in `src/config/presets/index.ts`:
+1. Import and merge with global: `const merged = mergeWithGlobal(globalPreset, newPreset)`
+2. Add to `PRESETS` array and `PRESET_MAP`
+
+Finally, add i18n translations to `_locales/{en,es}/messages.json`.
 
 ## Adding a New Visualization Mode
 
-1. Create implementation in `src/modes/implementations/my-mode.ts`:
+1. Create `src/modes/implementations/my-mode.ts` implementing `VisualizationMode` interface
+   - Required: `id`, `name`, `description`, `icon` (lucide-react), `category`
+   - Optional: `incompatibleWith` array for mutually exclusive modes
+   - Methods: `activate(context)`, `deactivate()`, `isActive()`, `getConfig()`
+   - Export singleton instance
 
-```typescript
-import type { VisualizationMode, ModeContext, ModeConfig } from '../types';
+2. Register in `src/content/index.ts`: `registry.register(myMode)`
 
-class MyMode implements VisualizationMode {
-  readonly id = 'my-mode';
-  readonly name = 'My Mode';
-  readonly description = 'What this mode does';
-  readonly icon = 'Eye';  // lucide-react icon name
-  readonly category = 'overlay';  // 'overlay' | 'indicator' | 'simulation'
-  readonly incompatibleWith = ['other-mode'];  // IDs of conflicting modes
+3. Mode appears automatically in popup UI, grouped by category.
 
-  private active = false;
-
-  activate(context: ModeContext, config: ModeConfig): void {
-    // Add overlays, inject styles, etc.
-    this.active = true;
-  }
-
-  deactivate(): void {
-    // Clean up overlays, remove styles
-    this.active = false;
-  }
-
-  isActive(): boolean { return this.active; }
-  getConfig(): ModeConfig { return {}; }
-}
-
-export const myMode = new MyMode();  // Export singleton
-```
-
-2. Register in `src/modes/registry.ts`:
-
-```typescript
-import { myMode } from './implementations/my-mode';
-// Add to register() calls at bottom of file
-register(myMode);
-```
-
-3. The mode will automatically appear in the popup UI grouped by category.
+See existing modes in `src/modes/implementations/` for patterns.
 
 ## TypeScript & Linting
 
@@ -248,14 +200,22 @@ register(myMode);
 **Biome** (replaces ESLint/Prettier):
 - Config in `biome.json`
 - Run `npm run lint` for linting
+- Run `npm run lint -- --write` to auto-fix
 - Fast, single-tool solution for linting and formatting
 
-## Documentation
+## Dependency Rules
 
-| File                     | Description                                |
-|--------------------------|--------------------------------------------|
-| `PROJECT.md`             | Project vision, problem statement, roadmap |
-| `IMPLEMENTATION_PLAN.md` | Detailed task breakdown by phase           |
+Enforced by `dependency-cruiser` (run `npm run depcruise`):
+
+```
+config/   ← Pure configuration (types, analysis, presets) - NO UI deps
+   ↑
+modes/    ← Visualization (can import config, NEVER vice versa)
+   ↑
+content/  ← Orchestrator (imports both)
+```
+
+**Key rule:** `config/` must NEVER import from `modes/`. Analysis logic lives in `config/analysis.ts` but rendering (overlays) stays in `modes/utils/scan-overlays.ts`.
 
 ## Privacy
 
