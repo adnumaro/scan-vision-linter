@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#4f46e5"/>
+    </linearGradient>
+    <linearGradient id="scanGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:0.9"/>
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0.9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect x="8" y="8" width="112" height="112" rx="24" fill="url(#bgGrad)"/>
+
+  <!-- Document shape (white) -->
+  <rect x="28" y="20" width="72" height="88" rx="6" fill="white" opacity="0.95"/>
+
+  <!-- Text lines (dimmed - representing scanned text) -->
+  <rect x="38" y="34" width="52" height="6" rx="3" fill="#cbd5e1"/>
+  <rect x="38" y="46" width="44" height="6" rx="3" fill="#cbd5e1"/>
+  <rect x="38" y="70" width="48" height="6" rx="3" fill="#cbd5e1"/>
+  <rect x="38" y="82" width="40" height="6" rx="3" fill="#cbd5e1"/>
+
+  <!-- Highlighted heading (scan hotspot) -->
+  <rect x="36" y="56" width="56" height="10" rx="3" fill="url(#scanGrad)"/>
+
+  <!-- Scan beam / eye indicator -->
+  <ellipse cx="100" cy="64" rx="18" ry="24" fill="#10b981" opacity="0.85"/>
+  <ellipse cx="100" cy="64" rx="10" ry="14" fill="white"/>
+  <circle cx="100" cy="64" r="6" fill="#1e293b"/>
+  <circle cx="102" cy="62" r="2" fill="white"/>
+
+  <!-- Scan rays from eye to document -->
+  <path d="M82 52 L58 56" stroke="#10b981" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <path d="M82 64 L58 61" stroke="#10b981" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <path d="M82 76 L58 66" stroke="#10b981" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+</svg>
