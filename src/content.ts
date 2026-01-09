@@ -22,7 +22,6 @@ import {
 import { ePatternMode } from './modes/implementations/e-pattern-mode'
 import { fPatternMode } from './modes/implementations/f-pattern-mode'
 import { first5sMode } from './modes/implementations/first-5s-mode'
-import { foldLineMode } from './modes/implementations/fold-line-mode'
 import { heatZonesMode } from './modes/implementations/heat-zones-mode'
 import { scanMode } from './modes/implementations/scan-mode'
 import { SCORING } from './modes/utils/constants'
@@ -39,7 +38,6 @@ import { DEFAULT_CONFIG } from './types/messages'
 
 // Register all modes
 registry.register(scanMode)
-registry.register(foldLineMode)
 registry.register(fPatternMode)
 registry.register(ePatternMode)
 registry.register(heatZonesMode)

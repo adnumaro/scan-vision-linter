@@ -4,7 +4,7 @@
  */
 
 import type { LucideIcon } from 'lucide-react'
-import { Flame, LayoutList, LayoutTemplate, Minus, ScanText, Timer } from 'lucide-react'
+import { Flame, LayoutList, LayoutTemplate, ScanText, Timer } from 'lucide-react'
 import { t } from '../utils/i18n'
 import type { ModeCategory } from './types'
 
@@ -74,14 +74,6 @@ export function getModeMetadata(): ModeInfo[] {
       category: 'overlay',
       incompatibleWith: [],
     },
-    {
-      id: 'fold-line',
-      name: t('modeFoldLineName'),
-      description: t('modeFoldLineDesc'),
-      icon: Minus,
-      category: 'indicator',
-      incompatibleWith: [],
-    },
   ]
 }
 
@@ -95,7 +87,6 @@ export function getCategoryLabels(): Record<ModeCategory, string> {
   return {
     simulation: t('catSimulations'),
     overlay: t('catOverlays'),
-    indicator: t('catIndicators'),
   }
 }
 
@@ -105,7 +96,7 @@ export const CATEGORY_LABELS: Record<ModeCategory, string> = getCategoryLabels()
 /**
  * Category display order
  */
-export const CATEGORY_ORDER: ModeCategory[] = ['simulation', 'overlay', 'indicator']
+export const CATEGORY_ORDER: ModeCategory[] = ['simulation', 'overlay']
 
 /**
  * Get mode metadata by ID

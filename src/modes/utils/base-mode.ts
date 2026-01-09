@@ -23,7 +23,7 @@ export abstract class ViewportTrackingMode<TConfig extends ModeConfig>
   abstract readonly name: string
   abstract readonly description: string
   abstract readonly icon: LucideIcon
-  abstract readonly category: 'overlay' | 'indicator' | 'simulation'
+  abstract readonly category: 'overlay' | 'simulation'
   abstract readonly incompatibleWith: string[]
 
   protected active = false

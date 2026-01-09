@@ -10,8 +10,9 @@
  */
 
 import { Timer } from 'lucide-react'
+import { t } from '../../utils/i18n'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
-import { getBodyBgColor, SCAN_COLORS, withOpacity } from '../utils/colors'
+import { COLORS, getBodyBgColor, SCAN_COLORS, withOpacity } from '../utils/colors'
 import { cloneModeConfig } from '../utils/config'
 import { Z_INDEX } from '../utils/constants'
 import { createOverlayTracker, type OverlayTracker } from '../utils/overlay-tracker'
@@ -145,6 +146,65 @@ function createBelowFoldOverlay(rect: DOMRect, config: First5sConfig['settings']
 }
 
 /**
+ * Creates the fold line indicator
+ */
+function createFoldLine(tracker: OverlayTracker, contentArea: Element, foldY: number): void {
+  const contentRect = contentArea.getBoundingClientRect()
+  const foldOffsetY = foldY - contentRect.top
+  const color = COLORS.indicator.foldLine
+
+  // Create dotted line
+  const line = document.createElement('div')
+  line.className = 'scanvision-fold-line'
+  line.style.cssText = `
+    position: fixed;
+    top: ${foldY}px;
+    left: ${contentRect.left}px;
+    width: ${contentRect.width}px;
+    height: 0;
+    border-top: 2px dotted ${color};
+    pointer-events: none;
+    z-index: ${Z_INDEX.INDICATOR};
+  `
+
+  tracker.track({
+    element: contentArea,
+    overlay: line,
+    offset: { top: foldOffsetY, left: 0, width: 0 },
+    type: 'fold-line',
+    fixedDimensions: true,
+  })
+
+  // Create label
+  const label = document.createElement('div')
+  label.className = 'scanvision-fold-label'
+  label.textContent = t('patternAboveTheFold')
+  label.style.cssText = `
+    position: fixed;
+    top: ${foldY - 24}px;
+    left: ${contentRect.left + contentRect.width - 110}px;
+    padding: 4px 8px;
+    background-color: ${color};
+    color: ${COLORS.indicator.label};
+    font-size: 11px;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-weight: 500;
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: ${Z_INDEX.TOP};
+    white-space: nowrap;
+  `
+
+  tracker.track({
+    element: contentArea,
+    overlay: label,
+    offset: { top: foldOffsetY - 24, left: contentRect.width - 110 },
+    type: 'fold-label',
+    fixedDimensions: true,
+  })
+}
+
+/**
  * Creates all overlays for the content area using the tracker
  * Only shows highlights for elements above the initial fold line
  */
@@ -242,6 +302,9 @@ function createOverlays(
       })
     }
   }
+
+  // Add fold line indicator
+  createFoldLine(tracker, contentArea, foldY)
 }
 
 /**

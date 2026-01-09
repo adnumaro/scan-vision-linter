@@ -76,7 +76,7 @@ export interface VisualizationMode {
 /**
  * Categories for grouping modes in UI
  */
-export type ModeCategory = 'overlay' | 'indicator' | 'simulation'
+export type ModeCategory = 'overlay' | 'simulation'
 
 /**
  * Mode state stored in chrome.storage
