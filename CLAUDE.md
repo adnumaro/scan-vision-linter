@@ -28,6 +28,7 @@ src/
 ├── App.tsx                     # Main popup component with all controls
 ├── App.css                     # Popup styles
 ├── index.css                   # Base reset styles
+├── content.ts                  # Content script - orchestrates modes & analytics
 ├── types/
 │   └── messages.ts             # Chrome messaging interfaces
 ├── utils/
@@ -39,27 +40,29 @@ src/
 ├── config/                     # Configuration layer (no UI dependencies)
 │   ├── types.ts                # Shared interfaces (PlatformPreset, AntiPattern, etc.)
 │   ├── merge.ts                # Deep merge utility for presets
-│   ├── analysis.ts             # Scannability analysis logic
+│   ├── analysis/               # Scannability analysis (split into modules)
+│   │   ├── index.ts            # Barrel exports
+│   │   ├── types.ts            # Analysis interfaces
+│   │   ├── anti-patterns.ts    # Unformatted code detection
+│   │   ├── weighted-anchors.ts # Anchor weight calculations
+│   │   └── suggestions.ts      # Platform suggestion evaluation
 │   └── presets/                # Platform-specific configurations
 │       ├── index.ts            # Exports, platform detection, merged presets
 │       ├── global/             # Base preset (fallback)
 │       ├── confluence/         # Confluence-specific
 │       └── notion/             # Notion-specific
-├── content/
-│   └── index.ts                # Content script - orchestrates modes & analytics
 └── modes/                      # Visualization system
     ├── types.ts                # VisualizationMode interface, ModeContext
     ├── registry.ts             # Singleton mode registry
     ├── manager.ts              # Mode lifecycle coordinator
     ├── metadata.ts             # Mode metadata for UI
     ├── index.ts                # Public API exports
-    ├── implementations/        # 6 visualization modes
+    ├── implementations/        # 5 visualization modes
     │   ├── scan-mode.ts        # Core: dims text, highlights anchors
     │   ├── f-pattern-mode.ts   # F-shaped reading pattern overlay
     │   ├── e-pattern-mode.ts   # E-shaped reading pattern overlay
-    │   ├── fold-line-mode.ts   # "Above the fold" indicator line
     │   ├── heat-zones-mode.ts  # Attention gradient overlay
-    │   └── first-5s-mode.ts    # Quick scan simulation
+    │   └── first-5s-mode.ts    # Quick scan simulation (includes fold line)
     └── utils/                  # Mode utilities
         ├── base-mode.ts, colors.ts, config.ts, constants.ts
         ├── dom.ts, overlay.ts, overlay-tracker.ts
@@ -88,16 +91,15 @@ Each platform has its own folder with independent configuration:
 
 ## Key Features
 
-### 1. Visualization Modes (6 modes)
+### 1. Visualization Modes (5 modes)
 
 | Mode           | Category   | Description                                                                               |
 |----------------|------------|-------------------------------------------------------------------------------------------|
 | **Scan**       | Simulation | Core mode: dims text with `color-mix()`, highlights anchors (headings, code, links, etc.) |
-| **First 5s**   | Simulation | Shows only what users perceive in first 5 seconds (blur + word limit)                     |
+| **First 5s**   | Simulation | Shows what users see in first 5 seconds: fold line + highlights above fold only           |
 | **F-Pattern**  | Overlay    | F-shaped reading pattern overlay with 3 attention zones                                   |
 | **E-Pattern**  | Overlay    | E-shaped pattern overlay with 4 zones (more detailed than F)                              |
 | **Heat Zones** | Overlay    | Attention gradient overlay (green→red radial gradient)                                    |
-| **Fold Line**  | Indicator  | Shows "above the fold" viewport boundary                                                  |
 
 **Mode incompatibilities:**
 - Scan ↔ First 5s (both are text simulations)
@@ -141,7 +143,7 @@ Each platform has its own folder with independent configuration:
 │  MODE SYSTEM                                            │
 │  ├─ Registry: Stores all registered modes (singleton)   │
 │  ├─ Manager: Coordinates activation/deactivation        │
-│  └─ 6 Mode Implementations (each exports singleton)     │
+│  └─ 5 Mode Implementations (each exports singleton)     │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -208,14 +210,14 @@ See existing modes in `src/modes/implementations/` for patterns.
 Enforced by `dependency-cruiser` (run `npm run depcruise`):
 
 ```
-config/   ← Pure configuration (types, analysis, presets) - NO UI deps
+config/     ← Pure configuration (types, analysis/, presets) - NO UI deps
    ↑
-modes/    ← Visualization (can import config, NEVER vice versa)
+modes/      ← Visualization (can import config, NEVER vice versa)
    ↑
-content/  ← Orchestrator (imports both)
+content.ts  ← Orchestrator (imports both)
 ```
 
-**Key rule:** `config/` must NEVER import from `modes/`. Analysis logic lives in `config/analysis.ts` but rendering (overlays) stays in `modes/utils/scan-overlays.ts`.
+**Key rule:** `config/` must NEVER import from `modes/`. Analysis logic lives in `config/analysis/` but rendering (overlays) stays in `modes/utils/scan-overlays.ts`.
 
 ## Privacy
 
