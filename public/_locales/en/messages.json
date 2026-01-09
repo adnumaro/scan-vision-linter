@@ -82,6 +82,9 @@
   "lblVisualizationModes": {
     "message": "Visualization Modes"
   },
+  "lblCustomization": {
+    "message": "Customization"
+  },
   "lblSuggestionsFor": {
     "message": "Suggestions for $PLATFORM$",
     "placeholders": {

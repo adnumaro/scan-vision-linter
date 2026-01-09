@@ -22,8 +22,12 @@ function App() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [detectedPresetId, setDetectedPresetId] = useState<string | null>(null)
   const [activeModes, setActiveModes] = useState<string[]>(['scan'])
-  const [analyticsExpanded, setAnalyticsExpanded] = useState(true)
   const [isReanalyzing, setIsReanalyzing] = useState(false)
+  // Accordion states
+  const [presetExpanded, setPresetExpanded] = useState(true)
+  const [analyticsExpanded, setAnalyticsExpanded] = useState(true)
+  const [modesExpanded, setModesExpanded] = useState(false)
+  const [customizationExpanded, setCustomizationExpanded] = useState(false)
 
   useEffect(() => {
     const detectAndUpdateState = async () => {
@@ -315,16 +319,46 @@ function App() {
 
       {error && <div className="error-message">{error}</div>}
 
-      {/* Analytics Section */}
-      <div className="analytics">
-        <div className="analytics-header">
+      {/* 1. Preset Selector Section */}
+      <div className="section">
+        <button
+          type="button"
+          className="section-header"
+          onClick={() => setPresetExpanded(!presetExpanded)}
+        >
+          {presetExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <span className="section-title">{t('lblPlatformPreset')}</span>
+          {isAutoDetected && <span className="preset-auto">{t('lblAutoDetected')}</span>}
+        </button>
+        {presetExpanded && (
+          <div className="section-content">
+            <select
+              className="preset-select"
+              value={config.presetId}
+              onChange={(e) => handleConfigChange('presetId', e.target.value)}
+              aria-label={t('lblPlatformPreset')}
+            >
+              {PRESETS.map((preset) => (
+                <option key={preset.id} value={preset.id}>
+                  {preset.name}
+                </option>
+              ))}
+            </select>
+            <div className="preset-description">{currentPreset.description}</div>
+          </div>
+        )}
+      </div>
+
+      {/* 2. Analytics Section */}
+      <div className="section">
+        <div className="section-header-with-action">
           <button
             type="button"
-            className="analytics-header-toggle"
+            className="section-header"
             onClick={() => setAnalyticsExpanded(!analyticsExpanded)}
           >
             {analyticsExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            <span className="analytics-title">{t('lblAnalysis')}</span>
+            <span className="section-title">{t('lblAnalysis')}</span>
           </button>
           <button
             type="button"
@@ -340,13 +374,13 @@ function App() {
         </div>
 
         {analyticsExpanded && !analytics && (
-          <div className="analytics-content analytics-content--empty">
+          <div className="section-content section-content--empty">
             <span className="analytics-empty-text">{t('msgNoAnalysis')}</span>
           </div>
         )}
 
         {analyticsExpanded && analytics && (
-          <div className="analytics-content">
+          <div className="section-content">
             <div className="score-container">
               <div className={`score-value ${getScoreClass(analytics.score)}`}>
                 {analytics.score}
@@ -475,74 +509,74 @@ function App() {
         )}
       </div>
 
-      {/* Preset Selector */}
-      <div className="preset-section">
-        <div className="preset-label">
-          <span>{t('lblPlatformPreset')}</span>
-          {isAutoDetected && <span className="preset-auto">{t('lblAutoDetected')}</span>}
-        </div>
-        <select
-          className="preset-select"
-          value={config.presetId}
-          onChange={(e) => handleConfigChange('presetId', e.target.value)}
-          aria-label={t('lblPlatformPreset')}
+      {/* 3. Visualization Modes Section */}
+      <div className="section">
+        <button
+          type="button"
+          className="section-header"
+          onClick={() => setModesExpanded(!modesExpanded)}
         >
-          {PRESETS.map((preset) => (
-            <option key={preset.id} value={preset.id}>
-              {preset.name}
-            </option>
-          ))}
-        </select>
-        <div className="preset-description">{currentPreset.description}</div>
-      </div>
-
-      {/* Controls */}
-      <div className="controls">
-        <div className="control-group">
-          <div className="control-label">
-            <span>{t('lblTextVisibility')}</span>
-            <span className="control-value">{Math.round(config.opacity * 100)}%</span>
-          </div>
-          <input
-            type="range"
-            className="slider"
-            min="0.1"
-            max="0.5"
-            step="0.05"
-            value={config.opacity}
-            onChange={(e) => handleConfigChange('opacity', parseFloat(e.target.value))}
-            aria-label={t('lblTextVisibility')}
-          />
-        </div>
-
-        <div className="control-group">
-          <div className="control-label">
-            <span>{t('lblBlurAmount')}</span>
-            <span className="control-value">{config.blur}px</span>
-          </div>
-          <input
-            type="range"
-            className="slider"
-            min="0"
-            max="2"
-            step="0.25"
-            value={config.blur}
-            onChange={(e) => handleConfigChange('blur', parseFloat(e.target.value))}
-            aria-label={t('lblBlurAmount')}
-          />
-        </div>
-
-        <button type="button" onClick={handleReset} className="reset-button">
-          {t('btnResetDefaults')}
+          {modesExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <span className="section-title">{t('lblVisualizationModes')}</span>
         </button>
+        {modesExpanded && (
+          <div className="section-content">
+            <ModeList activeModes={activeModes} onToggle={handleModeToggle} />
+          </div>
+        )}
       </div>
 
-      {/* Visualization Modes */}
-      <div className="modes-section">
-        <div className="modes-header">
-          <span className="modes-title">{t('lblVisualizationModes')}</span>
-        </div>
-        <ModeList activeModes={activeModes} onToggle={handleModeToggle} />
+      {/* 4. Customization Section */}
+      <div className="section">
+        <button
+          type="button"
+          className="section-header"
+          onClick={() => setCustomizationExpanded(!customizationExpanded)}
+        >
+          {customizationExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <span className="section-title">{t('lblCustomization')}</span>
+        </button>
+        {customizationExpanded && (
+          <div className="section-content">
+            <div className="control-group">
+              <div className="control-label">
+                <span>{t('lblTextVisibility')}</span>
+                <span className="control-value">{Math.round(config.opacity * 100)}%</span>
+              </div>
+              <input
+                type="range"
+                className="slider"
+                min="0.1"
+                max="0.5"
+                step="0.05"
+                value={config.opacity}
+                onChange={(e) => handleConfigChange('opacity', parseFloat(e.target.value))}
+                aria-label={t('lblTextVisibility')}
+              />
+            </div>
+
+            <div className="control-group">
+              <div className="control-label">
+                <span>{t('lblBlurAmount')}</span>
+                <span className="control-value">{config.blur}px</span>
+              </div>
+              <input
+                type="range"
+                className="slider"
+                min="0"
+                max="2"
+                step="0.25"
+                value={config.blur}
+                onChange={(e) => handleConfigChange('blur', parseFloat(e.target.value))}
+                aria-label={t('lblBlurAmount')}
+              />
+            </div>
+
+            <button type="button" onClick={handleReset} className="reset-button">
+              {t('btnResetDefaults')}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
