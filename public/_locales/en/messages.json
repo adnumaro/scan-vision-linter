@@ -142,8 +142,14 @@
   "catSimulations": {
     "message": "Simulations"
   },
+  "catSimulationsDesc": {
+    "message": "Simulate how users perceive your content during quick scanning"
+  },
   "catOverlays": {
     "message": "Overlays"
+  },
+  "catOverlaysDesc": {
+    "message": "Visual guides showing where users typically look on a page"
   },
   "catIndicators": {
     "message": "Indicators"
@@ -155,29 +161,44 @@
   "modeScanDesc": {
     "message": "Dims text and highlights visual anchors"
   },
+  "modeScanUse": {
+    "message": "Check if key elements stand out from surrounding text"
+  },
   "modeFirst5sName": {
     "message": "First 5 Seconds"
   },
   "modeFirst5sDesc": {
-    "message": "Shows what users see during quick scanning"
+    "message": "Shows only content above the fold with highlights"
+  },
+  "modeFirst5sUse": {
+    "message": "See what users notice before scrolling"
   },
   "modeFPatternName": {
     "message": "F-Pattern"
   },
   "modeFPatternDesc": {
-    "message": "Shows F-shaped reading pattern overlay"
+    "message": "F-shaped reading pattern overlay"
+  },
+  "modeFPatternUse": {
+    "message": "Optimize content placement for natural eye movement"
   },
   "modeEPatternName": {
     "message": "E-Pattern"
   },
   "modeEPatternDesc": {
-    "message": "Shows E-shaped reading pattern overlay"
+    "message": "E-shaped reading pattern with 4 scan zones"
+  },
+  "modeEPatternUse": {
+    "message": "Better for content with multiple horizontal sections"
   },
   "modeHeatZonesName": {
     "message": "Heat Zones"
   },
   "modeHeatZonesDesc": {
-    "message": "Shows attention gradient overlay"
+    "message": "Shows attention gradient from high to low"
+  },
+  "modeHeatZonesUse": {
+    "message": "Identify where to place critical information"
   },
   "modeFoldLineName": {
     "message": "Fold Line"

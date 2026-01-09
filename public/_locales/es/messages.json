@@ -142,8 +142,14 @@
   "catSimulations": {
     "message": "Simulaciones"
   },
+  "catSimulationsDesc": {
+    "message": "Simula como los usuarios perciben tu contenido durante un escaneo rapido"
+  },
   "catOverlays": {
     "message": "Superposiciones"
+  },
+  "catOverlaysDesc": {
+    "message": "Guias visuales que muestran donde miran tipicamente los usuarios"
   },
   "catIndicators": {
     "message": "Indicadores"
@@ -155,29 +161,44 @@
   "modeScanDesc": {
     "message": "Atenua el texto y resalta anclas visuales"
   },
+  "modeScanUse": {
+    "message": "Verifica si los elementos clave destacan del texto"
+  },
   "modeFirst5sName": {
     "message": "Primeros 5 Segundos"
   },
   "modeFirst5sDesc": {
-    "message": "Muestra lo que los usuarios ven durante un escaneo rapido"
+    "message": "Muestra solo contenido sobre el pliegue con resaltados"
+  },
+  "modeFirst5sUse": {
+    "message": "Ve lo que los usuarios notan antes de hacer scroll"
   },
   "modeFPatternName": {
     "message": "Patron F"
   },
   "modeFPatternDesc": {
-    "message": "Muestra superposicion del patron de lectura en F"
+    "message": "Superposicion del patron de lectura en F"
+  },
+  "modeFPatternUse": {
+    "message": "Optimiza la ubicacion del contenido para el movimiento natural del ojo"
   },
   "modeEPatternName": {
     "message": "Patron E"
   },
   "modeEPatternDesc": {
-    "message": "Muestra superposicion del patron de lectura en E"
+    "message": "Patron de lectura en E con 4 zonas de escaneo"
+  },
+  "modeEPatternUse": {
+    "message": "Mejor para contenido con multiples secciones horizontales"
   },
   "modeHeatZonesName": {
     "message": "Zonas de Calor"
   },
   "modeHeatZonesDesc": {
-    "message": "Muestra gradiente de atencion"
+    "message": "Muestra gradiente de atencion de alto a bajo"
+  },
+  "modeHeatZonesUse": {
+    "message": "Identifica donde colocar informacion critica"
   },
   "modeFoldLineName": {
     "message": "Linea de Pliegue"

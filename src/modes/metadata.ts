@@ -16,6 +16,7 @@ export interface ModeMetadata {
   id: string
   name: string
   description: string
+  useCase?: string
   category: ModeCategory
   incompatibleWith: string[]
 }
@@ -38,6 +39,7 @@ export function getModeMetadata(): ModeInfo[] {
       id: 'scan',
       name: t('modeScanName'),
       description: t('modeScanDesc'),
+      useCase: t('modeScanUse'),
       icon: ScanText,
       category: 'simulation',
       incompatibleWith: ['first-5s'],
@@ -46,6 +48,7 @@ export function getModeMetadata(): ModeInfo[] {
       id: 'first-5s',
       name: t('modeFirst5sName'),
       description: t('modeFirst5sDesc'),
+      useCase: t('modeFirst5sUse'),
       icon: Timer,
       category: 'simulation',
       incompatibleWith: ['scan'],
@@ -54,6 +57,7 @@ export function getModeMetadata(): ModeInfo[] {
       id: 'f-pattern',
       name: t('modeFPatternName'),
       description: t('modeFPatternDesc'),
+      useCase: t('modeFPatternUse'),
       icon: LayoutTemplate,
       category: 'overlay',
       incompatibleWith: ['e-pattern'],
@@ -62,6 +66,7 @@ export function getModeMetadata(): ModeInfo[] {
       id: 'e-pattern',
       name: t('modeEPatternName'),
       description: t('modeEPatternDesc'),
+      useCase: t('modeEPatternUse'),
       icon: LayoutList,
       category: 'overlay',
       incompatibleWith: ['f-pattern'],
@@ -70,6 +75,7 @@ export function getModeMetadata(): ModeInfo[] {
       id: 'heat-zones',
       name: t('modeHeatZonesName'),
       description: t('modeHeatZonesDesc'),
+      useCase: t('modeHeatZonesUse'),
       icon: Flame,
       category: 'overlay',
       incompatibleWith: [],
@@ -92,6 +98,18 @@ export function getCategoryLabels(): Record<ModeCategory, string> {
 
 // For backward compatibility
 export const CATEGORY_LABELS: Record<ModeCategory, string> = getCategoryLabels()
+
+/**
+ * Category descriptions for UI display
+ */
+export function getCategoryDescriptions(): Record<ModeCategory, string> {
+  return {
+    simulation: t('catSimulationsDesc'),
+    overlay: t('catOverlaysDesc'),
+  }
+}
+
+export const CATEGORY_DESCRIPTIONS: Record<ModeCategory, string> = getCategoryDescriptions()
 
 /**
  * Category display order
@@ -118,11 +136,13 @@ export function getModesByCategory(category: ModeCategory): ModeInfo[] {
 export function getModesGroupedByCategory(): Array<{
   category: ModeCategory
   label: string
+  description: string
   modes: ModeInfo[]
 }> {
   return CATEGORY_ORDER.map((category) => ({
     category,
     label: CATEGORY_LABELS[category],
+    description: CATEGORY_DESCRIPTIONS[category],
     modes: getModesByCategory(category),
   }))
 }

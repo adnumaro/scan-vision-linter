@@ -31,9 +31,12 @@ export function ModeList({ activeModes, onToggle }: ModeListProps) {
 
   return (
     <div className="mode-list">
-      {modesByCategory.map(({ category, label, modes }) => (
+      {modesByCategory.map(({ category, label, description, modes }) => (
         <div key={category} className="mode-category">
-          <div className="mode-category__label">{label}</div>
+          <div className="mode-category__header">
+            <div className="mode-category__label">{label}</div>
+            <div className="mode-category__description">{description}</div>
+          </div>
           <div className="mode-category__items">
             {modes.map((mode) => {
               const { disabled, reason } = getDisabledInfo(mode)
@@ -43,6 +46,7 @@ export function ModeList({ activeModes, onToggle }: ModeListProps) {
                   id={mode.id}
                   name={mode.name}
                   description={mode.description}
+                  useCase={mode.useCase}
                   icon={mode.icon}
                   enabled={activeModes.includes(mode.id)}
                   disabled={disabled}
