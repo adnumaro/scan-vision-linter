@@ -21,6 +21,9 @@
   "btnAnalyzing": {
     "message": "Analyzing..."
   },
+  "msgAnalyzing": {
+    "message": "Analyzing page..."
+  },
   "btnResetDefaults": {
     "message": "Reset to Defaults"
   },

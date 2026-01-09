@@ -192,6 +192,11 @@ function App() {
     setError(null)
     setIsReanalyzing(true)
 
+    // Clear current analytics immediately to show loading state
+    setAnalytics(null)
+
+    const startTime = Date.now()
+
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
 
@@ -207,8 +212,6 @@ function App() {
         return
       }
 
-      // Clear current analytics for fresh analysis
-      setAnalytics(null)
       await clearAnalytics(tab.url)
 
       // Send analyze message - this runs independently of visualization modes
@@ -218,6 +221,12 @@ function App() {
         config,
         preset,
       })
+
+      // Ensure minimum 200ms loading time for visual feedback
+      const elapsed = Date.now() - startTime
+      if (elapsed < 200) {
+        await new Promise((resolve) => setTimeout(resolve, 200 - elapsed))
+      }
 
       if (response?.analytics) {
         setAnalytics(response.analytics)
@@ -329,17 +338,19 @@ function App() {
 
         {analyticsExpanded && !analytics && (
           <div className="section-content section-content--empty">
-            <span className="analytics-empty-text">{t('msgNoAnalysis')}</span>
-            <button
-              type="button"
-              className={`analyze-button ${isReanalyzing ? 'analyze-button--loading' : ''}`}
-              onClick={() => {
-                if (!isReanalyzing) analyzeContent()
-              }}
-              disabled={isReanalyzing}
-            >
-              {isReanalyzing ? t('btnAnalyzing') : t('btnAnalyze')}
-            </button>
+            {isReanalyzing ? (
+              <>
+                <RefreshCw size={20} className="loading-spinner" />
+                <span className="analytics-loading-text">{t('msgAnalyzing')}</span>
+              </>
+            ) : (
+              <>
+                <span className="analytics-empty-text">{t('msgNoAnalysis')}</span>
+                <button type="button" className="analyze-button" onClick={() => analyzeContent()}>
+                  {t('btnAnalyze')}
+                </button>
+              </>
+            )}
           </div>
         )}
 

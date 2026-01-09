@@ -257,6 +257,17 @@
   text-align: center;
 }
 
+.analytics-loading-text {
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.loading-spinner {
+  color: #9ca3af;
+  animation: spin 0.8s linear infinite;
+}
+
 .reanalyze-button {
   display: flex;
   align-items: center;
