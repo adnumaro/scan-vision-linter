@@ -2,6 +2,17 @@
 module.exports = {
   forbidden: [
     {
+      name: 'no-config-to-modes',
+      severity: 'error',
+      comment: 'Config (presets, analysis, types) must not import from modes. Modes can import config, not vice versa.',
+      from: {
+        path: '^src/config/',
+      },
+      to: {
+        path: '^src/modes/',
+      },
+    },
+    {
       name: 'no-circular',
       severity: 'error',
       comment: 'Circular dependencies are not allowed',

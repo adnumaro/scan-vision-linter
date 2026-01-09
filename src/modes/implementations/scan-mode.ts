@@ -6,16 +6,13 @@
  */
 
 import { ScanText } from 'lucide-react'
-import {
-  clearUnformattedCodeMarkers,
-  detectUnformattedCode,
-  markUnformattedCodeBlocks,
-} from '../../content/analysis/antiPatterns'
+import { detectUnformattedCode } from '../../config/presets'
 import type { ModeConfig, ModeContext, VisualizationMode } from '../types'
 import { cloneModeConfig } from '../utils/config'
 import { batchAnalyzeParagraphs } from '../utils/dom'
 import {
   createDimOverlays,
+  createUnformattedCodeOverlays,
   removeAllScanOverlays,
   type ScanOverlayConfig,
   updateDimOverlayConfig,
@@ -99,11 +96,14 @@ class ScanMode implements VisualizationMode {
 
     const ignoreSelector = getIgnoreSelector(context)
     const textBlockSelector = getTextBlockSelector(context)
+    const codeElements = context.preset.selectors.codeElements || []
 
     // 1. Detect problems FIRST to exclude them from blur
     const problemBlocks = findProblemBlocks(context)
     const unformattedCode = detectUnformattedCode(
       context.contentArea,
+      context.preset.analysis.antiPatterns,
+      codeElements,
       textBlockSelector,
       ignoreSelector,
     )
@@ -127,7 +127,12 @@ class ScanMode implements VisualizationMode {
     )
 
     // 3. Create overlays for unformatted code (antipatterns)
-    markUnformattedCodeBlocks(unformattedCode)
+    const overlayInfos = unformattedCode.map(({ element, type, description }) => ({
+      element,
+      type,
+      description,
+    }))
+    createUnformattedCodeOverlays(overlayInfos)
 
     this.active = true
   }
@@ -136,7 +141,6 @@ class ScanMode implements VisualizationMode {
     if (!this.active) return
 
     removeAllScanOverlays()
-    clearUnformattedCodeMarkers()
     this.active = false
   }
 

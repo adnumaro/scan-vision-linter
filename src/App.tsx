@@ -2,7 +2,7 @@ import { ChevronDown, ChevronRight, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import './App.css'
 import { ModeList } from './components/ModeList'
-import { detectPlatform, getPresetById, PRESETS } from './presets/platforms'
+import { detectPlatform, getPresetById, PRESETS } from './config/presets'
 import type { AnalyticsData, ScanConfig } from './types/messages'
 import { DEFAULT_CONFIG } from './types/messages'
 import { t } from './utils/i18n'
@@ -144,7 +144,7 @@ function App() {
   const handleReset = useCallback(async () => {
     const defaultConfig = await resetConfig()
     // Keep detected preset if available
-    if (detectedPresetId && detectedPresetId !== 'default') {
+    if (detectedPresetId && detectedPresetId !== 'global') {
       defaultConfig.presetId = detectedPresetId
     }
     setConfig(defaultConfig)
@@ -299,7 +299,7 @@ function App() {
   }
 
   const currentPreset = getPresetById(config.presetId)
-  const isAutoDetected = detectedPresetId === config.presetId && detectedPresetId !== 'default'
+  const isAutoDetected = detectedPresetId === config.presetId && detectedPresetId !== 'global'
   const buttonClass = `scan-button ${isActive ? 'scan-button--active' : 'scan-button--inactive'}`
 
   return (

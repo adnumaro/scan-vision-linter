@@ -1,3 +1,20 @@
+/**
+ * Types for Chrome extension messaging
+ * Platform types are imported from the presets module
+ */
+
+import type { TriggeredSuggestion } from '../config/analysis'
+import type { PlatformPreset } from '../config/types'
+
+export type { TriggeredSuggestion } from '../config/analysis'
+// Re-export preset types for convenience
+export type {
+  AnchorWeights,
+  AntiPattern,
+  PlatformPreset,
+  PlatformSuggestion,
+} from '../config/types'
+
 export interface ScanConfig {
   opacity: number
   blur: number
@@ -7,67 +24,7 @@ export interface ScanConfig {
 export const DEFAULT_CONFIG: ScanConfig = {
   opacity: 0.5,
   blur: 1.5,
-  presetId: 'default',
-}
-
-export interface PlatformStyleOverrides {
-  navigationSelectors?: string[]
-  additionalCSS?: string
-}
-
-/**
- * A platform-specific suggestion for improving scannability
- * Suggestions are informative only - they do NOT affect the score
- */
-export interface PlatformSuggestion {
-  /** Unique identifier for this suggestion */
-  id: string
-  /** Display name */
-  name: string
-  /** Description shown to the user */
-  description: string
-  /** Selector that, if NOT present, triggers the suggestion */
-  missingSelector?: string
-  /** Selector that, if present, triggers the suggestion (anti-pattern) */
-  presentSelector?: string
-  /** Custom validation function (optional) */
-  validate?: (contentArea: Element) => boolean
-}
-
-/**
- * Platform-specific analysis configuration
- */
-export interface PlatformAnalysisConfig {
-  /** Platform-specific suggestions (informative, don't affect score) */
-  suggestions?: PlatformSuggestion[]
-}
-
-export interface PlatformPreset {
-  id: string
-  name: string
-  description: string
-  domains: string[]
-  selectors: {
-    contentArea: string
-    /** Selectors for text blocks (paragraphs). Defaults to 'p' if not specified */
-    textBlocks?: string
-    /** Selectors for code blocks. Defaults to 'pre' if not specified */
-    codeBlocks?: string
-    hotSpots: string[]
-    ignoreElements: string[]
-  }
-  styles?: PlatformStyleOverrides
-  /** Platform-specific analysis configuration */
-  analysis?: PlatformAnalysisConfig
-}
-
-/**
- * Result of a triggered platform suggestion
- */
-export interface TriggeredSuggestion {
-  id: string
-  name: string
-  description: string
+  presetId: 'global',
 }
 
 /**

@@ -3,6 +3,14 @@
  * Uses the modes system for visualization
  */
 
+import {
+  calculateWeightedAnchors,
+  detectUnformattedCode,
+  evaluatePlatformSuggestions,
+  getPresetById,
+  type PlatformPreset,
+  PRESETS,
+} from '../config/presets'
 import type { ModeContext, ModesState } from '../modes'
 import {
   createModeManager,
@@ -19,23 +27,15 @@ import { heatZonesMode } from '../modes/implementations/heat-zones-mode'
 import { scanMode } from '../modes/implementations/scan-mode'
 import { SCORING } from '../modes/utils/constants'
 import { estimateLines, MAX_LINES_WITHOUT_ANCHOR } from '../modes/utils/dom'
-import { getPresetById, PRESETS } from '../presets/platforms'
+import { createUnformattedCodeOverlays } from '../modes/utils/scan-overlays'
 import type {
   AnalyticsData,
   DetectedProblem,
   Message,
-  PlatformPreset,
   ScanConfig,
   ScanResponse,
 } from '../types/messages'
 import { DEFAULT_CONFIG } from '../types/messages'
-import {
-  clearUnformattedCodeMarkers,
-  detectUnformattedCode,
-  markUnformattedCodeBlocks,
-} from './analysis/antiPatterns'
-import { evaluatePlatformSuggestions } from './analysis/suggestions'
-import { calculateWeightedAnchors } from './analysis/weights'
 
 // Register all modes
 registry.register(scanMode)
@@ -48,7 +48,7 @@ registry.register(first5sMode)
 // Create manager
 const manager = createModeManager(registry)
 
-// Use the first preset (default) from platforms.ts - single source of truth
+// Use global preset as default - single source of truth
 const DEFAULT_PRESET = PRESETS[0]
 
 /**
@@ -191,15 +191,20 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
     return state.cache.data
   }
 
-  // Use platform-specific selectors, with fallbacks
-  const textBlockSelector = state.preset.selectors.textBlocks || 'p'
-  const codeBlockSelector = state.preset.selectors.codeBlocks || 'pre'
-  const ignoreSelector = state.preset.selectors.ignoreElements?.join(', ') || ''
+  // Get the local preset (with validate functions intact)
+  // Chrome messaging strips functions, so we get the preset from our registry
+  const localPreset = getPresetById(state.preset.id)
 
-  // Calculate weighted anchors for more accurate scannability scoring
+  // Use platform-specific selectors, with fallbacks
+  const textBlockSelector = localPreset.selectors.textBlocks || 'p'
+  const codeBlockSelector = localPreset.selectors.codeBlocks || 'pre'
+  const ignoreSelector = localPreset.selectors.ignoreElements?.join(', ') || ''
+
+  // Calculate weighted anchors using weights from the preset
   const weightedAnchors = calculateWeightedAnchors(
     mainContent,
-    state.preset.selectors.hotSpots,
+    localPreset.analysis.weights,
+    localPreset.selectors.hotSpots,
     ignoreSelector,
     codeBlockSelector,
   )
@@ -232,9 +237,12 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
     }
   })
 
-  // Detect unformatted code blocks
+  // Detect unformatted code blocks using patterns from the preset
+  const codeElements = localPreset.selectors.codeElements || []
   const unformattedCodeMatches = detectUnformattedCode(
     mainContent,
+    localPreset.analysis.antiPatterns,
+    codeElements,
     textBlockSelector,
     ignoreSelector,
   )
@@ -242,8 +250,12 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
 
   // Mark unformatted code blocks visually (cleared on deactivate)
   if (manager.isActive('scan')) {
-    clearUnformattedCodeMarkers()
-    markUnformattedCodeBlocks(unformattedCodeMatches)
+    const overlayInfos = unformattedCodeMatches.map(({ element, type, description }) => ({
+      element,
+      type,
+      description,
+    }))
+    createUnformattedCodeOverlays(overlayInfos)
   }
 
   // Calculate score using weighted anchors
@@ -324,10 +336,7 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
   }
 
   // Evaluate platform-specific suggestions (informative only, don't affect score)
-  // Use local preset (with validate functions) instead of message-passed preset
-  // because Chrome messaging strips functions during serialization
-  const localPreset = getPresetById(state.preset.id)
-  const platformSuggestions = localPreset.analysis?.suggestions || []
+  const platformSuggestions = localPreset.analysis.suggestions || []
   const triggeredSuggestions = evaluatePlatformSuggestions(platformSuggestions, mainContent)
 
   const data: AnalyticsData = {
@@ -413,7 +422,8 @@ function handleMessage(message: Message, sendResponse: (response: ScanResponse) 
       }
       if (message.preset) {
         const presetChanged = message.preset.id !== state.preset.id
-        state.preset = message.preset
+        // Get the full preset from registry (message.preset may be stripped)
+        state.preset = getPresetById(message.preset.id)
         if (presetChanged) {
           invalidateCache()
         }
@@ -433,7 +443,7 @@ function handleMessage(message: Message, sendResponse: (response: ScanResponse) 
         state.config = message.config
       }
       if (message.preset) {
-        state.preset = message.preset
+        state.preset = getPresetById(message.preset.id)
       }
 
       const validatedModeId = validateModeId(message.modeId)
@@ -465,7 +475,7 @@ function handleMessage(message: Message, sendResponse: (response: ScanResponse) 
         state.config = message.config
       }
       if (message.preset) {
-        state.preset = message.preset
+        state.preset = getPresetById(message.preset.id)
       }
 
       if (manager.isActive('scan')) {
@@ -506,7 +516,6 @@ function cleanup(): void {
     manager.destroy()
     removeAllOverlays()
     removeAllStylesheets()
-    clearUnformattedCodeMarkers()
     invalidateCache()
   } catch {
     // Silently handle errors during cleanup
