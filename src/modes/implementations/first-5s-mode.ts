@@ -113,10 +113,14 @@ function isHotspot(element: Element): boolean {
 }
 
 /**
- * Checks if an element is completely above the fold line
+ * Checks if an element is above the fold line
+ * foldOffset is the distance from contentArea top to the fold
+ * We compare the element's position relative to contentArea
  */
-function isAboveFold(rect: DOMRect, foldY: number): boolean {
-  return rect.bottom <= foldY
+function isAboveFold(elementRect: DOMRect, contentAreaRect: DOMRect, foldOffset: number): boolean {
+  // Element's bottom position relative to contentArea top
+  const elementBottomRelative = elementRect.bottom - contentAreaRect.top
+  return elementBottomRelative <= foldOffset
 }
 
 /**
@@ -146,62 +150,135 @@ function createBelowFoldOverlay(rect: DOMRect, config: First5sConfig['settings']
 }
 
 /**
- * Creates the fold line indicator
+ * Finds the scrollable ancestor of an element (not window)
  */
-function createFoldLine(tracker: OverlayTracker, contentArea: Element, foldY: number): void {
+function getScrollableAncestor(element: Element): Element | null {
+  let current = element.parentElement
+  while (current) {
+    const style = window.getComputedStyle(current)
+    if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+      if (current.scrollHeight > current.clientHeight) {
+        return current
+      }
+    }
+    current = current.parentElement
+  }
+  return null
+}
+
+/**
+ * Calculates the fold offset from the top of contentArea
+ * This represents how much content is visible when the page first loads (scroll = 0)
+ */
+function calculateFoldOffset(contentArea: Element): number {
+  const scrollContainer = getScrollableAncestor(contentArea)
+
+  if (scrollContainer) {
+    // Scroll is in an internal container (like Confluence)
+    const containerRect = scrollContainer.getBoundingClientRect()
+    const contentRect = contentArea.getBoundingClientRect()
+    const scrollTop = scrollContainer.scrollTop
+
+    // Position of contentArea relative to scroll container when scroll = 0
+    const contentTopInContainer = contentRect.top - containerRect.top + scrollTop
+
+    // Visible height of the scroll container
+    const containerVisibleHeight = containerRect.height
+
+    // Fold offset from contentArea top
+    return containerVisibleHeight - contentTopInContainer
+  }
+  // Scroll is in window
   const contentRect = contentArea.getBoundingClientRect()
-  const foldOffsetY = foldY - contentRect.top
+  const contentTopInDocument = contentRect.top + window.scrollY
+  return window.innerHeight - contentTopInDocument
+}
+
+/**
+ * Creates the fold line indicator
+ * Uses position: fixed with scroll event listener for correct positioning
+ */
+function createFoldLine(
+  contentArea: Element,
+  foldOffset: number,
+): { elements: HTMLElement[]; cleanup: () => void } {
   const color = COLORS.indicator.foldLine
+  const scrollContainer = getScrollableAncestor(contentArea)
+
+  // Create container
+  const container = document.createElement('div')
+  container.className = 'scanvision-fold-container'
 
   // Create dotted line
   const line = document.createElement('div')
   line.className = 'scanvision-fold-line'
-  line.style.cssText = `
-    position: fixed;
-    top: ${foldY}px;
-    left: ${contentRect.left}px;
-    width: ${contentRect.width}px;
-    height: 0;
-    border-top: 2px dotted ${color};
-    pointer-events: none;
-    z-index: ${Z_INDEX.INDICATOR};
-  `
-
-  tracker.track({
-    element: contentArea,
-    overlay: line,
-    offset: { top: foldOffsetY, left: 0, width: 0 },
-    type: 'fold-line',
-    fixedDimensions: true,
-  })
+  container.appendChild(line)
 
   // Create label
   const label = document.createElement('div')
   label.className = 'scanvision-fold-label'
   label.textContent = t('patternAboveTheFold')
-  label.style.cssText = `
-    position: fixed;
-    top: ${foldY - 24}px;
-    left: ${contentRect.left + contentRect.width - 110}px;
-    padding: 4px 8px;
-    background-color: ${color};
-    color: ${COLORS.indicator.label};
-    font-size: 11px;
-    font-family: system-ui, -apple-system, sans-serif;
-    font-weight: 500;
-    border-radius: 4px;
-    pointer-events: none;
-    z-index: ${Z_INDEX.TOP};
-    white-space: nowrap;
-  `
+  container.appendChild(label)
 
-  tracker.track({
-    element: contentArea,
-    overlay: label,
-    offset: { top: foldOffsetY - 24, left: contentRect.width - 110 },
-    type: 'fold-label',
-    fixedDimensions: true,
-  })
+  document.body.appendChild(container)
+
+  // Function to update position
+  const updatePosition = () => {
+    const contentRect = contentArea.getBoundingClientRect()
+    const foldViewportY = contentRect.top + foldOffset
+
+    container.style.cssText = `
+      position: fixed;
+      top: ${foldViewportY}px;
+      left: ${contentRect.left}px;
+      width: ${contentRect.width}px;
+      height: 0;
+      pointer-events: none;
+      z-index: ${Z_INDEX.INDICATOR};
+    `
+
+    line.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 0;
+      border-top: 2px dotted ${color};
+      pointer-events: none;
+    `
+
+    label.style.cssText = `
+      position: absolute;
+      top: -24px;
+      right: 0;
+      padding: 4px 8px;
+      background-color: ${color};
+      color: ${COLORS.indicator.label};
+      font-size: 11px;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-weight: 500;
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: ${Z_INDEX.TOP};
+      white-space: nowrap;
+    `
+  }
+
+  // Initial position
+  updatePosition()
+
+  // Listen to scroll on the correct container
+  const scrollTarget = scrollContainer || window
+  scrollTarget.addEventListener('scroll', updatePosition, { passive: true })
+  window.addEventListener('resize', updatePosition, { passive: true })
+
+  const cleanup = () => {
+    scrollTarget.removeEventListener('scroll', updatePosition)
+    window.removeEventListener('resize', updatePosition)
+    container.remove()
+  }
+
+  return { elements: [container], cleanup }
 }
 
 /**
@@ -212,11 +289,12 @@ function createOverlays(
   tracker: OverlayTracker,
   context: ModeContext,
   config: First5sConfig['settings'],
-  foldY: number,
+  foldOffset: number,
 ): void {
   const { contentArea, preset } = context
   const ignoreSelector = preset.selectors.ignoreElements?.join(', ') || ''
   const textBlockSelector = preset.selectors.textBlocks || 'p'
+  const contentAreaRect = contentArea.getBoundingClientRect()
 
   // Get text blocks to dim
   const textBlocks = contentArea.querySelectorAll(textBlockSelector)
@@ -248,7 +326,7 @@ function createOverlays(
     const rect = heading.getBoundingClientRect()
     if (rect.width === 0 || rect.height === 0) continue
 
-    if (isAboveFold(rect, foldY)) {
+    if (isAboveFold(rect, contentAreaRect, foldOffset)) {
       // Above fold: show highlight
       const overlay = createHeadingHighlight(rect)
       tracker.track({
@@ -282,7 +360,7 @@ function createOverlays(
     const rect = img.getBoundingClientRect()
     if (rect.width === 0 || rect.height === 0) continue
 
-    if (isAboveFold(rect, foldY)) {
+    if (isAboveFold(rect, contentAreaRect, foldOffset)) {
       // Above fold: show outline
       const overlay = createImageOutline(rect)
       tracker.track({
@@ -302,9 +380,6 @@ function createOverlays(
       })
     }
   }
-
-  // Add fold line indicator
-  createFoldLine(tracker, contentArea, foldY)
 }
 
 /**
@@ -323,21 +398,34 @@ class First5sMode implements VisualizationMode {
   private config: First5sConfig = DEFAULT_CONFIG
   private context: ModeContext | null = null
   private tracker: OverlayTracker | null = null
-  /** Fold line position captured at activation time */
-  private initialFoldY: number = 0
+  /** Fold line cleanup function */
+  private foldLineCleanup: (() => void) | null = null
+  /** Fold offset from contentArea top (calculated once at activation) */
+  private foldOffset: number = 0
+
+  private clearFoldLine(): void {
+    this.foldLineCleanup?.()
+    this.foldLineCleanup = null
+  }
 
   activate(context: ModeContext): void {
     if (this.active) return
 
     // Clean up any previous state
     this.tracker?.clear()
+    this.clearFoldLine()
 
-    // Capture fold position at activation time
-    this.initialFoldY = window.innerHeight
+    // Calculate fold offset (how much content is visible when scroll = 0)
+    this.foldOffset = calculateFoldOffset(context.contentArea)
 
     this.context = context
     this.tracker = createOverlayTracker()
-    createOverlays(this.tracker, context, this.config.settings, this.initialFoldY)
+    createOverlays(this.tracker, context, this.config.settings, this.foldOffset)
+
+    // Create fold line with its own scroll handling
+    const foldLine = createFoldLine(context.contentArea, this.foldOffset)
+    this.foldLineCleanup = foldLine.cleanup
+
     this.active = true
   }
 
@@ -345,9 +433,10 @@ class First5sMode implements VisualizationMode {
     if (!this.active) return
 
     this.tracker?.clear()
+    this.clearFoldLine()
     this.tracker = null
     this.context = null
-    this.initialFoldY = 0
+    this.foldOffset = 0
     this.active = false
   }
 
@@ -361,11 +450,14 @@ class First5sMode implements VisualizationMode {
       },
     }
 
-    // Recreate overlays with new config (keep same foldY)
+    // Recreate overlays with new config (keep same foldOffset)
     if (this.active && this.context && this.tracker) {
       this.tracker.clear()
+      this.clearFoldLine()
       this.tracker = createOverlayTracker()
-      createOverlays(this.tracker, this.context, this.config.settings, this.initialFoldY)
+      createOverlays(this.tracker, this.context, this.config.settings, this.foldOffset)
+      const foldLine = createFoldLine(this.context.contentArea, this.foldOffset)
+      this.foldLineCleanup = foldLine.cleanup
     }
   }
 
