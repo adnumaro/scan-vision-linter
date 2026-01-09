@@ -304,7 +304,10 @@ function App() {
 
   return (
     <div className="popup">
-      <h3 className="popup-title">{t('extName')}</h3>
+      <h3 className="popup-title">
+        <img src="/icon-32.png" alt="" className="popup-icon" />
+        {t('extName')}
+      </h3>
 
       <button type="button" onClick={toggleScan} className={buttonClass}>
         {isActive ? t('btnScanActive') : t('btnStartScan')}
