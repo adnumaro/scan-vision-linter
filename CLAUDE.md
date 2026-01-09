@@ -132,7 +132,7 @@ Each platform has its own folder with independent configuration:
               │ Chrome Message API
               ↓
 ┌─────────────────────────────────────────────────────────┐
-│  CONTENT SCRIPT (content/index.ts)                      │
+│  CONTENT SCRIPT (content.ts)                            │
 │  Listens for messages, manages ModeManager              │
 └─────────────┬───────────────────────────────────────────┘
               │
@@ -184,7 +184,7 @@ Finally, add i18n translations to `_locales/{en,es}/messages.json`.
    - Methods: `activate(context)`, `deactivate()`, `isActive()`, `getConfig()`
    - Export singleton instance
 
-2. Register in `src/content/index.ts`: `registry.register(myMode)`
+2. Register in `src/content.ts`: `registry.register(myMode)`
 
 3. Mode appears automatically in popup UI, grouped by category.
 

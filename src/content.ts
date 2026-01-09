@@ -10,32 +10,32 @@ import {
   getPresetById,
   type PlatformPreset,
   PRESETS,
-} from '../config/presets'
-import type { ModeContext, ModesState } from '../modes'
+} from './config/presets'
+import type { ModeContext, ModesState } from './modes'
 import {
   createModeManager,
   getViewportInfo,
   registry,
   removeAllOverlays,
   removeAllStylesheets,
-} from '../modes'
-import { ePatternMode } from '../modes/implementations/e-pattern-mode'
-import { fPatternMode } from '../modes/implementations/f-pattern-mode'
-import { first5sMode } from '../modes/implementations/first-5s-mode'
-import { foldLineMode } from '../modes/implementations/fold-line-mode'
-import { heatZonesMode } from '../modes/implementations/heat-zones-mode'
-import { scanMode } from '../modes/implementations/scan-mode'
-import { SCORING } from '../modes/utils/constants'
-import { estimateLines, MAX_LINES_WITHOUT_ANCHOR } from '../modes/utils/dom'
-import { createUnformattedCodeOverlays } from '../modes/utils/scan-overlays'
+} from './modes'
+import { ePatternMode } from './modes/implementations/e-pattern-mode'
+import { fPatternMode } from './modes/implementations/f-pattern-mode'
+import { first5sMode } from './modes/implementations/first-5s-mode'
+import { foldLineMode } from './modes/implementations/fold-line-mode'
+import { heatZonesMode } from './modes/implementations/heat-zones-mode'
+import { scanMode } from './modes/implementations/scan-mode'
+import { SCORING } from './modes/utils/constants'
+import { estimateLines, MAX_LINES_WITHOUT_ANCHOR } from './modes/utils/dom'
+import { createUnformattedCodeOverlays } from './modes/utils/scan-overlays'
 import type {
   AnalyticsData,
   DetectedProblem,
   Message,
   ScanConfig,
   ScanResponse,
-} from '../types/messages'
-import { DEFAULT_CONFIG } from '../types/messages'
+} from './types/messages'
+import { DEFAULT_CONFIG } from './types/messages'
 
 // Register all modes
 registry.register(scanMode)

@@ -30,7 +30,7 @@ module.exports = {
         pathNot: [
           // Entry points
           '(^|/)main\\.tsx$',
-          '(^|/)content/index\\.ts$',
+          '(^|/)content\\.ts$',
           // Config files
           '\\.config\\.(js|ts|cjs|mjs)$',
           // Type declarations

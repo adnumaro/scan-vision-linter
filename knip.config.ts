@@ -3,7 +3,7 @@ import type { KnipConfig } from 'knip'
 const config: KnipConfig = {
   entry: [
     'src/main.tsx',
-    'src/content/index.ts',
+    'src/content.ts',
     // Public API barrel exports
     'src/modes/index.ts',
   ],
