@@ -10,8 +10,10 @@ import type { AntiPatternMatch } from './types'
  */
 function getTextWithoutCodeElements(element: Element, codeElementsSelector: string): string {
   const clone = element.cloneNode(true) as Element
-  for (const el of clone.querySelectorAll(codeElementsSelector)) {
-    el.remove()
+  if (codeElementsSelector) {
+    for (const el of clone.querySelectorAll(codeElementsSelector)) {
+      el.remove()
+    }
   }
   return clone.textContent || ''
 }
@@ -32,10 +34,10 @@ export function detectUnformattedCode(
 
   for (const block of textBlocks) {
     // Skip if block is inside a code element
-    if (block.closest(codeElementsSelector)) continue
+    if (codeElementsSelector && block.closest(codeElementsSelector)) continue
 
     // Skip if block contains a code element (wrapper element)
-    if (block.querySelector(codeElementsSelector)) continue
+    if (codeElementsSelector && block.querySelector(codeElementsSelector)) continue
 
     // Skip if block or ancestors have code-editor-like classes
     const blockClasses = block.className || ''
