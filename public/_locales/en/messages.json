@@ -15,6 +15,12 @@
   "btnReanalyze": {
     "message": "Re-analyze page"
   },
+  "btnAnalyze": {
+    "message": "Analyze Page"
+  },
+  "btnAnalyzing": {
+    "message": "Analyzing..."
+  },
   "btnResetDefaults": {
     "message": "Reset to Defaults"
   },

@@ -188,43 +188,7 @@ function App() {
     [config],
   )
 
-  const toggleScan = async () => {
-    setError(null)
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-
-      if (!tab.id) {
-        setError(t('errNoActiveTab'))
-        return
-      }
-
-      if (tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) {
-        setError(t('errCannotScanBrowser'))
-        return
-      }
-
-      const preset = getPresetById(config.presetId)
-      const response = await chrome.tabs.sendMessage(tab.id, {
-        action: 'toggle-scan',
-        config,
-        preset,
-      })
-      if (response?.isScanning !== undefined) {
-        setIsActive(response.isScanning)
-        if (response.analytics && tab.url) {
-          setAnalytics(response.analytics)
-          await saveAnalytics(tab.url, response.analytics)
-        } else if (tab.url) {
-          setAnalytics(null)
-          await clearAnalytics(tab.url)
-        }
-      }
-    } catch {
-      setError(t('errReloadPage'))
-    }
-  }
-
-  const reAnalyze = async () => {
+  const analyzeContent = async () => {
     setError(null)
     setIsReanalyzing(true)
 
@@ -237,26 +201,20 @@ function App() {
         return
       }
 
-      // Clear current analytics and storage for this URL
+      if (tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) {
+        setError(t('errCannotScanBrowser'))
+        setIsReanalyzing(false)
+        return
+      }
+
+      // Clear current analytics for fresh analysis
       setAnalytics(null)
       await clearAnalytics(tab.url)
 
-      // Send message to clear overlays and re-analyze
+      // Send analyze message - this runs independently of visualization modes
       const preset = getPresetById(config.presetId)
-
-      // First deactivate to clear overlays, then reactivate
-      await chrome.tabs.sendMessage(tab.id, {
-        action: 'toggle-scan',
-        config,
-        preset,
-      })
-
-      // Small delay for visual feedback
-      await new Promise((resolve) => setTimeout(resolve, 400))
-
-      // Reactivate scan
       const response = await chrome.tabs.sendMessage(tab.id, {
-        action: 'toggle-scan',
+        action: 'analyze',
         config,
         preset,
       })
@@ -264,7 +222,6 @@ function App() {
       if (response?.analytics) {
         setAnalytics(response.analytics)
         await saveAnalytics(tab.url, response.analytics)
-        setIsActive(response.isScanning)
       }
     } catch {
       setError(t('errReloadPage'))
@@ -304,7 +261,6 @@ function App() {
 
   const currentPreset = getPresetById(config.presetId)
   const isAutoDetected = detectedPresetId === config.presetId && detectedPresetId !== 'global'
-  const buttonClass = `scan-button ${isActive ? 'scan-button--active' : 'scan-button--inactive'}`
 
   return (
     <div className="popup">
@@ -312,10 +268,6 @@ function App() {
         <img src="/icon-32.png" alt="" className="popup-icon" />
         {t('extName')}
       </h3>
-
-      <button type="button" onClick={toggleScan} className={buttonClass}>
-        {isActive ? t('btnScanActive') : t('btnStartScan')}
-      </button>
 
       {error && <div className="error-message">{error}</div>}
 
@@ -351,7 +303,7 @@ function App() {
 
       {/* 2. Analytics Section */}
       <div className="section">
-        <div className="section-header-with-action">
+        <div className="section-header-row">
           <button
             type="button"
             className="section-header"
@@ -360,22 +312,34 @@ function App() {
             {analyticsExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             <span className="section-title">{t('lblAnalysis')}</span>
           </button>
-          <button
-            type="button"
-            className={`reanalyze-button ${isReanalyzing ? 'reanalyze-button--spinning' : ''}`}
-            onClick={() => {
-              if (!isReanalyzing) reAnalyze()
-            }}
-            disabled={isReanalyzing}
-            title={t('btnReanalyze')}
-          >
-            <RefreshCw size={14} />
-          </button>
+          {analytics && (
+            <button
+              type="button"
+              className={`reanalyze-button ${isReanalyzing ? 'reanalyze-button--spinning' : ''}`}
+              onClick={() => {
+                if (!isReanalyzing) analyzeContent()
+              }}
+              disabled={isReanalyzing}
+              title={t('btnReanalyze')}
+            >
+              <RefreshCw size={14} />
+            </button>
+          )}
         </div>
 
         {analyticsExpanded && !analytics && (
           <div className="section-content section-content--empty">
             <span className="analytics-empty-text">{t('msgNoAnalysis')}</span>
+            <button
+              type="button"
+              className={`analyze-button ${isReanalyzing ? 'analyze-button--loading' : ''}`}
+              onClick={() => {
+                if (!isReanalyzing) analyzeContent()
+              }}
+              disabled={isReanalyzing}
+            >
+              {isReanalyzing ? t('btnAnalyzing') : t('btnAnalyze')}
+            </button>
           </div>
         )}
 

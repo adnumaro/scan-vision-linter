@@ -34,41 +34,6 @@
   border-radius: 4px;
 }
 
-/* Toggle Button */
-.scan-button {
-  width: 100%;
-  padding: 10px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.scan-button--inactive {
-  background-color: #2563eb;
-  color: #ffffff;
-}
-
-.scan-button--inactive:hover {
-  background-color: #1d4ed8;
-}
-
-.scan-button--active {
-  background-color: #16a34a;
-  color: #ffffff;
-}
-
-.scan-button--active:hover {
-  background-color: #15803d;
-}
-
-.scan-button:disabled {
-  background-color: #9ca3af;
-  cursor: not-allowed;
-}
-
 /* === Accordion Sections === */
 .section {
   margin-top: 16px;
@@ -96,14 +61,13 @@
   background-color: #f3f4f6;
 }
 
-.section-header-with-action {
+.section-header-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 
-.section-header-with-action .section-header {
-  width: auto;
+.section-header-row .section-header {
   flex: 1;
 }
 
@@ -121,9 +85,39 @@
 
 .section-content--empty {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
   padding: 24px 12px;
+}
+
+/* Analyze Button (Secondary style) */
+.analyze-button {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  background: transparent;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.analyze-button:hover:not(:disabled) {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #9ca3af;
+}
+
+.analyze-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.analyze-button--loading {
+  color: #9ca3af;
 }
 
 /* Preset Selector */
@@ -267,20 +261,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   padding: 0;
   border: none;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.1);
+  background: transparent;
   color: #9ca3af;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .reanalyze-button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .reanalyze-button:active:not(:disabled) {
