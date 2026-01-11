@@ -3,17 +3,10 @@
  * Platform types are imported from the presets module
  */
 
-import type { TriggeredSuggestion } from '../config/analysis'
+import type { TriggeredSuggestion } from '../config/analysis/types'
 import type { PlatformPreset } from '../config/types'
 
-export type { TriggeredSuggestion } from '../config/analysis'
-// Re-export preset types for convenience
-export type {
-  AnchorWeights,
-  AntiPattern,
-  PlatformPreset,
-  PlatformSuggestion,
-} from '../config/types'
+export type { PlatformPreset } from '../config/types'
 
 export interface ScanConfig {
   opacity: number

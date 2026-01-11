@@ -1,15 +1,17 @@
 /**
  * Confluence-specific anchor weights
- * Confluence has specific elements that are highly valuable for scannability
+ * These weights correspond to the platformAnchors defined in preset.ts
  */
 
 import type { AnchorWeights } from '../../types'
 
 export const CONFLUENCE_WEIGHTS: Partial<AnchorWeights> = {
-  // Info panels are very valuable in Confluence
-  infoPanel: 1.0,
-  // Status macros help quickly identify state
-  statusMacro: 0.9,
-  // Expand sections help organize long content
-  expandSection: 0.8,
+  // Callouts (info panels) are highly valuable for scannability
+  callout: 1.0,
+  // Toggles (expand sections) help organize long content
+  toggle: 0.8,
+  // Badges (status macros) help quickly identify state
+  badge: 0.9,
+  // Emojis add visual anchors but less valuable
+  emoji: 0.3,
 }

@@ -65,29 +65,10 @@ export function getPresetById(id: string): PlatformPreset {
   return PRESET_MAP[id] || globalPreset
 }
 
-// Re-export analysis functions
+// Re-export only what's actually used
 export {
-  type AntiPatternMatch,
   calculateWeightedAnchors,
   detectUnformattedCode,
   evaluatePlatformSuggestions,
-  type TriggeredSuggestion,
-  type WeightedAnchorBreakdown,
 } from '../analysis'
-// Re-export merge utility
-export { mergeWithGlobal } from '../merge'
-// Re-export types
-export type {
-  AnchorWeights,
-  AntiPattern,
-  PartialPlatformPreset,
-  PlatformAnalysis,
-  PlatformPreset,
-  PlatformSelectors,
-  PlatformStyles,
-  PlatformSuggestion,
-} from '../types'
-// Re-export individual presets for direct access
-export { confluencePreset } from './confluence'
-export { globalPreset } from './global'
-export { notionPreset } from './notion'
+export type { PlatformPreset } from '../types'

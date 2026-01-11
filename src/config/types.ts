@@ -18,20 +18,25 @@ export interface AntiPattern {
 /**
  * Weight values for different anchor types
  * Higher weight = more valuable for scannability
+ *
+ * HTML anchor weights are standard. Platform-specific weights
+ * are defined by each platform and accessed via index signature.
  */
 export interface AnchorWeights {
-  // Structure (high value)
+  // HTML Anchors - Structure (high value)
   heading: number
   codeBlock: number
   image: number
-  // Emphasis (medium value)
+  // HTML Anchors - Emphasis (medium value)
   emphasis: number
   inlineCode: number
   list: number
-  // Links (variable value)
+  // HTML Anchors - Links (variable value)
   linkStandalone: number
   linkInline: number
-  // Platform-specific weights can be added
+  // Default weight for platform anchors not explicitly defined
+  platformAnchorDefault: number
+  // Platform-specific weights (callout, toggle, badge, emoji, database, etc.)
   [key: string]: number
 }
 
@@ -77,27 +82,95 @@ export interface PlatformStyles {
 }
 
 /**
- * Selector configuration for a platform
+ * Anchors HTML estándar (igual para todas las plataformas)
  */
-export interface PlatformSelectors {
-  /** Main content area selector */
-  contentArea: string
-  /** Selectors for text blocks (defaults to 'p') */
-  textBlocks?: string
-  /** Selectors for code blocks (defaults to 'pre') */
-  codeBlocks?: string
-  /** Selectors for code elements to exclude during anti-pattern detection */
-  codeElements?: string[]
-  /** Selectors for platform-specific anchor elements */
-  hotSpots: string[]
-  /** Selectors for elements to ignore during analysis */
-  ignoreElements: string[]
+export interface HtmlAnchors {
+  /** Heading elements: h1-h6 or platform equivalents */
+  headings: string
+  /** Emphasis elements: strong, b, mark */
+  emphasis: string
+  /** Code block elements: pre or platform equivalents */
+  codeBlocks: string
+  /** Inline code elements: code, kbd (within paragraphs) */
+  inlineCode: string
+  /** Link elements: a[href] */
+  links: string
+  /** Image/media elements: img, picture, video, svg */
+  images: string
+  /** List elements: ul, ol */
+  lists: string
 }
+
+/**
+ * Anchors específicos de Confluence - TODOS requeridos
+ * Index signature allows usage as Record<string, string>
+ */
+export interface ConfluenceAnchors {
+  /** Info macros, panels, warnings */
+  callouts: string
+  /** Expand sections */
+  toggles: string
+  /** Status macros, labels */
+  badges: string
+  /** Emoji elements */
+  emojis: string
+  /** Index signature for Record<string, string> compatibility */
+  [key: string]: string
+}
+
+/**
+ * Anchors específicos de Notion - TODOS requeridos
+ * Index signature allows usage as Record<string, string>
+ */
+export interface NotionAnchors {
+  /** Callout blocks */
+  callouts: string
+  /** Toggle blocks */
+  toggles: string
+  /** Bookmark embeds */
+  embeds: string
+  /** Emoji elements */
+  emojis: string
+  /** Database/collection views */
+  databases: string
+  /** Index signature for Record<string, string> compatibility */
+  [key: string]: string
+}
+
+/**
+ * Global no tiene anchors de plataforma
+ * Uses empty Record which is compatible with Record<string, string>
+ */
+export type GlobalAnchors = Record<string, string>
+
+/**
+ * Selector configuration for a platform
+ * Generic over platform-specific anchors
+ */
+export interface PlatformSelectors<
+  TAnchors extends Record<string, string> = Record<string, string>,
+> {
+  /** Main content area selector */
+  content: string
+  /** Selectors for text blocks to measure density */
+  textBlocks: string
+  /** Standard HTML anchor selectors */
+  htmlAnchors: HtmlAnchors
+  /** Platform-specific anchor selectors */
+  platformAnchors: TAnchors
+  /** Elements to ignore during analysis */
+  ignore: string[]
+}
+
+// Concrete selector types for each platform
+export type GlobalSelectors = PlatformSelectors<GlobalAnchors>
+export type ConfluenceSelectors = PlatformSelectors<ConfluenceAnchors>
+export type NotionSelectors = PlatformSelectors<NotionAnchors>
 
 /**
  * Complete platform preset configuration
  */
-export interface PlatformPreset {
+export interface PlatformPreset<TAnchors extends Record<string, string> = Record<string, string>> {
   /** Unique identifier */
   id: string
   /** Display name */
@@ -107,7 +180,7 @@ export interface PlatformPreset {
   /** Domains this preset applies to */
   domains: string[]
   /** CSS selectors for content detection */
-  selectors: PlatformSelectors
+  selectors: PlatformSelectors<TAnchors>
   /** Style overrides */
   styles?: PlatformStyles
   /** Analysis configuration */
@@ -115,15 +188,43 @@ export interface PlatformPreset {
 }
 
 /**
+ * Partial HTML anchors for platform-specific overrides
+ */
+interface PartialHtmlAnchors {
+  headings?: string
+  emphasis?: string
+  codeBlocks?: string
+  inlineCode?: string
+  links?: string
+  images?: string
+  lists?: string
+}
+
+/**
+ * Partial selectors for platform-specific overrides
+ */
+export interface PartialPlatformSelectors<
+  TAnchors extends Record<string, string> = Record<string, string>,
+> {
+  content?: string
+  textBlocks?: string
+  htmlAnchors?: PartialHtmlAnchors
+  platformAnchors?: TAnchors
+  ignore?: string[]
+}
+
+/**
  * Partial preset for platform-specific overrides
  * Used before merging with global preset
  */
-export interface PartialPlatformPreset {
+export interface PartialPlatformPreset<
+  TAnchors extends Record<string, string> = Record<string, string>,
+> {
   id: string
   name: string
   description: string
   domains: string[]
-  selectors?: Partial<PlatformSelectors>
+  selectors?: PartialPlatformSelectors<TAnchors>
   styles?: PlatformStyles
   analysis?: {
     antiPatterns?: AntiPattern[]

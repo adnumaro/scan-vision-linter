@@ -60,15 +60,15 @@ function deepMerge<T extends Record<string, unknown>>(base: T, override: Partial
  * @param specificPreset - Partial specific preset (overrides)
  * @returns Complete merged preset
  */
-export function mergeWithGlobal(
+export function mergeWithGlobal<T extends Record<string, string>>(
   globalPreset: PlatformPreset,
-  specificPreset: PartialPlatformPreset,
-): PlatformPreset {
+  specificPreset: PartialPlatformPreset<T>,
+): PlatformPreset<T> {
   // Start with global as base
   const merged = deepMerge(
     globalPreset as unknown as Record<string, unknown>,
     specificPreset as unknown as Record<string, unknown>,
-  ) as unknown as PlatformPreset
+  ) as unknown as PlatformPreset<T>
 
   // Ensure analysis has all required fields after merge
   merged.analysis = {
@@ -80,13 +80,26 @@ export function mergeWithGlobal(
     suggestions: merged.analysis?.suggestions ?? globalPreset.analysis.suggestions,
   }
 
-  // Ensure selectors has all required fields
+  // Ensure selectors has all required fields with new structure
   merged.selectors = {
-    contentArea: merged.selectors?.contentArea ?? globalPreset.selectors.contentArea,
+    content: merged.selectors?.content ?? globalPreset.selectors.content,
     textBlocks: merged.selectors?.textBlocks ?? globalPreset.selectors.textBlocks,
-    codeBlocks: merged.selectors?.codeBlocks ?? globalPreset.selectors.codeBlocks,
-    hotSpots: merged.selectors?.hotSpots ?? globalPreset.selectors.hotSpots,
-    ignoreElements: merged.selectors?.ignoreElements ?? globalPreset.selectors.ignoreElements,
+    htmlAnchors: {
+      headings:
+        merged.selectors?.htmlAnchors?.headings ?? globalPreset.selectors.htmlAnchors.headings,
+      emphasis:
+        merged.selectors?.htmlAnchors?.emphasis ?? globalPreset.selectors.htmlAnchors.emphasis,
+      codeBlocks:
+        merged.selectors?.htmlAnchors?.codeBlocks ?? globalPreset.selectors.htmlAnchors.codeBlocks,
+      inlineCode:
+        merged.selectors?.htmlAnchors?.inlineCode ?? globalPreset.selectors.htmlAnchors.inlineCode,
+      links: merged.selectors?.htmlAnchors?.links ?? globalPreset.selectors.htmlAnchors.links,
+      images: merged.selectors?.htmlAnchors?.images ?? globalPreset.selectors.htmlAnchors.images,
+      lists: merged.selectors?.htmlAnchors?.lists ?? globalPreset.selectors.htmlAnchors.lists,
+    },
+    // Platform anchors: specific preset wins entirely (no merge with global)
+    platformAnchors: (merged.selectors?.platformAnchors ?? {}) as T,
+    ignore: merged.selectors?.ignore ?? globalPreset.selectors.ignore,
   }
 
   return merged

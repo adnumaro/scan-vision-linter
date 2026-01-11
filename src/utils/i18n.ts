@@ -16,11 +16,3 @@ export function t(key: string, substitutions?: string | string[]): string {
   // Return key as fallback for debugging (shows missing translations)
   return message || key
 }
-
-/**
- * Get the current UI language
- * @returns Language code (e.g., 'en', 'es')
- */
-export function getUILanguage(): string {
-  return chrome.i18n.getUILanguage()
-}

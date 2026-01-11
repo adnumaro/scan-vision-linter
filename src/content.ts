@@ -129,12 +129,12 @@ function invalidateCache(): void {
  * Safely handles empty or invalid selectors
  */
 function getContentArea(): Element {
-  const contentAreaSelector = state.preset.selectors.contentArea
-  if (!contentAreaSelector || !contentAreaSelector.trim()) {
+  const contentSelector = state.preset.selectors.content
+  if (!contentSelector || !contentSelector.trim()) {
     return document.body
   }
 
-  const selectors = contentAreaSelector
+  const selectors = contentSelector
     .split(',')
     .map((s) => s.trim())
     .filter((s) => s.length > 0)
@@ -193,19 +193,18 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
   // Chrome messaging strips functions, so we get the preset from our registry
   const localPreset = getPresetById(state.preset.id)
 
-  // Use platform-specific selectors, with fallbacks
-  const textBlockSelector = localPreset.selectors.textBlocks || 'p'
-  const codeBlockSelector = localPreset.selectors.codeBlocks || 'pre'
-  const ignoreSelector = localPreset.selectors.ignoreElements?.join(', ') || ''
+  // Use platform-specific selectors from preset
+  const { selectors, analysis } = localPreset
+  const textBlockSelector = selectors.textBlocks || 'p'
+  const ignoreSelector = selectors.ignore?.join(', ') || ''
 
-  // Calculate weighted anchors using weights from the preset
-  const weightedAnchors = calculateWeightedAnchors(
-    mainContent,
-    localPreset.analysis.weights,
-    localPreset.selectors.hotSpots,
+  // Calculate weighted anchors using preset selectors and weights
+  const weightedAnchors = calculateWeightedAnchors(mainContent, {
+    htmlAnchors: selectors.htmlAnchors,
+    platformAnchors: selectors.platformAnchors,
+    weights: analysis.weights,
     ignoreSelector,
-    codeBlockSelector,
-  )
+  })
 
   // Extract counts for display (UI breakdown)
   const headings = weightedAnchors.headings.count
@@ -219,6 +218,15 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
   const totalTextBlocks = textBlocks.length
 
   // Count problem blocks (text blocks > 5 lines without anchors)
+  // Build anchor selector from preset htmlAnchors
+  const anchorSelectorParts = [
+    selectors.htmlAnchors.emphasis,
+    selectors.htmlAnchors.inlineCode,
+    selectors.htmlAnchors.links,
+    selectors.htmlAnchors.images,
+  ].filter(Boolean)
+  const inlineAnchorSelector = anchorSelectorParts.join(', ')
+
   let problemBlocks = 0
 
   textBlocks.forEach((block) => {
@@ -227,7 +235,9 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
       return
     }
 
-    const hasAnchor = block.querySelector('strong, b, mark, code, a, img') !== null
+    const hasAnchor = inlineAnchorSelector
+      ? block.querySelector(inlineAnchorSelector) !== null
+      : false
     const lines = estimateLines(block)
 
     if (!hasAnchor && lines > MAX_LINES_WITHOUT_ANCHOR) {
@@ -236,14 +246,12 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
   })
 
   // Detect unformatted code blocks using patterns from the preset
-  const codeElements = localPreset.selectors.codeElements || []
-  const unformattedCodeMatches = detectUnformattedCode(
-    mainContent,
-    localPreset.analysis.antiPatterns,
-    codeElements,
+  const unformattedCodeMatches = detectUnformattedCode(mainContent, {
+    htmlAnchors: selectors.htmlAnchors,
+    patterns: analysis.antiPatterns,
     textBlockSelector,
     ignoreSelector,
-  )
+  })
   const unformattedCodeBlocks = unformattedCodeMatches.length
 
   // Mark unformatted code blocks visually (cleared on deactivate)

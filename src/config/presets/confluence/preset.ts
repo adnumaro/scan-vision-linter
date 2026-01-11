@@ -3,7 +3,7 @@
  */
 
 import { t } from '../../../utils/i18n'
-import type { PlatformSelectors, PlatformStyles } from '../../types'
+import type { ConfluenceSelectors, PlatformStyles } from '../../types'
 
 export const CONFLUENCE_ID = 'confluence'
 
@@ -13,28 +13,25 @@ export const CONFLUENCE_DESCRIPTION = (): string => t('presetConfluenceDesc')
 
 export const CONFLUENCE_DOMAINS: string[] = ['atlassian.net', 'confluence.com']
 
-export const CONFLUENCE_SELECTORS: PlatformSelectors = {
-  contentArea:
-    '.ak-editor-content-area, #content-body, [data-testid="page-content"], .wiki-content',
+export const CONFLUENCE_SELECTORS: ConfluenceSelectors = {
+  content: '.ak-editor-content-area, #content-body, [data-testid="page-content"], .wiki-content',
   textBlocks: 'p, [data-node-type="text"], [data-node-type="paragraph"]',
-  codeBlocks: '[data-prosemirror-node-name="codeBlock"]',
-  codeElements: [
-    // Confluence ProseMirror/CodeMirror editors
-    '.cm-editor',
-    '.cm-content',
-    '.fabric-editor-breakout-mark',
-    '[data-prosemirror-node-name="codeBlock"]',
-    '[data-prosemirror-content-type="node"]',
-  ],
-  hotSpots: [
-    '[data-testid*="emoji"]',
-    '.confluence-information-macro',
-    '.panel',
-    '[class*="status-macro"]',
-    '.expand-control',
-    '[data-testid="title-wrapper"]',
-  ],
-  ignoreElements: [
+  htmlAnchors: {
+    headings: 'h1, h2, h3, h4, h5, h6',
+    emphasis: 'strong, b, mark',
+    codeBlocks: '[data-prosemirror-node-name="codeBlock"], pre',
+    inlineCode: 'code, kbd',
+    links: 'a[href]',
+    images: 'img, picture, video, svg',
+    lists: 'ul, ol',
+  },
+  platformAnchors: {
+    callouts: '.confluence-information-macro, .panel',
+    toggles: '.expand-control',
+    badges: '[class*="status-macro"]',
+    emojis: '[data-testid*="emoji"]',
+  },
+  ignore: [
     // Navigation and header
     '[data-testid="grid-left-sidebar"]',
     '[data-testid="space-navigation"]',

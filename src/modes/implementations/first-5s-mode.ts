@@ -292,8 +292,11 @@ function createOverlays(
   foldOffset: number,
 ): void {
   const { contentArea, preset } = context
-  const ignoreSelector = preset.selectors.ignoreElements?.join(', ') || ''
-  const textBlockSelector = preset.selectors.textBlocks || 'p'
+  const { selectors } = preset
+  const ignoreSelector = selectors.ignore?.join(', ') || ''
+  const textBlockSelector = selectors.textBlocks || 'p'
+  const headingsSelector = selectors.htmlAnchors.headings
+  const imagesSelector = selectors.htmlAnchors.images
   const contentAreaRect = contentArea.getBoundingClientRect()
 
   // Get text blocks to dim
@@ -319,7 +322,7 @@ function createOverlays(
   }
 
   // Process headings - only highlight if above fold
-  const headings = contentArea.querySelectorAll('h1, h2, h3, h4, h5, h6')
+  const headings = contentArea.querySelectorAll(headingsSelector)
   for (const heading of headings) {
     if (ignoreSelector && heading.closest(ignoreSelector)) continue
 
@@ -348,7 +351,7 @@ function createOverlays(
   }
 
   // Process images - only outline if above fold
-  const images = contentArea.querySelectorAll('img, picture, video')
+  const images = contentArea.querySelectorAll(imagesSelector)
   for (const img of images) {
     if (ignoreSelector && img.closest(ignoreSelector)) continue
 

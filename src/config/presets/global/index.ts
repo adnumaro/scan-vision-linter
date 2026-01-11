@@ -2,7 +2,7 @@
  * Global preset - base configuration for all platforms
  */
 
-import type { PlatformPreset } from '../../types'
+import type { GlobalAnchors, PlatformPreset } from '../../types'
 import { GLOBAL_ANTI_PATTERNS } from './antiPatterns'
 import {
   GLOBAL_DESCRIPTION,
@@ -15,7 +15,7 @@ import {
 import { GLOBAL_SUGGESTIONS } from './suggestions'
 import { GLOBAL_WEIGHTS } from './weights'
 
-export const globalPreset: PlatformPreset = {
+export const globalPreset: PlatformPreset<GlobalAnchors> = {
   id: GLOBAL_ID,
   name: GLOBAL_NAME(),
   description: GLOBAL_DESCRIPTION(),
@@ -28,16 +28,3 @@ export const globalPreset: PlatformPreset = {
     suggestions: GLOBAL_SUGGESTIONS,
   },
 }
-
-// Re-export components for direct access if needed
-export { GLOBAL_ANTI_PATTERNS } from './antiPatterns'
-export {
-  GLOBAL_DESCRIPTION,
-  GLOBAL_DOMAINS,
-  GLOBAL_ID,
-  GLOBAL_NAME,
-  GLOBAL_SELECTORS,
-  GLOBAL_STYLES,
-} from './preset'
-export { GLOBAL_SUGGESTIONS } from './suggestions'
-export { GLOBAL_WEIGHTS } from './weights'

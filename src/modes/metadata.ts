@@ -33,7 +33,7 @@ export interface ModeInfo extends ModeMetadata {
  * Mode metadata definitions - single source of truth
  * Uses i18n for localized names and descriptions
  */
-export function getModeMetadata(): ModeInfo[] {
+function getModeMetadata(): ModeInfo[] {
   return [
     {
       id: 'scan',
@@ -89,27 +89,26 @@ export const MODE_METADATA: ModeInfo[] = getModeMetadata()
 /**
  * Category labels for UI display
  */
-export function getCategoryLabels(): Record<ModeCategory, string> {
+function getCategoryLabels(): Record<ModeCategory, string> {
   return {
     simulation: t('catSimulations'),
     overlay: t('catOverlays'),
   }
 }
 
-// For backward compatibility
 export const CATEGORY_LABELS: Record<ModeCategory, string> = getCategoryLabels()
 
 /**
  * Category descriptions for UI display
  */
-export function getCategoryDescriptions(): Record<ModeCategory, string> {
+function getCategoryDescriptions(): Record<ModeCategory, string> {
   return {
     simulation: t('catSimulationsDesc'),
     overlay: t('catOverlaysDesc'),
   }
 }
 
-export const CATEGORY_DESCRIPTIONS: Record<ModeCategory, string> = getCategoryDescriptions()
+const CATEGORY_DESCRIPTIONS: Record<ModeCategory, string> = getCategoryDescriptions()
 
 /**
  * Category display order

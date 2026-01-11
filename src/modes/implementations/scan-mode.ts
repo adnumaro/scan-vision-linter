@@ -48,7 +48,7 @@ function getTextBlockSelector(context: ModeContext): string {
  * Gets the ignore selector for the current platform
  */
 function getIgnoreSelector(context: ModeContext): string {
-  return context.preset.selectors.ignoreElements?.join(', ') || ''
+  return context.preset.selectors.ignore?.join(', ') || ''
 }
 
 /**
@@ -94,19 +94,18 @@ class ScanMode implements VisualizationMode {
   activate(context: ModeContext): void {
     if (this.active) return
 
+    const { selectors, analysis } = context.preset
     const ignoreSelector = getIgnoreSelector(context)
     const textBlockSelector = getTextBlockSelector(context)
-    const codeElements = context.preset.selectors.codeElements || []
 
     // 1. Detect problems FIRST to exclude them from blur
     const problemBlocks = findProblemBlocks(context)
-    const unformattedCode = detectUnformattedCode(
-      context.contentArea,
-      context.preset.analysis.antiPatterns,
-      codeElements,
+    const unformattedCode = detectUnformattedCode(context.contentArea, {
+      htmlAnchors: selectors.htmlAnchors,
+      patterns: analysis.antiPatterns,
       textBlockSelector,
       ignoreSelector,
-    )
+    })
 
     // Collect all problem elements to exclude from blur
     const problemElements = new Set<Element>([

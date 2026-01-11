@@ -1,17 +1,42 @@
 /**
  * Anti-pattern detection logic
+ * All selectors come from platform presets - no hardcoded values
  */
 
-import type { AntiPattern } from '../types'
+import type { AntiPattern, HtmlAnchors } from '../types'
 import type { AntiPatternMatch } from './types'
+
+/**
+ * Options for detecting unformatted code
+ */
+export interface UnformattedCodeOptions {
+  /** HTML anchor selectors from preset */
+  htmlAnchors: HtmlAnchors
+  /** Anti-patterns to detect */
+  patterns: AntiPattern[]
+  /** Selector for text blocks to analyze */
+  textBlockSelector?: string
+  /** Selector for elements to ignore */
+  ignoreSelector?: string
+}
+
+/**
+ * Builds a combined selector for all code elements (blocks + inline)
+ */
+function buildCodeSelector(htmlAnchors: HtmlAnchors): string {
+  const selectors: string[] = []
+  if (htmlAnchors.codeBlocks) selectors.push(htmlAnchors.codeBlocks)
+  if (htmlAnchors.inlineCode) selectors.push(htmlAnchors.inlineCode)
+  return selectors.join(', ')
+}
 
 /**
  * Extracts text content from an element, excluding code elements
  */
-function getTextWithoutCodeElements(element: Element, codeElementsSelector: string): string {
+function getTextWithoutCodeElements(element: Element, codeSelector: string): string {
   const clone = element.cloneNode(true) as Element
-  if (codeElementsSelector) {
-    for (const el of clone.querySelectorAll(codeElementsSelector)) {
+  if (codeSelector) {
+    for (const el of clone.querySelectorAll(codeSelector)) {
       el.remove()
     }
   }
@@ -20,24 +45,24 @@ function getTextWithoutCodeElements(element: Element, codeElementsSelector: stri
 
 /**
  * Detects unformatted code patterns in text blocks
+ * All selectors come from platform presets
  */
 export function detectUnformattedCode(
   contentArea: Element,
-  patterns: AntiPattern[],
-  codeElements: string[],
-  textBlockSelector = 'p',
-  ignoreSelector = '',
+  options: UnformattedCodeOptions,
 ): AntiPatternMatch[] {
+  const { htmlAnchors, patterns, textBlockSelector = 'p', ignoreSelector = '' } = options
+
   const matches: AntiPatternMatch[] = []
   const textBlocks = contentArea.querySelectorAll(textBlockSelector)
-  const codeElementsSelector = codeElements.join(', ')
+  const codeSelector = buildCodeSelector(htmlAnchors)
 
   for (const block of textBlocks) {
     // Skip if block is inside a code element
-    if (codeElementsSelector && block.closest(codeElementsSelector)) continue
+    if (codeSelector && block.closest(codeSelector)) continue
 
     // Skip if block contains a code element (wrapper element)
-    if (codeElementsSelector && block.querySelector(codeElementsSelector)) continue
+    if (codeSelector && block.querySelector(codeSelector)) continue
 
     // Skip if block or ancestors have code-editor-like classes
     const blockClasses = block.className || ''
@@ -53,7 +78,7 @@ export function detectUnformattedCode(
     // Skip blocks inside ignored elements
     if (ignoreSelector && block.closest(ignoreSelector)) continue
 
-    const textWithoutCode = getTextWithoutCodeElements(block, codeElementsSelector)
+    const textWithoutCode = getTextWithoutCodeElements(block, codeSelector)
 
     // Skip very short blocks
     if (textWithoutCode.length < 10) continue

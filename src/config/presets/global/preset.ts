@@ -4,7 +4,7 @@
  */
 
 import { t } from '../../../utils/i18n'
-import type { PlatformSelectors, PlatformStyles } from '../../types'
+import type { GlobalSelectors, PlatformStyles } from '../../types'
 
 export const GLOBAL_ID = 'global'
 
@@ -14,23 +14,20 @@ export const GLOBAL_DESCRIPTION = (): string => t('presetDefaultDesc')
 
 export const GLOBAL_DOMAINS: string[] = []
 
-export const GLOBAL_SELECTORS: PlatformSelectors = {
-  contentArea: 'main, article, [role="main"], .content, #content, body',
+export const GLOBAL_SELECTORS: GlobalSelectors = {
+  content: 'main, article, [role="main"], .content, #content, body',
   textBlocks: 'p',
-  codeBlocks: 'pre',
-  codeElements: [
-    // Standard HTML code elements
-    'pre',
-    'code',
-    'kbd',
-    'samp',
-    // Common code highlighting classes
-    '.highlight',
-    '.code-block',
-    '[data-language]',
-  ],
-  hotSpots: [],
-  ignoreElements: [],
+  htmlAnchors: {
+    headings: 'h1, h2, h3, h4, h5, h6',
+    emphasis: 'strong, b, mark',
+    codeBlocks: 'pre',
+    inlineCode: 'code, kbd',
+    links: 'a[href]',
+    images: 'img, picture, video, svg',
+    lists: 'ul, ol',
+  },
+  platformAnchors: {},
+  ignore: [],
 }
 
 export const GLOBAL_STYLES: PlatformStyles | undefined = undefined
