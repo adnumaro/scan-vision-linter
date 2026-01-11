@@ -8,6 +8,11 @@ import type { PlatformPreset } from '../config/types'
 
 export type { PlatformPreset } from '../config/types'
 
+/**
+ * Types of anchors that can have indicators toggled
+ */
+export type IndicatorType = 'headings' | 'emphasis' | 'code' | 'links' | 'images' | 'lists'
+
 export interface ScanConfig {
   opacity: number
   blur: number
@@ -59,6 +64,7 @@ export type MessageAction =
   | 'update-config'
   | 'analyze'
   | 'toggle-mode'
+  | 'toggle-indicator'
 
 export interface Message {
   action: MessageAction
@@ -66,6 +72,8 @@ export interface Message {
   preset?: PlatformPreset
   modeId?: string
   enabled?: boolean
+  /** Indicator type for toggle-indicator action */
+  indicatorType?: IndicatorType
 }
 
 export interface ScanResponse {
@@ -74,4 +82,6 @@ export interface ScanResponse {
   analytics?: AnalyticsData
   detectedPresetId?: string
   activeModes?: string[]
+  /** Currently active indicator types */
+  activeIndicators?: IndicatorType[]
 }

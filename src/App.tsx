@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import './App.css'
 import { ModeList } from './components/ModeList'
 import { detectPlatform, getPresetById, PRESETS } from './config/presets'
-import type { AnalyticsData, ScanConfig } from './types/messages'
+import type { AnalyticsData, IndicatorType, ScanConfig } from './types/messages'
 import { DEFAULT_CONFIG } from './types/messages'
 import { t } from './utils/i18n'
 import {
@@ -22,6 +22,7 @@ function App() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [detectedPresetId, setDetectedPresetId] = useState<string | null>(null)
   const [activeModes, setActiveModes] = useState<string[]>(['scan'])
+  const [activeIndicators, setActiveIndicators] = useState<IndicatorType[]>([])
   const [isReanalyzing, setIsReanalyzing] = useState(false)
   // Accordion states
   const [presetExpanded, setPresetExpanded] = useState(true)
@@ -69,6 +70,11 @@ function App() {
             } else {
               setActiveModes(['scan'])
             }
+            if (response?.activeIndicators) {
+              setActiveIndicators(response.activeIndicators)
+            } else {
+              setActiveIndicators([])
+            }
             // Only update analytics if we got fresh data from content script
             if (response?.analytics && tab.url) {
               setAnalytics(response.analytics)
@@ -78,6 +84,7 @@ function App() {
             // Content script not loaded on this tab
             setIsActive(false)
             setActiveModes(['scan'])
+            setActiveIndicators([])
             // Keep saved analytics for this URL, don't clear them
           }
         }
@@ -186,6 +193,32 @@ function App() {
       }
     },
     [config],
+  )
+
+  const handleIndicatorToggle = useCallback(
+    async (indicatorType: IndicatorType) => {
+      try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+        if (!tab.id) return
+
+        const isCurrentlyActive = activeIndicators.includes(indicatorType)
+        const preset = getPresetById(config.presetId)
+
+        const response = await chrome.tabs.sendMessage(tab.id, {
+          action: 'toggle-indicator',
+          indicatorType,
+          enabled: !isCurrentlyActive,
+          preset,
+        })
+
+        if (response?.activeIndicators) {
+          setActiveIndicators(response.activeIndicators)
+        }
+      } catch {
+        setError(t('errReloadPage'))
+      }
+    },
+    [config.presetId, activeIndicators],
   )
 
   const analyzeContent = async () => {
@@ -408,12 +441,20 @@ function App() {
             <div className="breakdown">
               <div className="breakdown-title">{t('lblAnchorsBreakdown')}</div>
               <div className="breakdown-grid">
-                <div className="breakdown-item">
+                <button
+                  type="button"
+                  className={`breakdown-item breakdown-item--interactive ${activeIndicators.includes('headings') ? 'breakdown-item--active breakdown-item--headings' : ''}`}
+                  onClick={() => handleIndicatorToggle('headings')}
+                  title={t('lblToggleIndicator')}
+                >
                   <span className="breakdown-value">{analytics.anchorsBreakdown.headings}</span>
                   <span className="breakdown-label">{t('lblHeadings')}</span>
-                </div>
-                <div
-                  className={`breakdown-item ${analytics.anchorsBreakdown.emphasis === 0 ? 'breakdown-item--warning' : ''}`}
+                </button>
+                <button
+                  type="button"
+                  className={`breakdown-item breakdown-item--interactive ${activeIndicators.includes('emphasis') ? 'breakdown-item--active breakdown-item--emphasis' : ''} ${analytics.anchorsBreakdown.emphasis === 0 ? 'breakdown-item--warning' : ''}`}
+                  onClick={() => handleIndicatorToggle('emphasis')}
+                  title={t('lblToggleIndicator')}
                 >
                   <span className="breakdown-value">
                     {analytics.anchorsBreakdown.emphasis}
@@ -422,9 +463,12 @@ function App() {
                     )}
                   </span>
                   <span className="breakdown-label">{t('lblEmphasis')}</span>
-                </div>
-                <div
-                  className={`breakdown-item ${analytics.anchorsBreakdown.code === 0 && analytics.unformattedCodeBlocks > 0 ? 'breakdown-item--warning' : ''}`}
+                </button>
+                <button
+                  type="button"
+                  className={`breakdown-item breakdown-item--interactive ${activeIndicators.includes('code') ? 'breakdown-item--active breakdown-item--code' : ''} ${analytics.anchorsBreakdown.code === 0 && analytics.unformattedCodeBlocks > 0 ? 'breakdown-item--warning' : ''}`}
+                  onClick={() => handleIndicatorToggle('code')}
+                  title={t('lblToggleIndicator')}
                 >
                   <span className="breakdown-value">
                     {analytics.anchorsBreakdown.code}
@@ -434,19 +478,34 @@ function App() {
                       )}
                   </span>
                   <span className="breakdown-label">{t('lblCode')}</span>
-                </div>
-                <div className="breakdown-item">
+                </button>
+                <button
+                  type="button"
+                  className={`breakdown-item breakdown-item--interactive ${activeIndicators.includes('links') ? 'breakdown-item--active breakdown-item--links' : ''}`}
+                  onClick={() => handleIndicatorToggle('links')}
+                  title={t('lblToggleIndicator')}
+                >
                   <span className="breakdown-value">{analytics.anchorsBreakdown.links}</span>
                   <span className="breakdown-label">{t('lblLinks')}</span>
-                </div>
-                <div className="breakdown-item">
+                </button>
+                <button
+                  type="button"
+                  className={`breakdown-item breakdown-item--interactive ${activeIndicators.includes('images') ? 'breakdown-item--active breakdown-item--images' : ''}`}
+                  onClick={() => handleIndicatorToggle('images')}
+                  title={t('lblToggleIndicator')}
+                >
                   <span className="breakdown-value">{analytics.anchorsBreakdown.images}</span>
                   <span className="breakdown-label">{t('lblImages')}</span>
-                </div>
-                <div className="breakdown-item">
+                </button>
+                <button
+                  type="button"
+                  className={`breakdown-item breakdown-item--interactive ${activeIndicators.includes('lists') ? 'breakdown-item--active breakdown-item--lists' : ''}`}
+                  onClick={() => handleIndicatorToggle('lists')}
+                  title={t('lblToggleIndicator')}
+                >
                   <span className="breakdown-value">{analytics.anchorsBreakdown.lists}</span>
                   <span className="breakdown-label">{t('lblLists')}</span>
-                </div>
+                </button>
               </div>
             </div>
 

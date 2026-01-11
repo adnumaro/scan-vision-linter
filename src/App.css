@@ -513,6 +513,55 @@
   margin-left: 2px;
 }
 
+/* Interactive Breakdown Items */
+.breakdown-item--interactive {
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.breakdown-item--interactive:hover {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+.breakdown-item--active {
+  border-width: 2px;
+  padding: 5px 3px;
+}
+
+/* Type-specific active states */
+.breakdown-item--headings.breakdown-item--active {
+  background: rgba(var(--scan-color-headings), 0.1);
+  border-color: rgba(var(--scan-color-headings), 0.7);
+}
+
+.breakdown-item--emphasis.breakdown-item--active {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.7);
+}
+
+.breakdown-item--code.breakdown-item--active {
+  background: rgba(var(--scan-color-code), 0.1);
+  border-color: rgba(var(--scan-color-code), 0.7);
+}
+
+.breakdown-item--links.breakdown-item--active {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.7);
+}
+
+.breakdown-item--images.breakdown-item--active {
+  background: rgba(var(--scan-color-images), 0.1);
+  border-color: rgba(var(--scan-color-images), 0.7);
+}
+
+.breakdown-item--lists.breakdown-item--active {
+  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(168, 85, 247, 0.7);
+}
+
 /* Color Legend */
 .color-legend {
   margin-top: 12px;

@@ -70,6 +70,9 @@
   "lblAnchorsBreakdown": {
     "message": "Desglose de Anclas"
   },
+  "lblToggleIndicator": {
+    "message": "Clic para mostrar/ocultar indicador"
+  },
   "lblColorGuide": {
     "message": "Guia de Colores"
   },

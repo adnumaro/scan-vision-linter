@@ -70,6 +70,9 @@
   "lblAnchorsBreakdown": {
     "message": "Anchors Breakdown"
   },
+  "lblToggleIndicator": {
+    "message": "Click to toggle indicator"
+  },
   "lblColorGuide": {
     "message": "Color Guide"
   },

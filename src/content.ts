@@ -26,10 +26,12 @@ import { heatZonesMode } from './modes/implementations/heat-zones-mode'
 import { scanMode } from './modes/implementations/scan-mode'
 import { SCORING } from './modes/utils/constants'
 import { estimateLines, MAX_LINES_WITHOUT_ANCHOR } from './modes/utils/dom'
+import { createIndicatorManager } from './modes/utils/indicator-overlays'
 import { createUnformattedCodeOverlays } from './modes/utils/scan-overlays'
 import type {
   AnalyticsData,
   DetectedProblem,
+  IndicatorType,
   Message,
   ScanConfig,
   ScanResponse,
@@ -45,6 +47,9 @@ registry.register(first5sMode)
 
 // Create manager
 const manager = createModeManager(registry)
+
+// Create indicator manager for anchor type highlighting
+const indicatorManager = createIndicatorManager()
 
 // Use global preset as default - single source of truth
 const DEFAULT_PRESET = PRESETS[0]
@@ -75,6 +80,12 @@ const state: ContentState = {
 
 const CACHE_TTL = 1000 // 1 second TTL
 
+// Track pending analysis timeout for cleanup
+let pendingAnalysisTimeout: ReturnType<typeof setTimeout> | null = null
+
+// Cache content area element for consistency within a session
+let cachedContentArea: Element | null = null
+
 /**
  * Valid message actions
  */
@@ -84,6 +95,7 @@ const VALID_ACTIONS = [
   'update-config',
   'toggle-mode',
   'toggle-scan',
+  'toggle-indicator',
 ] as const
 type ValidAction = (typeof VALID_ACTIONS)[number]
 
@@ -122,13 +134,20 @@ function getContentHash(contentArea: Element): string {
  */
 function invalidateCache(): void {
   state.cache = { data: null, timestamp: 0, contentHash: '' }
+  cachedContentArea = null
 }
 
 /**
  * Gets the main content area element
+ * Caches the result for consistency within a session
  * Safely handles empty or invalid selectors
  */
 function getContentArea(): Element {
+  // Return cached element if still in DOM
+  if (cachedContentArea && document.contains(cachedContentArea)) {
+    return cachedContentArea
+  }
+
   const contentSelector = state.preset.selectors.content
   if (!contentSelector || !contentSelector.trim()) {
     return document.body
@@ -142,7 +161,10 @@ function getContentArea(): Element {
   for (const selector of selectors) {
     try {
       const element = document.querySelector(selector)
-      if (element) return element
+      if (element) {
+        cachedContentArea = element
+        return element
+      }
     } catch {
       // Invalid selector, skip to next
       console.warn(`[ScanVision] Invalid selector: ${selector}`)
@@ -196,7 +218,10 @@ function analyzeScannability(forceRefresh = false): AnalyticsData {
   // Use platform-specific selectors from preset
   const { selectors, analysis } = localPreset
   const textBlockSelector = selectors.textBlocks || 'p'
-  const ignoreSelector = selectors.ignore?.join(', ') || ''
+  // Always ignore ScanVision-created elements (overlays, indicators)
+  const scanvisionIgnore = '[class^="scanvision-"]'
+  const baseIgnore = selectors.ignore?.join(', ') || ''
+  const ignoreSelector = baseIgnore ? `${baseIgnore}, ${scanvisionIgnore}` : scanvisionIgnore
 
   // Calculate weighted anchors using preset selectors and weights
   const weightedAnchors = calculateWeightedAnchors(mainContent, {
@@ -399,6 +424,7 @@ function createResponse(includeAnalytics = false): ScanResponse {
     isScanning: manager.isActive('scan'),
     config: state.config,
     activeModes: manager.getActiveModes(),
+    activeIndicators: indicatorManager.getActiveTypes(),
     analytics: includeAnalytics && manager.isActive('scan') ? analyzeScannability() : undefined,
   }
 }
@@ -414,11 +440,23 @@ function handleMessage(message: Message, sendResponse: (response: ScanResponse) 
     }
 
     case 'analyze': {
-      const analytics = analyzeScannability()
-      sendResponse({
-        ...createResponse(),
-        analytics,
-      })
+      // Update preset if provided (ensures correct ignore selectors)
+      if (message.preset) {
+        state.preset = getPresetById(message.preset.id)
+      }
+      // Clear any pending analysis
+      if (pendingAnalysisTimeout) {
+        clearTimeout(pendingAnalysisTimeout)
+      }
+      // Delay analysis to let dynamic content settle (Confluence, Notion, etc.)
+      pendingAnalysisTimeout = setTimeout(() => {
+        pendingAnalysisTimeout = null
+        const analytics = analyzeScannability(true)
+        sendResponse({
+          ...createResponse(),
+          analytics,
+        })
+      }, 1000)
       return true
     }
 
@@ -498,6 +536,26 @@ function handleMessage(message: Message, sendResponse: (response: ScanResponse) 
       }
       return true
     }
+
+    case 'toggle-indicator': {
+      if (message.preset) {
+        state.preset = getPresetById(message.preset.id)
+      }
+
+      const indicatorType = message.indicatorType as IndicatorType | undefined
+      if (indicatorType) {
+        const context = createContext()
+
+        if (message.enabled) {
+          indicatorManager.activate(indicatorType, context)
+        } else {
+          indicatorManager.deactivate(indicatorType)
+        }
+      }
+
+      sendResponse(createResponse())
+      return true
+    }
   }
 }
 
@@ -519,7 +577,12 @@ chrome.runtime.onMessage.addListener(
  */
 function cleanup(): void {
   try {
+    if (pendingAnalysisTimeout) {
+      clearTimeout(pendingAnalysisTimeout)
+      pendingAnalysisTimeout = null
+    }
     manager.destroy()
+    indicatorManager.deactivateAll()
     removeAllOverlays()
     removeAllStylesheets()
     invalidateCache()
